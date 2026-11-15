@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, BrainCircuit } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
 import { Button } from '@project/components/ui/button';
+import { Switch } from '@project/components/ui/switch';
+import { toast } from 'sonner';
+import { bigbullsBackend } from '../lib/bigbullsBackend';
 import { cn } from '@project/components/lib/utils';
 import Watchlist from '../components/Watchlist';
 import PriceChart from '../components/PriceChart';
@@ -16,6 +19,29 @@ export default function Terminal() {
   const t = useTrading();
   const [symbol, setSymbol] = useState('EURUSD');
   const [tabs, setTabs] = useState(['EURUSD', 'XAUUSD', 'BTCUSD']);
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [aiSaving, setAiSaving] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setAiEnabled(false);
+    if (t.account.type === 'Real' && t.account.id) {
+      bigbullsBackend.aiTradeMode(t.account.id).then((mode) => {
+        if (active) setAiEnabled(Boolean(mode.enabled));
+      }).catch(() => { if (active) setAiEnabled(false); });
+    }
+    return () => { active = false; };
+  }, [t.account.id, t.account.type]);
+  const changeAiMode = async (enabled: boolean) => {
+    if (!t.account.id || t.account.type !== 'Real' || aiSaving) return;
+    setAiSaving(true);
+    try {
+      const mode = await bigbullsBackend.setAiTradeMode(t.account.id, enabled);
+      setAiEnabled(Boolean(mode?.enabled));
+      toast.success(enabled ? 'AI trading mode enabled for this Real account' : 'Manual trading mode enabled');
+    } catch (error: any) {
+      toast.error(error?.message || 'Unable to change AI trading mode');
+    } finally { setAiSaving(false); }
+  };
   const select = (s: string) => { setSymbol(s); if (!tabs.includes(s)) setTabs((x) => [...x.slice(-4), s]); };
 
   return (
@@ -34,6 +60,7 @@ export default function Terminal() {
           <Stat k="Margin" v={money(t.margin)} className="hidden lg:block" />
           <Stat k="Free margin" v={money(t.free)} className="hidden lg:block" />
           <Stat k="Margin level" v={t.margin ? `${t.level.toFixed(0)}%` : '—'} className="hidden xl:block" />
+          {t.account.type === 'Real' && <div className="hidden items-center gap-2 rounded-lg border px-2.5 py-1.5 sm:flex"><BrainCircuit className="h-4 w-4 text-primary" /><div className="leading-tight"><div className="text-[10px] font-bold">{aiEnabled ? 'AI MODE' : 'MANUAL MODE'}</div><div className="text-[9px] text-muted-foreground">Account trading mode</div></div><Switch checked={aiEnabled} disabled={aiSaving || t.account.balance <= 0} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
           <Select value={t.account.id} onValueChange={t.setActive}>
             <SelectTrigger className="h-9 w-auto gap-2 font-semibold">
               <SelectValue />
@@ -49,6 +76,7 @@ export default function Terminal() {
           <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/deposit">Deposit</Link></Button>
         </div>
       </header>
+      {t.account.type === 'Real' && <div className="flex items-center justify-between border-b bg-card px-3 py-2 sm:hidden"><span className="flex items-center gap-2 text-xs font-semibold"><BrainCircuit className="h-4 w-4 text-primary" />{aiEnabled ? 'AI Trading' : 'Manual Trading'}</span><Switch checked={aiEnabled} disabled={aiSaving || t.account.balance <= 0} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[300px_1fr_300px]">
         <aside className="hidden min-h-0 border-r bg-card lg:block"><Watchlist selected={symbol} onSelect={select} /></aside>
         <main className="grid min-h-0 grid-rows-[1fr_260px]">
