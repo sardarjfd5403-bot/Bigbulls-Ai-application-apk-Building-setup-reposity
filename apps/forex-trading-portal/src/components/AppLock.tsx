@@ -20,7 +20,7 @@ async function verifyPin(pin:string,stored:string){
  const hex=Array.from(new Uint8Array(hash)).map(x=>x.toString(16).padStart(2,'0')).join('');
  return hex===parts[1];
 }
-function withTimeout<T>(promise:Promise<T>,ms=7000):Promise<T>{
+function withTimeout<T>(promise:Promise<T>,ms=3000):Promise<T>{
  return Promise.race([promise,new Promise<T>((_,reject)=>setTimeout(()=>reject(new Error('Secure storage initialization timed out')),ms))]);
 }
 export default function AppLock({children}:{children:ReactNode}){
@@ -53,7 +53,7 @@ export default function AppLock({children}:{children:ReactNode}){
     else{setSetup(true);setLocked(false);}
    })());
    try{
-    const info=await withTimeout(BiometricAuth.checkBiometry(),4000);
+    const info=await withTimeout(BiometricAuth.checkBiometry(),2000);
     setBioAvailable(Boolean(info?.isAvailable));
    }catch{setBioAvailable(false);}
   }catch(e){
@@ -63,7 +63,7 @@ export default function AppLock({children}:{children:ReactNode}){
    setSetup(false);setLocked(false);setError('Device secure storage is unavailable. App opened without app lock.');
   }finally{setReady(true);}
  },[native]);
- useEffect(()=>{void load();},[load]);
+ useEffect(()=>{\n  let alive=true;\n  // Independent UI watchdog: never leave a signed-in client on the security splash.\n  const watchdog=setTimeout(()=>{if(alive){setSetup(false);setLocked(false);setError('Security storage is taking too long. App opened; you can enable the app lock later.');setReady(true);}},3500);\n  void load().finally(()=>clearTimeout(watchdog));\n  return()=>{alive=false;clearTimeout(watchdog);};\n },[load]);
  useEffect(()=>{
   if(!native)return;
   let handle:{remove:()=>Promise<void>}|undefined;
