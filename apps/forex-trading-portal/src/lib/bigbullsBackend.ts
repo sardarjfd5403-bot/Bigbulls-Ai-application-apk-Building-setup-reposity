@@ -56,6 +56,13 @@ export const bigbullsBackend = {
     return (data || []) as TradingAccountRow[];
   },
 
+
+  async updateProfile(input:{full_name:string;country:string;phone:string}) {
+    const user=await requireUser();
+    const {data,error}=await supabase.from('profiles').update({...input,updated_at:new Date().toISOString()}).eq('id',user.id).select('id,full_name,email,country,phone').single();
+    if(error)throw error;return data;
+  },
+
   async profile() {
     const user = await requireUser();
     const { data, error } = await supabase.from('profiles')
