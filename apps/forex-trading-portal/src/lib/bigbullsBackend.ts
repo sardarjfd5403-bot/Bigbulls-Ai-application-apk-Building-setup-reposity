@@ -187,13 +187,18 @@ export const bigbullsBackend = {
         .select('symbol,side').eq('id', positionId).eq('account_id', accountId).maybeSingle();
       if (positionError) throw positionError;
       if (!position) throw new Error('REAL position not found.');
-      const symbol = String(position.symbol).toUpperCase().replace('/', '');
-      const { data: quote, error: quoteError } = await supabase.from('bb_bbook_quotes')
-        .select('bid,ask').eq('symbol', symbol).maybeSingle();
-      if (quoteError) throw quoteError;
-      if (!quote || !(Number(quote.bid) > 0 && Number(quote.ask) >= Number(quote.bid))) throw new Error('No valid database exit quote is available.');
-      body.exit_price = position.side === 'BUY' ? Number(quote.bid) : Number(quote.ask);
-      body.bid = Number(quote.bid); body.ask = Number(quote.ask);
+      let bid = Number(body.bid || 0), ask = Number(body.ask || 0);
+      if (!(bid > 0 && ask >= bid)) {
+        const symbol = String(position.symbol).toUpperCase().replace('/', '');
+        const { data: quote, error: quoteError } = await supabase.from('bb_bbook_quotes')
+          .select('bid,ask').eq('symbol', symbol).maybeSingle();
+        if (quoteError) throw quoteError;
+        if (!quote) throw new Error('No database exit quote is available.');
+        bid = Number(quote.bid); ask = Number(quote.ask);
+      }
+      if (!(bid > 0 && ask >= bid)) throw new Error('No valid exit quote is available.');
+      body.exit_price = position.side === 'BUY' ? bid : ask;
+      body.bid = bid; body.ask = ask;
     }
     const { data, error } = await supabase.rpc('bb_client_bbook_action', {
       p_action: action, p_payload: body,
@@ -260,8 +265,8 @@ export const bigbullsBackend = {
     return this.directRealAction(accountId, 'open', input as unknown as Record<string, unknown>);
   },
 
-  async realClose(accountId: string, positionId: string) {
-    return this.directRealAction(accountId, 'close', { position_id: positionId });
+  async realClose(accountId: string, positionId: string, quote?: { bid: number; ask: number }) {
+    return this.directRealAction(accountId, 'close', { position_id: positionId, bid: quote?.bid, ask: quote?.ask });
   },
 
   async realModify(accountId: string, positionId: string, stopLoss?: number | null, takeProfit?: number | null) {
