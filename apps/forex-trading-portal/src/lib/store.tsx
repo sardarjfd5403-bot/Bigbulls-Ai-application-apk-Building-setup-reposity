@@ -35,7 +35,7 @@ function useEngine(){
    const closed=(result.positions||[]).filter((p:any)=>p.status==='CLOSED').map((p:any)=>({...mapPosition(p),closePrice:Number(p.mark_price||p.exit_price||p.entry_price),closeTime:Date.parse(p.closed_at||p.opened_at),profit:Number(p.realized_pnl||0),reason:p.close_reason||'Closed'}));
    const {data:orders,error}=await supabase.from('bb_bbook_pending_orders').select('*').eq('account_id',accountId).eq('status','PENDING').order('created_at',{ascending:false});
    if(error)throw error;
-   const pending=(orders||[]).map((o:any)=>({id:o.id,accountId,symbol:o.symbol,side:o.side.toLowerCase(),kind:String(o.order_type).includes('LIMIT')?'Limit':'Stop',volume:Number(o.quantity),price:Number(o.target_price),sl:o.stop_loss==null?undefined:Number(o.stop_loss),tp:o.take_profit==null?undefined:Number(o.take_profit),created:Date.parse(o.created_at)}));
+   const pending=(orders||[]).map((o:any)=>({id:o.id,accountId,symbol:o.symbol,side:o.side.toLowerCase(),kind:(String(o.order_type).includes('LIMIT')?'Limit':'Stop') as 'Limit'|'Stop',volume:Number(o.quantity),price:Number(o.target_price),sl:o.stop_loss==null?undefined:Number(o.stop_loss),tp:o.take_profit==null?undefined:Number(o.take_profit),created:Date.parse(o.created_at)}));
    setState(old=>({...old,accounts:old.accounts.map(a=>a.id===accountId?{...a,balance:Number(result.metrics?.balance??a.balance)}:a),positions:old.positions.filter(p=>p.accountId!==accountId).concat(active),pending:old.pending.filter(p=>p.accountId!==accountId).concat(pending),history:old.history.filter(p=>p.accountId!==accountId).concat(closed)}));
   }else{
    const result:any=await bigbullsBackend.demoStatus(accountId);
@@ -62,13 +62,13 @@ function useEngine(){
   closePosition:(id:string)=>run(()=>account.type==='Real'?bigbullsBackend.realClose(account.id,id):bigbullsBackend.demoClose(account.id,id),'Close request sent to execution engine'),
   closeAll:(filter:'all'|'profit'|'loss')=>run(async()=>{const selected=positions.filter(p=>filter==='all'||(filter==='profit'?pnl(p,quotes)>0:pnl(p,quotes)<0));for(const p of selected){if(account.type==='Real')await bigbullsBackend.realClose(account.id,p.id);else await bigbullsBackend.demoClose(account.id,p.id);}},'Close requests submitted'),
   modifyPosition:(id:string,sl?:number,tp?:number)=>run(()=>account.type==='Real'?bigbullsBackend.realModify(account.id,id,sl??null,tp??null):bigbullsBackend.demoModify(account.id,id,sl??0,tp??null),'Stop Loss / Take Profit update submitted'),
-  transact:()=>{toast.error('Use the secure BIGBULLS payment workflow; local balance credit is disabled.');return false;},
-  transfer:()=>{toast.error('Local transfers are disabled until the existing server transfer workflow is wired.');return false;},
+  transact:(_accountId:string,_type:any,_method:string,_amount:number)=>{toast.error('Use the secure BIGBULLS payment workflow; local balance credit is disabled.');return false;},
+  transfer:(_fromId:string,_toId:string,_amount:number)=>{toast.error('Local transfers are disabled until the existing server transfer workflow is wired.');return false;},
   openAccount:(a:{type:'Real'|'Demo';kind:Account['kind'];platform:string;leverage:number})=>run(async()=>{const {data,error}=await supabase.rpc('create_client_trading_account',{p_account_mode:a.type.toLowerCase(),p_account_type:a.kind,p_leverage:String(a.leverage)});if(error)throw error;if(!data)throw new Error('Account request was not accepted.');},'Account request submitted'),
-  walletMove:()=>{toast.error('Local wallet mutation is disabled.');return false;},
-  setLeverage:()=>{toast.error('Leverage changes require the existing account-management workflow.');},
+  walletMove:(_accountId:string,_amount:number)=>{toast.error('Local wallet mutation is disabled.');return false;},
+  setLeverage:(_id:string,_leverage:number)=>{toast.error('Leverage changes require the existing account-management workflow.');},
   resetDemo:(id:string)=>run(()=>bigbullsBackend.demoSetBalance(id,10000,'set'),'Demo balance reset requested'),
-  archive:()=>{toast.error('Account archiving is controlled by the existing back office.');},
+  archive:(_id:string)=>{toast.error('Account archiving is controlled by the existing back office.');},
  };
  return {quotes,state,account,positions,pending,history,floating,margin,equity,free,level,busy,refresh,...actions};
 }
