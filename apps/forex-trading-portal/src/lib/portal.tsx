@@ -52,7 +52,7 @@ const KEY = 'bigbulls-portal-v1';
 
 function usePortalState() {
   const [s, set] = useState<State>(() => {
-    try { const v = localStorage.getItem(KEY); if (v) return { ...initial(), ...JSON.parse(v) }; } catch { /* ignore */ }
+    try { const v = localStorage.getItem(KEY); if (v) { const saved = JSON.parse(v); const base = initial(); return { ...base, ...saved, wallet: 0, walletTxns: [], kyc: base.kyc, ib: base.ib, tickets: [] }; } } catch { /* ignore */ }
     return initial();
   });
   useEffect(() => { localStorage.setItem(KEY, JSON.stringify(s)); }, [s]);
