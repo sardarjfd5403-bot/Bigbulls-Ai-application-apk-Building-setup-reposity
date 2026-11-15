@@ -52,7 +52,7 @@ export default function Terminal() {
         <Link to="/" className="text-muted-foreground hover:text-foreground" aria-label="Back"><ArrowLeft className="h-5 w-5" /></Link>
         <Logo />
         <Select value={symbol} onValueChange={setSymbol}>
-          <SelectTrigger className="ml-2 h-9 w-[132px] shrink-0 font-bold sm:w-[168px]">
+          <SelectTrigger className="ml-1 h-8 w-[108px] shrink-0 px-1 text-[11px] font-bold sm:ml-2 sm:h-9 sm:w-[168px] sm:text-sm">
             <SelectValue placeholder="Select pair" />
           </SelectTrigger>
           <SelectContent>
@@ -63,15 +63,15 @@ export default function Terminal() {
             ))}
           </SelectContent>
         </Select>
-        <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-4">
-          <Stat k="Balance" v={money(t.account.balance)} className="block [&_div:last-child]:text-[11px] sm:[&_div:last-child]:text-sm" />
+        <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-4">
+          <Stat k="Balance" v={money(t.account.balance)} className="block [&_div:last-child]:text-[10px] sm:[&_div:last-child]:text-sm" />
           <Stat k="Equity" v={money(t.equity)} className="block [&_div:last-child]:text-[11px] sm:[&_div:last-child]:text-sm" />
           <Stat k="Margin" v={money(t.margin)} className="hidden lg:block" />
           <Stat k="Free margin" v={money(t.free)} className="hidden lg:block" />
           <Stat k="Margin level" v={t.margin ? `${t.level.toFixed(0)}%` : '—'} className="hidden xl:block" />
           {t.account.type === 'Real' && <div className="hidden items-center gap-2 rounded-lg border px-2.5 py-1.5 sm:flex"><BrainCircuit className="h-4 w-4 text-primary" /><div className="leading-tight"><div className="text-[10px] font-bold">{aiEnabled ? 'AI MODE' : 'MANUAL MODE'}</div><div className="text-[9px] text-muted-foreground">Account trading mode</div></div><Switch checked={aiEnabled} disabled={aiSaving || t.account.balance <= 0} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
           <Select value={t.account.id} onValueChange={t.setActive}>
-            <SelectTrigger className="h-8 max-w-[94px] gap-1 px-2 text-xs font-semibold sm:h-9 sm:max-w-none sm:gap-2">
+            <SelectTrigger className="h-8 max-w-[84px] gap-1 px-1.5 text-[10px] font-semibold sm:h-9 sm:max-w-none sm:gap-2 sm:text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
