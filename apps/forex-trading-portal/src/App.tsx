@@ -20,7 +20,6 @@ import Analytics from './pages/Analytics';
 import Support from './pages/Support';
 import TradeHistory from './pages/TradeHistory';
 import AuthScreen from './pages/AuthScreen';
-import AppLock from './components/AppLock';
 
 // Android WebView must use hash-based routing: BrowserRouter changes the WebView
 // pathname and can leave Capacitor deep links / restored sessions on an empty route.
@@ -65,9 +64,7 @@ export default function App() {
   return (
     <TradingProvider>
       <PortalProvider>
-        <AppLock>
-          <ClientRoutes />
-        </AppLock>
+        <ClientRoutes />
         <Toaster />
       </PortalProvider>
     </TradingProvider>
