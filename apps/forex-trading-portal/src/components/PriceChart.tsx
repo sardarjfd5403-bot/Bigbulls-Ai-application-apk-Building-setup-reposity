@@ -4,7 +4,8 @@ import { fetchCandles } from '../lib/feed';
 import { SYM } from '../lib/symbols';
 import { cn } from '@project/components/lib/utils';
 
-const TFS: [string, number][] = [['1m', 60], ['5m', 300], ['15m', 900], ['1h', 3600], ['4h', 14400], ['1D', 86400]];\nconst TF_API: Record<number,string> = {60:'1m',300:'5m',900:'15m',3600:'1h',14400:'4h',86400:'1d'};
+const TFS: [string, number][] = [['1m', 60], ['5m', 300], ['15m', 900], ['1h', 3600], ['4h', 14400], ['1D', 86400]];
+const TF_API: Record<number,string> = {60:'1m',300:'5m',900:'15m',3600:'1h',14400:'4h',86400:'1d'};
 type Candle = { t: number; o: number; h: number; l: number; c: number };
 
 export default function PriceChart({ symbol }: { symbol: string }) {
