@@ -1,10 +1,8 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { toast } from 'sonner';
+import { bigbullsBackend } from './bigbullsBackend';
+import { supabase } from './supabase';
 
-/**
- * Client profile, KYC, wallet, IB (partner) and support data.
- * Demo storage in the browser — replace these actions with your back-office API.
- */
 export type KycStatus = 'Not started' | 'Under review' | 'Verified' | 'Rejected';
 export type KycStep = 'email' | 'phone' | 'profile' | 'identity' | 'address';
 export type Profile = { firstName: string; lastName: string; phone: string; country: string; dob: string; city: string; address: string; postal: string };
@@ -23,70 +21,112 @@ type State = {
   terminal: { oneClick: boolean; confirmClose: boolean; sounds: boolean };
   ib: { joined: boolean; code: string; clients: IbClient[]; paid: number };
   tickets: Ticket[];
+  kycRecord: any | null;
+  loading: boolean;
 };
 
-const uid = () => Math.random().toString(36).slice(2, 10);
 const COUNTRIES = ['Pakistan', 'UAE', 'India', 'Bangladesh', 'Nigeria', 'Egypt', 'UK', 'Malaysia'];
-const NAMES = ['Ahmed Raza', 'Sara Khan', 'Bilal Hussain', 'Ayesha Malik', 'Usman Tariq', 'Fatima Noor', 'Hamza Ali', 'Zainab Iqbal', 'Omar Farooq', 'Hira Javed'];
-
-const seedClients = (): IbClient[] =>
-  NAMES.map((name, i) => {
-    const lots = Math.round(Math.random() * 120 * 100) / 100;
-    return { id: uid(), name, country: COUNTRIES[i % COUNTRIES.length], joined: Date.now() - (i + 1) * 86400000 * 6, lots, commission: lots * 8, status: i % 4 === 3 ? 'Inactive' : 'Active' };
-  });
-
 const initial = (): State => ({
   profile: { firstName: '', lastName: '', phone: '', country: 'Pakistan', dob: '', city: '', address: '', postal: '' },
   kyc: { email: 'Verified', phone: 'Not started', profile: 'Not started', identity: 'Not started', address: 'Not started' },
-  docs: {},
-  wallet: 0,
-  walletTxns: [],
-  twoFA: false,
+  docs: {}, wallet: 0, walletTxns: [], twoFA: false,
   notify: { email: true, push: true, news: false },
   terminal: { oneClick: false, confirmClose: true, sounds: true },
-  ib: { joined: false, code: '', clients: [], paid: 0 },
-  tickets: [],
+  ib: { joined: false, code: '', clients: [], paid: 0 }, tickets: [], kycRecord: null, loading: true,
 });
 
-const KEY = 'bigbulls-portal-v1';
+const normalizeKyc = (status: unknown): KycStatus => {
+  const s = String(status || '').trim().toLowerCase();
+  if (['approved', 'verified', 'complete', 'completed'].includes(s)) return 'Verified';
+  if (['pending', 'under_review', 'in_review', 'processing'].includes(s)) return 'Under review';
+  if (['rejected', 'declined', 'not_verified'].includes(s)) return 'Rejected';
+  return 'Not started';
+};
 
 function usePortalState() {
   const [s, set] = useState<State>(() => {
-    try { const v = localStorage.getItem(KEY); if (v) { const saved = JSON.parse(v); const base = initial(); return { ...base, ...saved, wallet: 0, walletTxns: [], kyc: base.kyc, ib: base.ib, tickets: [] }; } } catch { /* ignore */ }
-    return initial();
+    const base = initial();
+    try {
+      const raw = localStorage.getItem('bigbulls-portal-settings-v2');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        return { ...base, twoFA: Boolean(saved.twoFA), notify: { ...base.notify, ...saved.notify }, terminal: { ...base.terminal, ...saved.terminal } };
+      }
+    } catch { /* use safe defaults */ }
+    return base;
   });
-  useEffect(() => { localStorage.setItem(KEY, JSON.stringify(s)); }, [s]);
 
-  // KYC is never auto-approved in the app. Only the existing BIGBULLS admin review
-  // can change a submission to approved/rejected; client UI must read that server status.
+  const loadServerState = useCallback(async () => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+    if (!user) { set(x => ({ ...x, loading: false })); return; }
+    const [kycResult, profileResult, walletResult] = await Promise.allSettled([
+      bigbullsBackend.kyc(), bigbullsBackend.profile(), bigbullsBackend.walletBalance(),
+    ]);
+    if (kycResult.status === 'rejected') throw kycResult.reason;
+    const kyc = kycResult.value;
+    const profile = profileResult.status === 'fulfilled' ? profileResult.value : null;
+    const wallet = walletResult.status === 'fulfilled' ? Number(walletResult.value || 0) : 0;
+    const status = normalizeKyc(kyc?.status);
+    const fullName = String(kyc?.legal_name || profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || '');
+    const parts = fullName.trim().split(/\s+/).filter(Boolean);
+    set(old => ({
+      ...old,
+      loading: false,
+      kycRecord: kyc || null,
+      wallet,
+      profile: {
+        ...old.profile,
+        firstName: String(kyc?.first_name || parts[0] || ''),
+        lastName: String(kyc?.last_name || parts.slice(1).join(' ') || ''),
+        phone: String(profile?.phone || ''),
+        country: String(kyc?.country || profile?.country || old.profile.country),
+        dob: String(kyc?.date_of_birth || ''),
+        address: String(kyc?.residential_address || ''),
+      },
+      kyc: {
+        ...old.kyc,
+        profile: status === 'Verified' ? 'Verified' : (status === 'Rejected' ? 'Rejected' : old.kyc.profile),
+        identity: status,
+        address: status,
+      },
+    }));
+  }, []);
 
-  const verified = s.kyc.identity === 'Verified' && s.kyc.address === 'Verified' && s.kyc.profile === 'Verified';
-  const level = verified ? 'Fully verified' : s.kyc.profile === 'Verified' ? 'Partially verified' : 'Unverified';
+  useEffect(() => {
+    let alive = true;
+    const run = () => { void loadServerState().catch(e => { console.error('BIGBULLS portal hydration failed', e); if (alive) set(x => ({ ...x, loading: false })); }); };
+    run();
+    let channel: any;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!alive || !data.user) return;
+      channel = bigbullsBackend.subscribeClientData(data.user.id, run);
+    }).catch(() => {});
+    const { data: auth } = supabase.auth.onAuthStateChange(() => { if (alive) run(); });
+    return () => { alive = false; auth.subscription.unsubscribe(); if (channel) void supabase.removeChannel(channel); };
+  }, [loadServerState]);
+
+  useEffect(() => {
+    try { localStorage.setItem('bigbulls-portal-settings-v2', JSON.stringify({ twoFA: s.twoFA, notify: s.notify, terminal: s.terminal })); } catch { /* storage can be disabled */ }
+  }, [s.twoFA, s.notify, s.terminal]);
+
+  const verified = s.kyc.identity === 'Verified';
+  const level = verified ? 'Fully verified' : s.kyc.identity === 'Under review' ? 'Verification pending' : 'Unverified';
   const ibEarned = s.ib.clients.reduce((a, c) => a + c.commission, 0);
-
-  const walletLog = (x: State, type: WalletTxn['type'], note: string, amount: number): State => ({
-    ...x, wallet: x.wallet + (type === 'Credit' ? amount : -amount),
-    walletTxns: [{ id: uid(), type, note, amount, time: Date.now() }, ...x.walletTxns],
-  });
-
   return {
     ...s, verified, level, ibEarned,
-    saveProfile: (p: Profile) => set((x) => ({ ...x, profile: p, kyc: { ...x.kyc, profile: 'Verified', phone: p.phone ? 'Verified' : x.kyc.phone } })),
-    submitDoc: (step: 'identity' | 'address', url: string, docType: string) =>
-      set((x) => ({ ...x, docs: { ...x.docs, [step]: { url, docType } }, kyc: { ...x.kyc, [step]: 'Under review' } })),
-    walletCredit: (_note: string, _amount: number) => toast.error('Wallet credits are controlled by BIGBULLS back office approvals.'),
-    walletDebit: (_note: string, _amount: number) => toast.error('Wallet debits must use the existing BIGBULLS server workflow.'),
-    setTwoFA: (v: boolean) => set((x) => ({ ...x, twoFA: v })),
-    setNotify: (k: keyof State['notify'], v: boolean) => set((x) => ({ ...x, notify: { ...x.notify, [k]: v } })),
-    setTerminal: (k: keyof State['terminal'], v: boolean) => set((x) => ({ ...x, terminal: { ...x.terminal, [k]: v } })),
-    joinIb: () => toast.error('IB registration must be completed through the existing BIGBULLS partner back office.'),
-    withdrawCommission: () => { toast.error('IB commission payouts are controlled by the existing BIGBULLS back office.'); return; /* disabled local payout */ /* set((x) => {
-      const avail = x.ib.clients.reduce((a, c) => a + c.commission, 0) - x.ib.paid;
-      if (avail <= 0) return x;
-      return walletLog({ ...x, ib: { ...x.ib, paid: x.ib.paid + avail } }, 'Credit', 'IB commission payout', avail);
-    }), */ },
-    createTicket: (t: Omit<Ticket, 'id' | 'status' | 'time'>) => set((x) => ({ ...x, tickets: [{ ...t, id: uid(), status: 'Open', time: Date.now() }, ...x.tickets] })),
-    closeTicket: (id: string) => set((x) => ({ ...x, tickets: x.tickets.map((t) => (t.id === id ? { ...t, status: 'Closed' } : t)) })),
+    refresh: loadServerState,
+    saveProfile: (p: Profile) => set(x => ({ ...x, profile: p })),
+    submitDoc: (step: 'identity' | 'address', url: string, docType: string) => set(x => ({ ...x, docs: { ...x.docs, [step]: { url, docType } } })),
+    walletCredit: () => toast.error('Wallet credits are controlled by BIGBULLS back-office approvals.'),
+    walletDebit: () => toast.error('Wallet debits must use the existing BIGBULLS server workflow.'),
+    setTwoFA: (v: boolean) => set(x => ({ ...x, twoFA: v })),
+    setNotify: (k: keyof State['notify'], v: boolean) => set(x => ({ ...x, notify: { ...x.notify, [k]: v } })),
+    setTerminal: (k: keyof State['terminal'], v: boolean) => set(x => ({ ...x, terminal: { ...x.terminal, [k]: v } })),
+    joinIb: () => toast.error('IB registration must be completed through the BIGBULLS partner workflow.'),
+    withdrawCommission: () => toast.error('IB commission payouts are controlled by BIGBULLS back office.'),
+    createTicket: () => toast.error('Create support requests from the live Support page.'),
+    closeTicket: () => toast.error('Ticket status is controlled by BIGBULLS support staff.'),
   };
 }
 
