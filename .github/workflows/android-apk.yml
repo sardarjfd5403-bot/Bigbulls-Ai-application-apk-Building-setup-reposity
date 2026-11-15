@@ -1,4 +1,5 @@
 name: BIGBULLS Android APK
+# Rebuild after first-login AppLock watchdog fix
 on:
   workflow_dispatch:
   push:
