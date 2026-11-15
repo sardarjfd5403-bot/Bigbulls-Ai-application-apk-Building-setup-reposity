@@ -64,6 +64,10 @@ export const bigbullsBackend = {
 
 
 
+  aiAutoTradeSettings(accountId:string, action:'get'|'set', settings:Record<string,unknown>={}) {
+    return invokeAuthed<Record<string,unknown>>('ai-auto-trade-settings',{account_id:accountId,action,...settings});
+  },
+
   async partnerDashboard() {
     const user=await requireUser();
     const [application,wallet,ledger,referrals,commissions]=await Promise.all([
