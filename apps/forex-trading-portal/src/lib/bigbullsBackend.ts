@@ -255,6 +255,23 @@ export const bigbullsBackend = {
     });
   },
 
+  async aiTradeMode(accountId: string) {
+    await requireUser();
+    const { data, error } = await supabase.rpc('get_client_ai_trade_mode', { p_account_id: accountId });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    return row || { enabled: false, risk_pct: 1, reward_pct: 2, max_daily_loss_pct: 3 };
+  },
+
+  async setAiTradeMode(accountId: string, enabled: boolean) {
+    await requireUser();
+    const { data, error } = await supabase.rpc('set_client_ai_trade_mode', {
+      p_account_id: accountId, p_enabled: enabled,
+    });
+    if (error) throw error;
+    return Array.isArray(data) ? data[0] : data;
+  },
+
   subscribeClientData(userId: string, onChange: () => void) {
     return supabase.channel('bigbulls-client-' + userId)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trading_accounts', filter: 'user_id=eq.' + userId }, onChange)
