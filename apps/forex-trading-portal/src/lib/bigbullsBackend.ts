@@ -92,6 +92,19 @@ export const bigbullsBackend = {
     if(error)throw error;return data;
   },
 
+  async getAppLockSettings(): Promise<boolean> {
+    const user=await requireUser();
+    const {data,error}=await supabase.from('client_app_lock_settings').select('enabled').eq('user_id',user.id).maybeSingle();
+    if(error)throw error;
+    return data?.enabled===true;
+  },
+
+  async setAppLockEnabled(enabled:boolean) {
+    const user=await requireUser();
+    const {error}=await supabase.from('client_app_lock_settings').upsert({user_id:user.id,enabled,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+    if(error)throw error;
+  },
+
   async updateProfile(input:{full_name:string;country:string;phone:string}) {
     const user=await requireUser();
     const {data,error}=await supabase.from('profiles').update({...input,updated_at:new Date().toISOString()}).eq('id',user.id).select('id,full_name,email,country,phone').single();
