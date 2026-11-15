@@ -70,7 +70,7 @@ function useEngine(){
   walletMove:(_accountId:string,_amount:number)=>{toast.error('Local wallet mutation is disabled.');return false;},
   setLeverage:(_id:string,_leverage:number)=>{toast.error('Leverage changes require the existing account-management workflow.');},
   resetDemo:(id:string)=>run(()=>bigbullsBackend.demoSetBalance(id,10000,'set'),'Demo balance reset requested'),
-  archive:(_id:string)=>{toast.error('Account archiving is controlled by the existing back office.');},
+  archive:(id:string)=>run(()=>bigbullsBackend.manageTradingAccount(id,'archive'),'Account archived securely'),
  };
  return {quotes,state,account,positions,pending,history,floating,margin,equity,free,level,busy,refresh,...actions};
 }

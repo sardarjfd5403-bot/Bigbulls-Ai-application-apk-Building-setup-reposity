@@ -9,11 +9,13 @@ import { cn } from '@project/components/lib/utils';
 import { useTrading } from '../lib/store';
 import { bigbullsBackend } from '../lib/bigbullsBackend';
 import { money } from '../lib/symbols';
+import { supabase } from '../lib/supabase';
 type Ledger={id:string;entry_type:string;direction:string;amount:number;note:string;created_at:string;balance_after:number};
 export default function WalletPage(){
  const t=useTrading();const real=t.state.accounts.filter(a=>a.type==='Real');const [balance,setBalance]=useState(0);const [ledger,setLedger]=useState<Ledger[]>([]);const [dir,setDir]=useState<'to'|'from'>('to');const [accountId,setAccountId]=useState('');const [amount,setAmount]=useState('');const [busy,setBusy]=useState(false);
  const reload=async()=>{const [b,l]=await Promise.all([bigbullsBackend.walletBalance(),bigbullsBackend.walletLedger()]);setBalance(Number(b||0));setLedger(l as Ledger[]);};
  useEffect(()=>{reload().catch(e=>toast.error(e.message||'Wallet data unavailable'));},[]);
+ useEffect(()=>{let alive=true;let channel:any=null;void supabase.auth.getUser().then(({data})=>{if(alive&&data.user)channel=bigbullsBackend.subscribeClientData(data.user.id,()=>{void reload().catch(e=>console.warn('Wallet refresh failed',e));});});return()=>{alive=false;if(channel)void supabase.removeChannel(channel);};},[]);
  useEffect(()=>{if(!accountId&&real[0])setAccountId(real[0].id);},[real,accountId]);
  const n=Number(amount);const account=real.find(a=>a.id===accountId);const max=dir==='to'?balance:Number(account?.balance||0);const invalid=!(n>0)||n>max||!account;
  const transfer=async()=>{if(invalid)return;setBusy(true);try{if(dir==='to')await bigbullsBackend.clientFundsTransfer({fromType:'wallet',toType:'account',toAccountId:accountId,amount:n,note:'Main Wallet to Real account'});else await bigbullsBackend.clientFundsTransfer({fromType:'account',fromAccountId:accountId,toType:'wallet',amount:n,note:'Real account to Main Wallet'});toast.success('Transfer completed by BIGBULLS server ledger.');setAmount('');await Promise.all([reload(),t.refresh()]);}catch(e:any){toast.error(e.message||'Transfer rejected by BIGBULLS controls');}finally{setBusy(false);}};
