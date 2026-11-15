@@ -12,6 +12,7 @@ import { Switch } from '@project/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
 import { cn } from '@project/components/lib/utils';
 import { usePortal, COUNTRIES, Profile as P } from '../lib/portal';
+import { isNativeApp, readAppPin, saveAppPin, removeAppPin } from '../lib/appLock';
 
 const schema = z.object({
   firstName: z.string().min(2, 'Required'),
@@ -66,11 +67,59 @@ function PersonalInfo() {
 
 function Security() {
   const { user } = useAuth();
+  const [enabled,setEnabled]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
+  const [pin,setPin]=useState('');
+  const [confirmPin,setConfirmPin]=useState('');
+  const [setup,setSetup]=useState(false);
+  const native=isNativeApp();
+  useEffect(()=>{
+    let alive=true;
+    bigbullsBackend.getAppLockSettings().then(async value=>{
+      if(!alive)return;
+      const stored=user?.id?await readAppPin(user.id):null;
+      if(value&&!stored){await bigbullsBackend.setAppLockEnabled(false);if(alive)setEnabled(false);}
+      else if(alive)setEnabled(value);
+    }).catch(e=>toast.error(e.message||'App Lock setting could not be loaded')).finally(()=>{if(alive)setLoading(false);});
+    return()=>{alive=false;};
+  },[user?.id]);
+  const toggle=async(value:boolean)=>{
+    if(loading||saving||!user?.id)return;
+    if(!value){
+      setSaving(true);
+      try{await bigbullsBackend.setAppLockEnabled(false);await removeAppPin(user.id);setEnabled(false);setSetup(false);setPin('');setConfirmPin('');toast.success('App Lock switched OFF.');}
+      catch(e:any){toast.error(e.message||'Could not disable App Lock');}
+      finally{setSaving(false);}
+      return;
+    }
+    const stored=await readAppPin(user.id);
+    if(stored){
+      setSaving(true);
+      try{await bigbullsBackend.setAppLockEnabled(true);setEnabled(true);toast.success('App Lock enabled.');}
+      catch(e:any){toast.error(e.message||'Could not enable App Lock');}
+      finally{setSaving(false);}
+    }else setSetup(true);
+  };
+  const save=async()=>{
+    if(!user?.id||!/^[0-9]{6}$/.test(pin)||pin!==confirmPin){toast.error('Enter and confirm the same 6-digit PIN.');return;}
+    setSaving(true);
+    try{await saveAppPin(user.id,pin);await bigbullsBackend.setAppLockEnabled(true);setEnabled(true);setSetup(false);setPin('');setConfirmPin('');toast.success('App Lock enabled securely on this device.');}
+    catch(e:any){toast.error(e.message||'App Lock could not be saved');}
+    finally{setSaving(false);}
+  };
   return (
     <div className="max-w-2xl space-y-3">
-      <Row title="BIGBULLS account" desc={user?.email || 'Authenticated account'} />
-      <Row title="Device app lock" desc="A 6-digit PIN is stored using Android Keystore. Fingerprint / face unlock can be enabled from the secure lock prompt." />
-      <Row title="Session security" desc="Your existing BIGBULLS Supabase session remains active until it expires or is revoked. App lock does not replace account authentication." />
+      <Row title="BIGBULLS account" desc={user?.email || 'Signed-in BIGBULLS account'} />
+      <Row title="Device App Lock" desc={native?'Optional 6-digit PIN protected by Android Keystore. OFF by default.':'Available in the installed Android app.'}>
+        <Switch checked={enabled} disabled={!native||loading||saving} onCheckedChange={toggle}/>
+      </Row>
+      {setup&&native&&<Card className="space-y-3 p-5">
+        <div><b className="text-sm">Create your 6-digit App Lock PIN</b><p className="mt-1 text-xs text-muted-foreground">This PIN is stored in Android secure storage on this device. It does not replace your BIGBULLS account password.</p></div>
+        <Input type="password" inputMode="numeric" maxLength={6} value={pin} onChange={e=>setPin(e.target.value.replace(/\\D/g,'').slice(0,6))} placeholder="Enter 6-digit PIN"/>
+        <Input type="password" inputMode="numeric" maxLength={6} value={confirmPin} onChange={e=>setConfirmPin(e.target.value.replace(/\\D/g,'').slice(0,6))} placeholder="Confirm PIN"/>
+        <div className="flex gap-2"><Button disabled={saving} onClick={save}>{saving?'Saving…':'Save & enable'}</Button><Button variant="outline" onClick={()=>setSetup(false)}>Cancel</Button></div>
+      </Card>}
     </div>
   );
 }
