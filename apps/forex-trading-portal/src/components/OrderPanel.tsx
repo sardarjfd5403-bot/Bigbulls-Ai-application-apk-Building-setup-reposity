@@ -40,7 +40,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
   const step = (d: number) => setVol(Math.max(0.01, Math.round((v + d) * 100) / 100).toFixed(2));
 
   return (
-    <div className="flex h-full flex-col gap-1 overflow-hidden p-1 sm:gap-3 sm:overflow-y-auto sm:p-3">
+    <div className="flex h-full min-h-0 flex-col gap-1 overflow-y-auto overscroll-contain p-1 pb-2 sm:gap-3 sm:p-3">
       <div>
         <div className="flex items-center justify-between"><div className="text-xs font-extrabold sm:text-lg">{symbol}<span className="ml-2 font-normal text-muted-foreground sm:hidden">{s.name}</span></div><div className="hidden text-xs text-muted-foreground sm:block">{s.name}</div></div>
         
