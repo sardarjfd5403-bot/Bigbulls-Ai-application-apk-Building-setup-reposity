@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@project/components/ui/dropdown-menu';
 import { cn } from '@project/components/lib/utils';
 import { pnl, useTrading, Position } from '../lib/store';
-import { SYM, money } from '../lib/symbols';
+import { getSymbolInfo, money } from '../lib/symbols';
 
 const TABS = ['Open', 'Pending', 'Closed'] as const;
 
@@ -43,7 +43,7 @@ export default function PositionsPanel() {
           </thead>
           <tbody>
             {tab === 'Open' && t.positions.map((p) => {
-              const pr = pnl(p, t.quotes); const d = SYM[p.symbol].digits; const q = t.quotes[p.symbol];
+              const pr = pnl(p, t.quotes); const d = getSymbolInfo(p.symbol).digits; const q = t.quotes[p.symbol] ?? { bid: p.openPrice, ask: p.openPrice };
               return (
                 <tr key={p.id} className="border-b hover:bg-muted/40">
                   <td className="px-3 py-2 font-bold">{p.symbol}</td><td className={cn('px-3 font-bold', p.side === 'buy' ? 'text-primary' : 'text-destructive')}>{p.side.toUpperCase()}</td>
@@ -60,12 +60,12 @@ export default function PositionsPanel() {
               );
             })}
             {tab === 'Pending' && t.pending.map((o) => {
-              const d = SYM[o.symbol].digits;
+              const d = getSymbolInfo(o.symbol).digits;
               return (
                 <tr key={o.id} className="border-b hover:bg-muted/40">
                   <td className="px-3 py-2 font-bold">{o.symbol}</td><td className={cn('px-3 font-bold', o.side === 'buy' ? 'text-primary' : 'text-destructive')}>{o.side.toUpperCase()} {o.kind.toUpperCase()}</td>
                   <td className="num px-3">{o.volume}</td><td className="num px-3">{o.price.toFixed(d)}</td>
-                  <td className="num px-3">{t.quotes[o.symbol].bid.toFixed(d)}</td>
+                  <td className="num px-3">{(t.quotes[o.symbol]?.bid ?? o.price).toFixed(d)}</td>
                   <td className="num px-3">{o.sl?.toFixed(d) ?? '—'}</td><td className="num px-3">{o.tp?.toFixed(d) ?? '—'}</td>
                   <td className="px-3 text-muted-foreground">{format(o.created, 'MMM d HH:mm:ss')}</td><td />
                   <td className="px-3 text-right"><button onClick={() => t.cancelPending(o.id)} className="text-muted-foreground hover:text-destructive" aria-label="Cancel"><X className="h-4 w-4" /></button></td>
@@ -73,7 +73,7 @@ export default function PositionsPanel() {
               );
             })}
             {tab === 'Closed' && t.history.slice(0, 200).map((c) => {
-              const d = SYM[c.symbol].digits;
+              const d = getSymbolInfo(c.symbol).digits;
               return (
                 <tr key={c.id} className="border-b hover:bg-muted/40">
                   <td className="px-3 py-2 font-bold">{c.symbol}</td><td className={cn('px-3 font-bold', c.side === 'buy' ? 'text-primary' : 'text-destructive')}>{c.side.toUpperCase()}</td>
@@ -95,7 +95,7 @@ export default function PositionsPanel() {
 }
 
 function ModifyDialog({ p, onClose }: { p: Position; onClose: () => void }) {
-  const t = useTrading(); const d = SYM[p.symbol].digits;
+  const t = useTrading(); const d = getSymbolInfo(p.symbol).digits;
   const [sl, setSl] = useState(p.sl?.toFixed(d) ?? ''); const [tp, setTp] = useState(p.tp?.toFixed(d) ?? '');
   return (
     <Dialog open onOpenChange={onClose}>
