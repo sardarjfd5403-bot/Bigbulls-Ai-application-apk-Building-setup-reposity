@@ -63,7 +63,13 @@ export default function AppLock({children}:{children:ReactNode}){
    setSetup(false);setLocked(false);setError('Device secure storage is unavailable. App opened without app lock.');
   }finally{setReady(true);}
  },[native]);
- useEffect(()=>{\n  let alive=true;\n  // Independent UI watchdog: never leave a signed-in client on the security splash.\n  const watchdog=setTimeout(()=>{if(alive){setSetup(false);setLocked(false);setError('Security storage is taking too long. App opened; you can enable the app lock later.');setReady(true);}},3500);\n  void load().finally(()=>clearTimeout(watchdog));\n  return()=>{alive=false;clearTimeout(watchdog);};\n },[load]);
+ useEffect(()=>{
+  let alive=true;
+  // Independent UI watchdog: never leave a signed-in client on the security splash.
+  const watchdog=setTimeout(()=>{if(alive){setSetup(false);setLocked(false);setError('Security storage is taking too long. App opened; you can enable the app lock later.');setReady(true);}},3500);
+  void load().finally(()=>clearTimeout(watchdog));
+  return()=>{alive=false;clearTimeout(watchdog);};
+ },[load]);
  useEffect(()=>{
   if(!native)return;
   let handle:{remove:()=>Promise<void>}|undefined;
