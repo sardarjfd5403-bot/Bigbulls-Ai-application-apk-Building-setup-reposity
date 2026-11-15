@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTrading } from '../lib/store';
-import { candleHistory } from '../lib/feed';
+import { fetchCandles } from '../lib/feed';
 import { SYM } from '../lib/symbols';
 import { cn } from '@project/components/lib/utils';
 
-const TFS: [string, number][] = [['1m', 60], ['5m', 300], ['15m', 900], ['1h', 3600], ['4h', 14400], ['1D', 86400]];
+const TFS: [string, number][] = [['1m', 60], ['5m', 300], ['15m', 900], ['1h', 3600], ['4h', 14400], ['1D', 86400]];\nconst TF_API: Record<number,string> = {60:'1m',300:'5m',900:'15m',3600:'1h',14400:'4h',86400:'1d'};
 type Candle = { t: number; o: number; h: number; l: number; c: number };
 
 export default function PriceChart({ symbol }: { symbol: string }) {
@@ -16,7 +16,7 @@ export default function PriceChart({ symbol }: { symbol: string }) {
   const bid = quotes[symbol].bid;
   const d = SYM[symbol].digits;
 
-  useEffect(() => { setCandles(candleHistory(symbol, quotes[symbol].bid, 90, tf)); }, [symbol, tf]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { let live = true; setCandles([]); fetchCandles(symbol, TF_API[tf] || '15m', 300).then(rows => { if (live) setCandles(rows); }).catch(err => console.warn('Live OHLC unavailable:', err)); return () => { live = false; }; }, [symbol, tf]);
 
   useEffect(() => {
     setCandles((cs) => {
