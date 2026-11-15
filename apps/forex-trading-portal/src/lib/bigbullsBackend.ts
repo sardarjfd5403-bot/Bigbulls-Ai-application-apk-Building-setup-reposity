@@ -57,6 +57,31 @@ export const bigbullsBackend = {
   },
 
 
+
+  async partnerDashboard() {
+    const user=await requireUser();
+    const [application,wallet,ledger,referrals,commissions]=await Promise.all([
+      supabase.from('partner_applications').select('id,partner_type,business_name,status,referral_code,admin_note,tier,created_at,reviewed_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+      supabase.from('partner_wallet_accounts').select('currency,available_balance,total_earned,total_paid,total_transferred,updated_at').eq('partner_user_id',user.id).maybeSingle(),
+      supabase.from('partner_wallet_ledger').select('id,entry_type,direction,amount,note,created_at').eq('partner_user_id',user.id).order('created_at',{ascending:false}).limit(100),
+      supabase.from('partner_referrals').select('id,referred_user_id,referral_code,created_at').eq('partner_user_id',user.id).order('created_at',{ascending:false}).limit(250),
+      supabase.from('partner_commission_ledger').select('id,verified_lots,commission_usd,status,admin_note,created_at,paid_at,symbol,masked_account,tier').eq('partner_user_id',user.id).order('created_at',{ascending:false}).limit(250)
+    ]);
+    const failed=[application,wallet,ledger,referrals,commissions].find(x=>x.error);
+    if(failed?.error)throw failed.error;
+    return {application:application.data,wallet:wallet.data,ledger:ledger.data||[],referrals:referrals.data||[],commissions:commissions.data||[]};
+  },
+  async applyPartner(input:{partner_type:string;business_name:string;website_or_social:string;audience_size:string;experience:string}) {
+    const user=await requireUser();
+    const {data,error}=await supabase.from('partner_applications').insert({...input,user_id:user.id,status:'pending'}).select('id,status,created_at').single();
+    if(error)throw error;return data;
+  },
+  async partnerTransferToRealAccount(accountId:string,amount:number) {
+    await requireUser();
+    const {data,error}=await supabase.rpc('partner_transfer_to_real_account',{p_account_id:accountId,p_amount:amount,p_note:'IB commission transfer from Android app'});
+    if(error)throw error;return data;
+  },
+
   async updateProfile(input:{full_name:string;country:string;phone:string}) {
     const user=await requireUser();
     const {data,error}=await supabase.from('profiles').update({...input,updated_at:new Date().toISOString()}).eq('id',user.id).select('id,full_name,email,country,phone').single();
