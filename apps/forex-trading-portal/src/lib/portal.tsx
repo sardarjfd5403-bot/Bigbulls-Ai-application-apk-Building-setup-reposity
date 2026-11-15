@@ -74,17 +74,17 @@ function usePortalState() {
     saveProfile: (p: Profile) => set((x) => ({ ...x, profile: p, kyc: { ...x.kyc, profile: 'Verified', phone: p.phone ? 'Verified' : x.kyc.phone } })),
     submitDoc: (step: 'identity' | 'address', url: string, docType: string) =>
       set((x) => ({ ...x, docs: { ...x.docs, [step]: { url, docType } }, kyc: { ...x.kyc, [step]: 'Under review' } })),
-    walletCredit: (note: string, amount: number) => set((x) => walletLog(x, 'Credit', note, amount)),
-    walletDebit: (note: string, amount: number) => set((x) => walletLog(x, 'Debit', note, amount)),
+    walletCredit: (_note: string, _amount: number) => toast.error('Wallet credits are controlled by BIGBULLS back office approvals.'),
+    walletDebit: (_note: string, _amount: number) => toast.error('Wallet debits must use the existing BIGBULLS server workflow.'),
     setTwoFA: (v: boolean) => set((x) => ({ ...x, twoFA: v })),
     setNotify: (k: keyof State['notify'], v: boolean) => set((x) => ({ ...x, notify: { ...x.notify, [k]: v } })),
     setTerminal: (k: keyof State['terminal'], v: boolean) => set((x) => ({ ...x, terminal: { ...x.terminal, [k]: v } })),
-    joinIb: () => set((x) => ({ ...x, ib: { joined: true, code: 'BB' + Math.floor(100000 + Math.random() * 899999), clients: seedClients(), paid: 0 } })),
-    withdrawCommission: () => set((x) => {
+    joinIb: () => toast.error('IB registration must be completed through the existing BIGBULLS partner back office.'),
+    withdrawCommission: () => { toast.error('IB commission payouts are controlled by the existing BIGBULLS back office.'); return; /* disabled local payout */ /* set((x) => {
       const avail = x.ib.clients.reduce((a, c) => a + c.commission, 0) - x.ib.paid;
       if (avail <= 0) return x;
       return walletLog({ ...x, ib: { ...x.ib, paid: x.ib.paid + avail } }, 'Credit', 'IB commission payout', avail);
-    }),
+    }), */ },
     createTicket: (t: Omit<Ticket, 'id' | 'status' | 'time'>) => set((x) => ({ ...x, tickets: [{ ...t, id: uid(), status: 'Open', time: Date.now() }, ...x.tickets] })),
     closeTicket: (id: string) => set((x) => ({ ...x, tickets: x.tickets.map((t) => (t.id === id ? { ...t, status: 'Closed' } : t)) })),
   };
