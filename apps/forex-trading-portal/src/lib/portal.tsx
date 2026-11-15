@@ -57,16 +57,8 @@ function usePortalState() {
   });
   useEffect(() => { localStorage.setItem(KEY, JSON.stringify(s)); }, [s]);
 
-  // Demo only: documents under review get approved after 20s (your back-office does this for real)
-  useEffect(() => {
-    const steps = (Object.keys(s.kyc) as KycStep[]).filter((k) => s.kyc[k] === 'Under review');
-    if (!steps.length) return;
-    const id = setTimeout(() => {
-      set((x) => ({ ...x, kyc: { ...x.kyc, ...Object.fromEntries(steps.map((k) => [k, 'Verified'])) } }));
-      toast.success('Verification approved');
-    }, 20000);
-    return () => clearTimeout(id);
-  }, [s.kyc]);
+  // KYC is never auto-approved in the app. Only the existing BIGBULLS admin review
+  // can change a submission to approved/rejected; client UI must read that server status.
 
   const verified = s.kyc.identity === 'Verified' && s.kyc.address === 'Verified' && s.kyc.profile === 'Verified';
   const level = verified ? 'Fully verified' : s.kyc.profile === 'Verified' ? 'Partially verified' : 'Unverified';
