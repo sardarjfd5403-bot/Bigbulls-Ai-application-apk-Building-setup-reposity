@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { Quotes, initialQuotes, subscribePrices, quoteToUsd } from './feed';
 import { SYM, SYMBOLS } from './symbols';
@@ -22,13 +22,14 @@ function useEngine(){
  const [quotes,setQuotes]=useState<Quotes>(initialQuotes);
  const [state,setState]=useState<State>(emptyState);
  const [busy,setBusy]=useState(false);
+ const accountsRef=useRef(state.accounts); useEffect(()=>{accountsRef.current=state.accounts;},[state.accounts]);
  const refresh=useCallback(async()=>{
   const rows=await bigbullsBackend.accounts();
   const accounts=rows.filter(a=>a.status==='approved'&&!a.archived_at&&!a.deleted_at).map(mapAccount);
   setState(old=>({...old,accounts,activeId:accounts.some(a=>a.id===old.activeId)?old.activeId:(accounts[0]?.id||'')}));
  },[]);
  const refreshAccount=useCallback(async(accountId:string)=>{
-  const account=state.accounts.find(a=>a.id===accountId); if(!account)return;
+  const account=accountsRef.current.find(a=>a.id===accountId); if(!account)return;
   if(account.type==='Real'){
    const result:any=await bigbullsBackend.realStatus(accountId);
    const all=(result.positions||[]).map(mapPosition);
@@ -46,7 +47,7 @@ function useEngine(){
    const balance=Number(result.ledger?.virtual_balance??result.ledger?.balance??account.balance);
    setState(old=>({...old,accounts:old.accounts.map(a=>a.id===accountId?{...a,balance}:a),positions:old.positions.filter(p=>p.accountId!==accountId).concat(active),pending:old.pending.filter(p=>p.accountId!==accountId),history:old.history.filter(p=>p.accountId!==accountId).concat(closed)}));
   }
- },[state.accounts]);
+ },[]);
  useEffect(()=>{const stop=subscribePrices(setQuotes);let alive=true;refresh().catch(e=>toast.error(e.message||'Unable to load trading accounts'));return()=>{alive=false;stop();};},[refresh]);
  useEffect(()=>{if(!state.activeId)return;refreshAccount(state.activeId).catch(e=>console.warn('Account refresh failed',e));const id=setInterval(()=>refreshAccount(state.activeId).catch(()=>{}),5000);return()=>clearInterval(id);},[state.activeId,refreshAccount]);
  useEffect(()=>{let alive=true;supabase.auth.getUser().then(({data})=>{if(!alive||!data.user)return;const channel=bigbullsBackend.subscribeClientData(data.user.id,()=>{refresh().then(()=>{if(state.activeId)refreshAccount(state.activeId);}).catch(()=>{});});return channel;});return()=>{alive=false;};},[refresh,refreshAccount,state.activeId]);
