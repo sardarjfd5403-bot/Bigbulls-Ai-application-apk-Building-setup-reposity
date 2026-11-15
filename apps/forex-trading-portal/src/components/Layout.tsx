@@ -71,7 +71,7 @@ export default function Layout() {
             </nav>
           )}
         </header>
-        {!p.verified && (
+        {!p.loading && !p.verified && (
           <div className="flex items-center gap-3 border-b bg-accent px-4 py-2.5 text-sm md:px-8">
             <AlertTriangle className="h-4 w-4 shrink-0 text-primary" />
             <span className="flex-1 text-accent-foreground">Complete KYC verification to remove deposit limits and enable withdrawals.</span>
