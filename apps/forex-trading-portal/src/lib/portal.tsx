@@ -89,7 +89,7 @@ function usePortalState() {
       const referrals = partner?.referrals || [];
       const commissions = partner?.commissions || [];
       const partnerWallet = partner?.wallet || {};
-      const next = {
+      const next: Partial<State> = {
         profile: profileValue,
         kyc: {
           email: user.email_confirmed_at ? 'Verified' : 'Under review',
