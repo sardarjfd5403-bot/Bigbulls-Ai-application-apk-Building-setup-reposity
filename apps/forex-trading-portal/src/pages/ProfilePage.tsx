@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -40,7 +40,8 @@ export default function ProfilePage() {
 
 function PersonalInfo() {
   const p = usePortal(); const { user } = useAuth();
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<P>({ resolver: zodResolver(schema), defaultValues: p.profile });
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<P>({ resolver: zodResolver(schema), defaultValues: p.profile });
+  useEffect(() => { reset(p.profile); }, [p.profile, reset]);
   const F = (name: keyof P, label: string, ph?: string) => (
     <label key={name} className="block text-xs font-semibold">{label}
       <Input className={cn('mt-1', errors[name] && 'border-destructive')} placeholder={ph} {...register(name)} />
