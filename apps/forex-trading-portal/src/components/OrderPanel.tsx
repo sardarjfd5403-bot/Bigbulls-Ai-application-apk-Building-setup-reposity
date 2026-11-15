@@ -11,7 +11,7 @@ type Mode = 'Market' | 'Pending';
 
 export default function OrderPanel({ symbol }: { symbol: string }) {
   const t = useTrading();
-  const s = SYM[symbol]; const q = t.quotes[symbol];
+  const s = SYM?.[symbol] ?? SYM.EURUSD; const q = t.quotes?.[symbol] ?? { bid: s.start, ask: s.start + s.spread };
   const [side, setSide] = useState<Side>('buy');
   const [mode, setMode] = useState<Mode>('Market');
   const [vol, setVol] = useState('0.01');
@@ -76,7 +76,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
         <Row k="Margin" v={money(margin)} /><Row k="Free margin" v={money(t.free)} />
         <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${t.account.leverage}`} />
       </div>
-      {missingDemoSl && <p className="text-xs text-amber-700">Demo paper execution requires a Stop Loss. Enable Stop Loss and enter a valid price before submitting.</p>}\n      <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('mt-auto h-12 text-base font-bold', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
+      {missingDemoSl && <p className="text-xs text-amber-700">Demo paper execution requires a Stop Loss. Enable Stop Loss and enter a valid price before submitting.</p>}\n      <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('sticky bottom-0 z-10 mt-auto h-12 shrink-0 bg-card text-base font-bold shadow-[0_-6px_16px_rgba(0,0,0,0.08)]', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
         {mode === 'Market' ? `Confirm ${side === 'buy' ? 'Buy' : 'Sell'} ${vol} lots` : `Place ${side === 'buy' ? 'Buy' : 'Sell'} order`}
       </Button>
     </div>
