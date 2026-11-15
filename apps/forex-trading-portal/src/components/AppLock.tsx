@@ -20,6 +20,9 @@ async function verifyPin(pin:string,stored:string){
  const hex=Array.from(new Uint8Array(hash)).map(x=>x.toString(16).padStart(2,'0')).join('');
  return hex===parts[1];
 }
+function withTimeout<T>(promise:Promise<T>,ms=7000):Promise<T>{
+ return Promise.race([promise,new Promise<T>((_,reject)=>setTimeout(()=>reject(new Error('Secure storage initialization timed out')),ms))]);
+}
 export default function AppLock({children}:{children:ReactNode}){
  const native=Capacitor.isNativePlatform();
  const [ready,setReady]=useState(!native);
@@ -35,18 +38,28 @@ export default function AppLock({children}:{children:ReactNode}){
  const load=useCallback(async()=>{
   if(!native){setReady(true);return;}
   try{
-   await SecureStorage.setKeyPrefix('bigbulls_android_');
-   const enabled=await SecureStorage.get('app_lock_enabled');
-   const saved=await SecureStorage.get('pin_hash');
-   const biometric=await SecureStorage.get('biometric_enabled');
-   const info=await BiometricAuth.checkBiometry();
-   setBioAvailable(info.isAvailable);
-   setBioEnabled(biometric===true);
-   setStoredPin(typeof saved==='string'?saved:'');
-   if(enabled===true&&typeof saved==='string'){setLocked(true);setSetup(false);}
-   else{setSetup(true);setLocked(false);}
-  }catch(e){setError('Secure Android storage is unavailable. App lock cannot be safely enabled on this device.');setSetup(true);}
-  finally{setReady(true);}
+   await withTimeout((async()=>{
+    await SecureStorage.setKeyPrefix('bigbulls_android_');
+    const [enabled,saved,biometric]=await Promise.all([
+     SecureStorage.get('app_lock_enabled'),
+     SecureStorage.get('pin_hash'),
+     SecureStorage.get('biometric_enabled')
+    ]);
+    setStoredPin(typeof saved==='string'?saved:'');
+    setBioEnabled(biometric==='true');
+    if(enabled==='true'&&typeof saved==='string'&&saved.length>20){setLocked(true);setSetup(false);}
+    else{setSetup(true);setLocked(false);}
+   })());
+   try{
+    const info=await withTimeout(BiometricAuth.checkBiometry(),4000);
+    setBioAvailable(Boolean(info?.isAvailable));
+   }catch{setBioAvailable(false);}
+  }catch(e){
+   // A device/plugin initialization problem must never trap a newly signed-in client
+   // behind an unfinishable lock screen. The app remains usable; lock can be set up later.
+   console.warn('BIGBULLS secure lock initialization skipped:',e);
+   setSetup(false);setLocked(false);setError('Device secure storage is unavailable. App opened without app lock.');
+  }finally{setReady(true);}
  },[native]);
  useEffect(()=>{void load();},[load]);
  useEffect(()=>{
@@ -57,27 +70,34 @@ export default function AppLock({children}:{children:ReactNode}){
   return()=>{alive=false;if(handle)void handle.remove();};
  },[native]);
  const savePin=async()=>{
-  if(!/^\d{6}$/.test(pin)){setError('PIN exactly 6 digits ka hona chahiye.');return;}
+  if(!/^\\d{6}$/.test(pin)){setError('PIN exactly 6 digits ka hona chahiye.');return;}
   if(pin!==confirmPin){setError('PIN match nahi hua.');return;}
-  try{const hash=await pinDigest(pin);await SecureStorage.set('pin_hash',hash);await SecureStorage.set('app_lock_enabled',true);await SecureStorage.set('biometric_enabled',false);setStoredPin(hash);setBioEnabled(false);setSetup(false);setLocked(false);setPin('');setConfirmPin('');setError('');}
-  catch{setError('Secure PIN save nahi ho saka.');}
+  try{
+   const hash=await pinDigest(pin);
+   await SecureStorage.set('pin_hash',hash);
+   await SecureStorage.set('app_lock_enabled','true');
+   await SecureStorage.set('biometric_enabled','false');
+   setStoredPin(hash);setBioEnabled(false);setSetup(false);setLocked(false);setPin('');setConfirmPin('');setError('');
+  }catch{setError('Secure PIN save nahi ho saka. Aap continue kar sakte hain; baad mein dobara setup karein.');}
  };
  const enableBiometric=async()=>{
-  try{await BiometricAuth.authenticate({reason:'Enable BIGBULLS app lock',allowDeviceCredential:true,androidTitle:'BIGBULLS security',androidSubtitle:'Confirm your device biometric'});await SecureStorage.set('biometric_enabled',true);setBioEnabled(true);setError('Biometric unlock enabled.');}
-  catch{setError('Biometric setup cancelled or unavailable. You can continue with PIN.');}
+  try{
+   await BiometricAuth.authenticate({reason:'Enable BIGBULLS app lock',allowDeviceCredential:true,androidTitle:'BIGBULLS security',androidSubtitle:'Confirm your device biometric'});
+   await SecureStorage.set('biometric_enabled','true');setBioEnabled(true);setError('Biometric unlock enabled.');
+  }catch{setError('Biometric setup cancelled or unavailable. You can continue with PIN.');}
  };
  const unlockBiometric=async()=>{
   try{await BiometricAuth.authenticate({reason:'Unlock BIGBULLS trading app',allowDeviceCredential:true,androidTitle:'BIGBULLS secure login',androidSubtitle:'Fingerprint or device credential'});setLocked(false);setAttempts(0);setError('');}
   catch{setError('Biometric verification failed. Enter your 6-digit app PIN.');}
  };
  const unlockPin=async()=>{
-  if(!/^\d{6}$/.test(pin)){setError('Enter your 6-digit PIN.');return;}
+  if(!/^\\d{6}$/.test(pin)){setError('Enter your 6-digit PIN.');return;}
   if(await verifyPin(pin,storedPin)){setLocked(false);setAttempts(0);setPin('');setError('');}
   else{const next=attempts+1;setAttempts(next);setPin('');setError(next>=5?'PIN incorrect. You can retry or use biometric/device credential.':'Incorrect PIN.');}
  };
  if(!native)return <>{children}</>;
- if(!ready)return <div className="flex min-h-screen items-center justify-center text-sm">Loading BIGBULLS secure lock…</div>;
- if(setup)return <div className="flex min-h-screen items-center justify-center bg-background p-5"><div className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6"><h2 className="text-2xl font-extrabold">Secure this device</h2><p className="text-sm text-muted-foreground">Set a 6-digit app PIN. It is stored encrypted with Android Keystore; your BIGBULLS password and biometric data are never stored here.</p><Input inputMode="numeric" maxLength={6} type="password" value={pin} onChange={e=>setPin(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="Create 6-digit PIN"/><Input inputMode="numeric" maxLength={6} type="password" value={confirmPin} onChange={e=>setConfirmPin(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="Confirm PIN"/>{error&&<p className="text-sm text-destructive">{error}</p>}<Button className="w-full" onClick={savePin}>Save PIN and continue</Button><p className="text-xs text-muted-foreground">After setup, enable fingerprint/face unlock from this security screen or use the PIN whenever needed.</p></div></div>;
- if(locked)return <div className="flex min-h-screen items-center justify-center bg-background p-5"><div className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6"><h2 className="text-2xl font-extrabold">BIGBULLS locked</h2><p className="text-sm text-muted-foreground">Authenticate to reopen your trading session.</p>{bioEnabled&&bioAvailable&&<Button className="w-full" onClick={unlockBiometric}>Unlock with fingerprint / face</Button>}<Input inputMode="numeric" maxLength={6} type="password" value={pin} onChange={e=>setPin(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="6-digit app PIN"/><Button variant="outline" className="w-full" onClick={unlockPin}>Unlock with PIN</Button>{bioAvailable&&!bioEnabled&&<Button variant="ghost" className="w-full" onClick={enableBiometric}>Enable biometric unlock</Button>}{error&&<p className="text-sm text-destructive">{error}</p>}</div></div>;
+ if(!ready)return <div className="flex min-h-screen items-center justify-center text-sm">Preparing BIGBULLS security…</div>;
+ if(setup)return <div className="flex min-h-screen items-center justify-center bg-background p-5"><div className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6"><h2 className="text-2xl font-extrabold">Secure this device</h2><p className="text-sm text-muted-foreground">Set a 6-digit app PIN. It is stored encrypted with Android Keystore; your BIGBULLS password and biometric data are never stored here.</p><Input inputMode="numeric" maxLength={6} type="password" value={pin} onChange={e=>setPin(e.target.value.replace(/\\D/g,'').slice(0,6))} placeholder="Create 6-digit PIN"/><Input inputMode="numeric" maxLength={6} type="password" value={confirmPin} onChange={e=>setConfirmPin(e.target.value.replace(/\\D/g,'').slice(0,6))} placeholder="Confirm PIN"/>{error&&<p className="text-sm text-destructive">{error}</p>}<Button className="w-full" onClick={savePin}>Save PIN and continue</Button><Button variant="ghost" className="w-full" onClick={()=>{setSetup(false);setError('');}}>Continue without app lock</Button><p className="text-xs text-muted-foreground">You can enable fingerprint/face unlock after setup. App access will not be blocked if this device does not support secure storage.</p></div></div>;
+ if(locked)return <div className="flex min-h-screen items-center justify-center bg-background p-5"><div className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6"><h2 className="text-2xl font-extrabold">BIGBULLS locked</h2><p className="text-sm text-muted-foreground">Authenticate to reopen your trading session.</p>{bioEnabled&&bioAvailable&&<Button className="w-full" onClick={unlockBiometric}>Unlock with fingerprint / face</Button>}<Input inputMode="numeric" maxLength={6} type="password" value={pin} onChange={e=>setPin(e.target.value.replace(/\\D/g,'').slice(0,6))} placeholder="6-digit app PIN"/><Button variant="outline" className="w-full" onClick={unlockPin}>Unlock with PIN</Button>{bioAvailable&&!bioEnabled&&<Button variant="ghost" className="w-full" onClick={enableBiometric}>Enable biometric unlock</Button>}{error&&<p className="text-sm text-destructive">{error}</p>}</div></div>;
  return <>{bioAvailable&&!bioEnabled&&<div className="fixed bottom-3 right-3 z-50"><Button size="sm" variant="outline" onClick={enableBiometric}>Enable fingerprint</Button></div>}{children}</>;
 }
