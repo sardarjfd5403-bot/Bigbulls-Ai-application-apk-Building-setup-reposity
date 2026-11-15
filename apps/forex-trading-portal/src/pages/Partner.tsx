@@ -1,87 +1,25 @@
-import { useMemo, useState } from 'react';
-import { format } from 'date-fns';
+import { useEffect,useState } from 'react';
 import { toast } from 'sonner';
-import { Copy, Users, BarChart3, DollarSign, Wallet, Search, Handshake } from 'lucide-react';
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card } from '@project/components/ui/card';
 import { Button } from '@project/components/ui/button';
 import { Input } from '@project/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@project/components/ui/table';
-import { cn } from '@project/components/lib/utils';
-import { usePortal } from '../lib/portal';
-import { fmt, money } from '../lib/symbols';
-
-const TIERS = [['Bronze', '0 – 50 lots', '$6 / lot'], ['Silver', '50 – 250 lots', '$8 / lot'], ['Gold', '250 – 1,000 lots', '$10 / lot'], ['Platinum', '1,000+ lots', '$12 / lot']];
-
-export default function Partner() {
-  const p = usePortal();
-  if (!p.ib.joined) {
-    return (
-      <div>
-        <Card className="overflow-hidden">
-          <div className="bg-primary p-10 text-primary-foreground">
-            <Handshake className="h-10 w-10 opacity-80" />
-            <h1 className="mt-4 text-3xl font-extrabold">Become a BIGBULLS Partner</h1>
-            <p className="mt-2 max-w-xl opacity-80">Introduce traders and earn up to $12 per lot on every trade they make. Paid daily straight to your wallet.</p>
-            <Button size="lg" variant="secondary" className="mt-6 font-bold" onClick={() => { p.joinIb(); toast.success('Welcome to the partner program'); }}>Join IB program</Button>
-          </div>
-          <div className="grid gap-px bg-border sm:grid-cols-4">{TIERS.map(([n, r, c]) => <div key={n} className="bg-card p-5"><div className="font-extrabold text-primary">{n}</div><div className="text-xs text-muted-foreground">{r}</div><div className="mt-2 font-bold">{c}</div></div>)}</div>
-        </Card>
-      </div>
-    );
-  }
-  return <Dashboard />;
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@project/components/ui/select';
+import { useTrading } from '../lib/store';
+import { bigbullsBackend } from '../lib/bigbullsBackend';
+import { money } from '../lib/symbols';
+type Dashboard={application:any;wallet:any;ledger:any[];referrals:any[];commissions:any[]};
+export default function Partner(){
+ const trading=useTrading();const [data,setData]=useState<Dashboard|null>(null);const [type,setType]=useState('individual');const [business,setBusiness]=useState('');const [website,setWebsite]=useState('');const [audience,setAudience]=useState('');const [experience,setExperience]=useState('');const [accountId,setAccountId]=useState('');const [busy,setBusy]=useState(false);
+ const reload=()=>bigbullsBackend.partnerDashboard().then(setData).catch(e=>toast.error(e.message||'Partner data unavailable'));
+ useEffect(()=>{reload();},[]);
+ const apply=async()=>{setBusy(true);try{await bigbullsBackend.applyPartner({partner_type:type,business_name:business,website_or_social:website,audience_size:audience,experience});toast.success('IB application submitted for admin review.');await reload();}catch(e:any){toast.error(e.message||'IB application failed');}finally{setBusy(false);}};
+ const transfer=async()=>{const amount=Number(data?.wallet?.available_balance||0);if(!accountId||amount<=0)return;setBusy(true);try{await bigbullsBackend.partnerTransferToRealAccount(accountId,amount);toast.success('Partner funds transferred to your Real account.');await reload();await trading.refresh();}catch(e:any){toast.error(e.message||'Partner transfer rejected');}finally{setBusy(false);}};
+ const app=data?.application;const wallet=data?.wallet;const approved=app?.status==='approved';
+ return <div><h1 className="text-3xl font-extrabold tracking-tight">Partner (IB)</h1><p className="mt-1 text-sm text-muted-foreground">Live application status, referral records and commission ledger from BIGBULLS.</p>
+ {!app&&<Card className="mt-5 max-w-2xl space-y-4 p-5"><h2 className="text-xl font-bold">Apply for IB partnership</h2><label className="block text-xs font-semibold">Partner type<Select value={type} onValueChange={setType}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="individual">Individual</SelectItem><SelectItem value="company">Company</SelectItem><SelectItem value="introducer">Introducing Broker</SelectItem></SelectContent></Select></label><label className="block text-xs font-semibold">Business / name<Input className="mt-1" value={business} onChange={e=>setBusiness(e.target.value)}/></label><label className="block text-xs font-semibold">Website / social profile<Input className="mt-1" value={website} onChange={e=>setWebsite(e.target.value)}/></label><label className="block text-xs font-semibold">Audience / client base size<Input className="mt-1" value={audience} onChange={e=>setAudience(e.target.value)}/></label><label className="block text-xs font-semibold">Forex / IB experience<Input className="mt-1" value={experience} onChange={e=>setExperience(e.target.value)}/></label><Button disabled={busy||!business.trim()} onClick={apply}>{busy?'Submitting…':'Submit IB application'}</Button></Card>}
+ {app&&<><Card className="mt-5 p-5"><div className="flex flex-wrap justify-between gap-3"><div><b>Application status</b><div className="mt-1 text-sm capitalize">{app.status}</div></div><div><b>Partner tier</b><div className="mt-1 text-sm">{app.tier||'Pending assignment'}</div></div></div>{app.referral_code&&<div className="mt-4"><div className="text-xs font-semibold">Your referral code</div><div className="mt-1 flex gap-2"><code className="rounded bg-muted px-3 py-2">{app.referral_code}</code><Button size="sm" variant="outline" onClick={()=>navigator.clipboard.writeText(app.referral_code)}>Copy</Button></div></div>}{app.admin_note&&<p className="mt-3 text-sm text-muted-foreground">Admin note: {app.admin_note}</p>}</Card>
+ {approved&&<><div className="mt-4 grid gap-4 sm:grid-cols-3"><Kpi label="Available balance" value={money(Number(wallet?.available_balance||0))}/><Kpi label="Total earned" value={money(Number(wallet?.total_earned||0))}/><Kpi label="Total paid" value={money(Number(wallet?.total_paid||0))}/></div><Card className="mt-4 space-y-3 p-5"><b>Transfer commission to Real account</b><Select value={accountId} onValueChange={setAccountId}><SelectTrigger><SelectValue placeholder="Select Real account"/></SelectTrigger><SelectContent>{trading.state.accounts.filter(a=>a.type==='Real').map(a=><SelectItem key={a.id} value={a.id}>#{a.number} · {money(a.balance)}</SelectItem>)}</SelectContent></Select><Button disabled={busy||!accountId||Number(wallet?.available_balance||0)<=0} onClick={transfer}>Transfer available commission</Button></Card><Card className="mt-4"><div className="border-b p-4 font-bold">Commission ledger</div>{(data?.commissions||[]).length===0?<p className="p-6 text-sm text-muted-foreground">No commission entries yet.</p>:data!.commissions.map(x=><div key={x.id} className="flex justify-between gap-3 border-b p-4 text-sm"><div><b>{x.symbol||'Trading commission'}</b><div className="text-xs text-muted-foreground">{x.masked_account||''} · {x.status} · {x.verified_lots} lots</div></div><b>{money(Number(x.commission_usd||0))}</b></div>)}</Card><Card className="mt-4"><div className="border-b p-4 font-bold">Referred clients</div>{(data?.referrals||[]).length===0?<p className="p-6 text-sm text-muted-foreground">No referrals yet.</p>:data!.referrals.map(x=><div key={x.id} className="flex justify-between border-b p-4 text-sm"><span>Client {String(x.referred_user_id).slice(0,8)}…</span><span className="text-muted-foreground">{new Date(x.created_at).toLocaleDateString()}</span></div>)}</Card></>}
+ </>}
+ </div>;
 }
-
-function Dashboard() {
-  const p = usePortal();
-  const [q, setQ] = useState('');
-  const link = `${window.location.origin}/?ref=${p.ib.code}`;
-  const lots = p.ib.clients.reduce((a, c) => a + c.lots, 0);
-  const available = p.ibEarned - p.ib.paid;
-  const tier = lots >= 1000 ? 'Platinum' : lots >= 250 ? 'Gold' : lots >= 50 ? 'Silver' : 'Bronze';
-  const chart = useMemo(() => p.ib.clients.map((c) => ({ name: c.name.split(' ')[0], commission: Math.round(c.commission) })), [p.ib.clients]);
-  const rows = p.ib.clients.filter((c) => (c.name + c.country).toLowerCase().includes(q.toLowerCase()));
-  const copy = () => { navigator.clipboard.writeText(link); toast.success('Link copied'); };
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 className="text-3xl font-extrabold tracking-tight">Partner (IB)</h1><p className="mt-1 text-sm text-muted-foreground">Partner code <b className="text-primary">{p.ib.code}</b> · Tier <b className="text-primary">{tier}</b></p></div>
-        <Button disabled={available <= 0} onClick={() => { p.withdrawCommission(); toast.success('Commission sent to wallet'); }}><Wallet className="mr-2 h-4 w-4" />Withdraw {money(available)} to wallet</Button>
-      </div>
-      <Card className="mt-5 flex flex-wrap items-center gap-3 p-4">
-        <span className="text-xs font-bold text-muted-foreground">Referral link</span>
-        <code className="num flex-1 truncate rounded bg-muted px-3 py-2 text-xs">{link}</code>
-        <Button size="sm" variant="outline" onClick={copy}><Copy className="mr-2 h-4 w-4" />Copy</Button>
-      </Card>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi icon={Users} label="Clients" v={String(p.ib.clients.length)} />
-        <Kpi icon={BarChart3} label="Volume (lots)" v={fmt(lots)} />
-        <Kpi icon={DollarSign} label="Total earned" v={money(p.ibEarned)} />
-        <Kpi icon={Wallet} label="Available" v={money(available)} />
-      </div>
-      <Card className="mt-4 p-5">
-        <div className="mb-3 font-bold">Commission by client</div>
-        <div className="h-56"><ResponsiveContainer><BarChart data={chart}><XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} /><YAxis fontSize={11} tickLine={false} axisLine={false} /><Tooltip /><Bar dataKey="commission" fill="hsl(var(--chart-1))" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></div>
-      </Card>
-      <Card className="mt-4 overflow-x-auto">
-        <div className="flex items-center justify-between border-b p-4"><span className="font-bold">Referred clients</span>
-          <div className="relative w-56"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-8" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} /></div></div>
-        <Table>
-          <TableHeader><TableRow><TableHead>Client</TableHead><TableHead>Country</TableHead><TableHead>Joined</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Lots</TableHead><TableHead className="text-right">Commission</TableHead></TableRow></TableHeader>
-          <TableBody>{rows.map((c) => (
-            <TableRow key={c.id}>
-              <TableCell className="font-semibold">{c.name}</TableCell><TableCell>{c.country}</TableCell><TableCell className="text-muted-foreground">{format(c.joined, 'MMM d, yyyy')}</TableCell>
-              <TableCell><span className={cn('rounded-full px-2 py-0.5 text-xs font-bold', c.status === 'Active' ? 'bg-[hsl(var(--success)/0.12)] text-up' : 'bg-muted text-muted-foreground')}>{c.status}</span></TableCell>
-              <TableCell className="num text-right">{fmt(c.lots)}</TableCell><TableCell className="num text-right font-bold text-up">{money(c.commission)}</TableCell>
-            </TableRow>))}</TableBody>
-        </Table>
-      </Card>
-    </div>
-  );
-}
-
-const Kpi = ({ icon: I, label, v }: { icon: typeof Users; label: string; v: string }) => (
-  <Card className="p-5"><I className="h-5 w-5 text-primary" /><div className="mt-3 text-xs font-semibold text-muted-foreground">{label}</div><div className="num mt-1 text-2xl font-extrabold">{v}</div></Card>
-);
+function Kpi({label,value}:{label:string;value:string}){return <Card className="p-5"><div className="text-xs text-muted-foreground">{label}</div><div className="num mt-2 text-2xl font-extrabold">{value}</div></Card>}
