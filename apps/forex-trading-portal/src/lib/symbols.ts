@@ -72,6 +72,10 @@ export const CATEGORIES: Category[] = ['Forex', 'Metals', 'Crypto', 'Energies', 
 
 export const SYM = Object.fromEntries(SYMBOLS.map((s) => [s.symbol, s])) as Record<string, SymbolInfo>;
 
+// Always return a complete instrument descriptor for persisted/legacy symbols.
+export const getSymbolInfo = (symbol?: string | null): SymbolInfo =>
+  (symbol ? SYM[symbol] : undefined) ?? SYM.EURUSD;
+
 export const fmt = (n: number, d = 2) =>
   n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 
