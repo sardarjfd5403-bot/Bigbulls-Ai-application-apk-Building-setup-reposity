@@ -163,11 +163,47 @@ export const bigbullsBackend = {
     return data;
   },
 
-  /** REAL account: existing in-house B-Book. Admin/compliance gates stay server-side. */
-  realExecution(accountId: string, action: string, payload: Record<string, unknown> = {}) {
-    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
-      action, account_id: accountId, ...payload,
+  /** REAL B-Book operations use authenticated Database RPCs; auth.uid() is resolved in PostgreSQL. */
+  async directRealAction(accountId: string, action: string, payload: Record<string, unknown> = {}) {
+    await requireUser();
+    const body: Record<string, unknown> = { ...payload, account_id: accountId };
+    if (action === 'open') {
+      let bid = Number(body.bid || 0), ask = Number(body.ask || 0), mid = Number(body.mid || 0);
+      if (!(bid > 0 && ask >= bid && mid > 0)) {
+        const symbol = String(body.symbol || '').toUpperCase().replace('/', '');
+        const { data, error } = await supabase.from('bb_bbook_quotes')
+          .select('mid,bid,ask,quote_time').eq('symbol', symbol).maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('No database quote is available for this instrument.');
+        bid = Number(data.bid); ask = Number(data.ask); mid = Number(data.mid);
+      }
+      body.bid = bid; body.ask = ask; body.mid = mid;
+      body.contract_size = Number(body.contract_size || 1);
+      body.spread_cost = Number(body.spread_cost || (ask - bid));
+    }
+    if (action === 'close') {
+      const positionId = String(body.position_id || '');
+      const { data: position, error: positionError } = await supabase.from('bb_bbook_positions')
+        .select('symbol,side').eq('id', positionId).eq('account_id', accountId).maybeSingle();
+      if (positionError) throw positionError;
+      if (!position) throw new Error('REAL position not found.');
+      const symbol = String(position.symbol).toUpperCase().replace('/', '');
+      const { data: quote, error: quoteError } = await supabase.from('bb_bbook_quotes')
+        .select('bid,ask').eq('symbol', symbol).maybeSingle();
+      if (quoteError) throw quoteError;
+      if (!quote || !(Number(quote.bid) > 0 && Number(quote.ask) >= Number(quote.bid))) throw new Error('No valid database exit quote is available.');
+      body.exit_price = position.side === 'BUY' ? Number(quote.bid) : Number(quote.ask);
+      body.bid = Number(quote.bid); body.ask = Number(quote.ask);
+    }
+    const { data, error } = await supabase.rpc('bb_client_bbook_action', {
+      p_action: action, p_payload: body,
     });
+    if (error) throw error;
+    return data as Record<string, unknown>;
+  },
+
+  realExecution(accountId: string, action: string, payload: Record<string, unknown> = {}) {
+    return this.directRealAction(accountId, action, payload);
   },
 
   /** DEMO account: existing server-side paper engine; no broker routing. */
@@ -178,9 +214,7 @@ export const bigbullsBackend = {
   },
 
   async realStatus(accountId: string) {
-    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
-      action: 'status', account_id: accountId,
-    });
+    return this.directRealAction(accountId, 'status');
   },
 
   async demoStatus(accountId: string) {
@@ -221,38 +255,31 @@ export const bigbullsBackend = {
   async realOpen(accountId: string, input: {
     symbol: string; side: 'BUY' | 'SELL'; quantity: number;
     stop_loss?: number | null; take_profit?: number | null;
+    bid?: number; ask?: number; mid?: number; contract_size?: number;
   }) {
-    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
-      action: 'open', account_id: accountId, ...input,
-    });
+    return this.directRealAction(accountId, 'open', input as unknown as Record<string, unknown>);
   },
 
   async realClose(accountId: string, positionId: string) {
-    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
-      action: 'close', account_id: accountId, position_id: positionId,
-    });
+    return this.directRealAction(accountId, 'close', { position_id: positionId });
   },
 
   async realModify(accountId: string, positionId: string, stopLoss?: number | null, takeProfit?: number | null) {
-    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
-      action: 'modify_position', account_id: accountId, position_id: positionId,
-      stop_loss: stopLoss ?? null, take_profit: takeProfit ?? null,
+    return this.directRealAction(accountId, 'modify', {
+      position_id: positionId, stop_loss: stopLoss ?? null, take_profit: takeProfit ?? null,
     });
   },
 
   async realPending(accountId: string, input: {
     symbol: string; side: 'BUY' | 'SELL'; order_type: string;
     quantity: number; target_price: number; stop_loss?: number | null; take_profit?: number | null;
+    contract_size?: number;
   }) {
-    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
-      action: 'pending', account_id: accountId, ...input,
-    });
+    return this.directRealAction(accountId, 'pending', input as unknown as Record<string, unknown>);
   },
 
   async realCancelPending(accountId: string, orderId: string) {
-    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
-      action: 'cancel_pending', account_id: accountId, order_id: orderId,
-    });
+    return this.directRealAction(accountId, 'cancel_pending', { order_id: orderId });
   },
 
   async aiTradeMode(accountId: string) {
