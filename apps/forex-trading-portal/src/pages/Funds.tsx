@@ -1,81 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Landmark, CreditCard, Bitcoin, Wallet, Smartphone, CheckCircle2 } from 'lucide-react';
 import { Card } from '@project/components/ui/card';
 import { Button } from '@project/components/ui/button';
 import { Input } from '@project/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
-import { cn } from '@project/components/lib/utils';
+import { bigbullsBackend } from '../lib/bigbullsBackend';
 import { useTrading } from '../lib/store';
-import { money } from '../lib/symbols';
-import { usePortal } from '../lib/portal';
-import { Link } from 'react-router-dom';
-
-const METHODS = [
-  { name: 'Bank Card', icon: CreditCard, time: 'Instant', fee: '0%', min: 10 },
-  { name: 'Bank Transfer', icon: Landmark, time: '1–3 hours', fee: '0%', min: 50 },
-  { name: 'USDT (TRC20)', icon: Bitcoin, time: 'Instant – 15 min', fee: '0%', min: 10 },
-  { name: 'Bitcoin', icon: Bitcoin, time: 'Instant – 30 min', fee: '0%', min: 10 },
-  { name: 'Skrill', icon: Wallet, time: 'Instant', fee: '0%', min: 10 },
-  { name: 'JazzCash / Easypaisa', icon: Smartphone, time: 'Instant', fee: '0%', min: 10 },
-];
-
-export default function Funds({ mode }: { mode: 'Deposit' | 'Withdrawal' }) {
-  const t = useTrading(); const kyc = usePortal();
-  const depositedTotal = t.state.txns.filter((x) => x.type === 'Deposit').reduce((a, x) => a + x.amount, 0);
-  const limitLeft = kyc.verified ? Infinity : Math.max(0, 2000 - depositedTotal);
-  const real = t.state.accounts.filter((a) => a.type === 'Real');
-  const [method, setMethod] = useState<string | null>(null);
-  const [accId, setAccId] = useState(real[0]?.id ?? '');
-  const [amount, setAmount] = useState('');
-  const m = METHODS.find((x) => x.name === method);
-  const acc = real.find((a) => a.id === accId);
-  const n = Number(amount);
-  const err = !amount ? '' : !(n > 0) ? 'Enter a valid amount' : m && n < m.min ? `Minimum is $${m.min}` : mode === 'Withdrawal' && acc && n > acc.balance ? 'Amount exceeds available balance' : mode === 'Deposit' && n > limitLeft ? `Unverified limit: you can deposit up to ${money(limitLeft)} more` : '';
-
-  const submit = () => {
-    if (!acc || !m || !n || err) return;
-    t.transact(acc.id, mode, m.name, n);
-    toast.success(mode === 'Deposit' ? `${money(n)} deposited to #${acc.number}` : `Withdrawal of ${money(n)} requested`);
-    setAmount(''); setMethod(null);
-  };
-
-  return (
-    <div>
-      <h1 className="text-3xl font-extrabold tracking-tight">{mode}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{mode === 'Deposit' ? 'Choose a payment method to fund your account.' : 'Choose where to receive your funds.'}</p>
-      {mode === 'Withdrawal' && !kyc.verified && <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl bg-accent p-4 text-sm text-accent-foreground"><span className="flex-1">Withdrawals are available once your account is fully verified.</span><Link to="/verification" className="font-bold text-primary underline">Verify now</Link></div>}
-      {mode === 'Deposit' && !kyc.verified && <div className="mt-6 rounded-xl bg-accent p-4 text-sm text-accent-foreground">Unverified accounts can deposit up to $2,000 in total. Remaining: <b>{money(limitLeft)}</b>. <Link to="/verification" className="font-bold text-primary underline">Verify</Link> to remove the limit.</div>}
-      {real.length === 0 && <Card className="mt-6 p-6 text-sm text-muted-foreground">Open a Real account first to {mode.toLowerCase()} funds.</Card>}
-      {real.length > 0 && (
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {METHODS.map((x) => (
-              <button key={x.name} onClick={() => setMethod(x.name)} className={cn('flex items-start gap-3 rounded-xl border-2 bg-card p-4 text-left transition', method === x.name ? 'border-primary' : 'border-transparent shadow-sm hover:border-primary/40')}>
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-primary"><x.icon className="h-5 w-5" /></div>
-                <div className="flex-1">
-                  <div className="font-bold">{x.name}</div>
-                  <div className="mt-1 grid grid-cols-2 gap-x-2 text-[11px] text-muted-foreground"><span>Processing: {x.time}</span><span>Fee: {x.fee}</span><span>Min: ${x.min}</span></div>
-                </div>
-                {method === x.name && <CheckCircle2 className="h-5 w-5 text-primary" />}
-              </button>
-            ))}
-          </div>
-          <Card className="h-fit space-y-4 p-5">
-            <div className="font-bold">{m ? m.name : 'Select a method'}</div>
-            <label className="block text-xs font-semibold">{mode === 'Deposit' ? 'To account' : 'From account'}
-              <Select value={accId} onValueChange={setAccId}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>{real.map((a) => <SelectItem key={a.id} value={a.id}>#{a.number} · {money(a.balance)}</SelectItem>)}</SelectContent></Select>
-            </label>
-            <label className="block text-xs font-semibold">Amount (USD)
-              <Input className={cn('num mt-1 h-11 text-lg', err && 'border-destructive')} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
-              {err && <span className="mt-1 block text-xs text-destructive">{err}</span>}
-            </label>
-            <div className="flex gap-2">{[100, 500, 1000].map((v) => <Button key={v} variant="outline" size="sm" onClick={() => setAmount(String(v))}>${v}</Button>)}</div>
-            <Button className="h-11 w-full font-bold" disabled={!m || !n || !!err || (mode === 'Withdrawal' && !kyc.verified)} onClick={submit}>{mode === 'Deposit' ? 'Deposit' : 'Withdraw'} {n > 0 && !err ? money(n) : ''}</Button>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
+type PayWallet={id:string;asset:string;network:string;label:string|null;address:string;active:boolean};
+type PayTxn={id:string;kind:string;asset:string;network:string;amount_usd:number;amount_crypto:number;status:string;created_at:string;admin_note?:string|null;rejection_reason?:string|null};
+export default function Funds({mode}:{mode:'Deposit'|'Withdrawal'}){
+ const trading=useTrading();const [wallets,setWallets]=useState<PayWallet[]>([]);const [txns,setTxns]=useState<PayTxn[]>([]);const [kyc,setKyc]=useState<any>(null);
+ const [walletId,setWalletId]=useState('');const [accountId,setAccountId]=useState('');const [usd,setUsd]=useState('');const [crypto,setCrypto]=useState('');const [txid,setTxid]=useState('');const [destination,setDestination]=useState('');const [otp,setOtp]=useState('');const [otpTxn,setOtpTxn]=useState('');const [proof,setProof]=useState<File|null>(null);const [busy,setBusy]=useState(false);
+ const selected=wallets.find(w=>w.id===walletId);const real=trading.state.accounts.filter(a=>a.type==='Real');
+ const reload=async()=>{const results=await Promise.all([bigbullsBackend.cryptoWallets(),bigbullsBackend.walletTransactions(),bigbullsBackend.kyc()]);setWallets(results[0] as PayWallet[]);setTxns(results[1] as PayTxn[]);setKyc(results[2]);if(!walletId&&results[0][0])setWalletId(results[0][0].id);};
+ useEffect(()=>{reload().catch(e=>toast.error(e.message||'Payment data could not be loaded'));},[]);
+ useEffect(()=>{if(!accountId&&real[0])setAccountId(real[0].id);},[accountId,real]);
+ const submit=async()=>{const usdValue=Number(usd),cryptoValue=Number(crypto);if(!selected||!accountId||usdValue<=0||cryptoValue<=0){toast.error('Select a payment network and Real account, then enter valid amounts.');return;}if(mode==='Deposit'&&txid.trim().length<=10){toast.error('Blockchain TXID must be longer than 10 characters.');return;}if(mode==='Withdrawal'&&destination.trim().length<=10){toast.error('Enter a valid destination address.');return;}setBusy(true);try{let proofPath:string|undefined;if(mode==='Deposit'&&proof)proofPath=await bigbullsBackend.uploadPaymentProof(proof);const payload:any={account_id:accountId,kind:mode.toLowerCase(),asset:selected.asset,network:selected.network,destination_address:mode==='Deposit'?selected.address:destination.trim(),amount_crypto:cryptoValue,amount_usd:usdValue};if(mode==='Deposit'){payload.tx_hash=txid.trim();if(proofPath)payload.proof_path=proofPath;}const created=await bigbullsBackend.submitWalletTransaction(payload);if(mode==='Withdrawal'){await bigbullsBackend.requestWithdrawalOtp(created.id);setOtpTxn(created.id);toast.success('Withdrawal request saved; email OTP sent.');}else toast.success('Deposit request sent for admin review.');setUsd('');setCrypto('');setTxid('');setDestination('');setProof(null);await reload();}catch(e:any){toast.error(e.message||'Payment request failed');}finally{setBusy(false);}};
+ const verify=async()=>{if(!/^\d{6}$/.test(otp)){toast.error('Enter the 6-digit OTP.');return;}setBusy(true);try{await bigbullsBackend.verifyWithdrawalOtp(otpTxn,otp);setOtpTxn('');setOtp('');toast.success('OTP verified; withdrawal awaits back-office approval.');await reload();}catch(e:any){toast.error(e.message||'OTP verification failed');}finally{setBusy(false);}};
+ return <div><h1 className="text-3xl font-extrabold tracking-tight">{mode}</h1><p className="mt-1 text-sm text-muted-foreground">Requests are stored in the existing BIGBULLS payment ledger. Balances change only after admin approval.</p>
+ {kyc?.status!=='approved'&&<div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">KYC: {kyc?.status||'not submitted'}. Withdrawals remain subject to KYC and security controls.</div>}
+ <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_380px]"><Card className="space-y-4 p-5"><b>Payment network</b>
+ <Select value={walletId} onValueChange={setWalletId}><SelectTrigger><SelectValue placeholder="Choose asset and network"/></SelectTrigger><SelectContent>{wallets.map(w=><SelectItem key={w.id} value={w.id}>{w.asset} + ' · ' + w.network + (w.label||'')}</SelectItem>)}</SelectContent></Select>
+ {selected&&<div className="rounded-lg bg-muted p-3 text-xs"><b>BIGBULLS deposit address</b><div className="mt-1 break-all font-mono">{selected.address}</div><Button size="sm" variant="outline" className="mt-2" onClick={()=>navigator.clipboard.writeText(selected.address)}>Copy address</Button></div>}
+ <label className="block text-xs font-semibold">Real account<Select value={accountId} onValueChange={setAccountId}><SelectTrigger className="mt-1"><SelectValue placeholder="Select Real account"/></SelectTrigger><SelectContent>{real.map(a=><SelectItem key={a.id} value={a.id}>#{a.number} · {a.balance.toFixed(2)} USD</SelectItem>)}</SelectContent></Select></label>
+ <div className="grid grid-cols-2 gap-3"><label className="block text-xs font-semibold">Amount USD<Input className="mt-1" type="number" value={usd} onChange={e=>setUsd(e.target.value)}/></label><label className="block text-xs font-semibold">Amount crypto<Input className="mt-1" type="number" value={crypto} onChange={e=>setCrypto(e.target.value)}/></label></div>
+ {mode==='Deposit'?<><label className="block text-xs font-semibold">Blockchain TXID<Input className="mt-1" value={txid} onChange={e=>setTxid(e.target.value)}/></label><label className="block text-xs font-semibold">Payment proof (optional)<Input className="mt-1" type="file" accept="image/*,.pdf" onChange={e=>setProof(e.target.files?.[0]||null)}/></label></>:<label className="block text-xs font-semibold">Your withdrawal address<Input className="mt-1" value={destination} onChange={e=>setDestination(e.target.value)}/></label>}
+ <Button className="w-full" disabled={busy||!wallets.length||!real.length} onClick={submit}>{busy?'Submitting…':'Submit '+mode+' request'}</Button>
+ {otpTxn&&<div className="space-y-2 rounded-lg border p-3"><b className="text-sm">Email OTP verification</b><Input inputMode="numeric" maxLength={6} value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="6-digit OTP"/><Button className="w-full" disabled={busy} onClick={verify}>Verify OTP</Button></div>}
+ </Card><Card className="p-5"><b>Recent requests</b>{txns.length===0?<p className="mt-3 text-sm text-muted-foreground">No payment requests yet.</p>:<div className="mt-3 space-y-3">{txns.slice(0,25).map(x=><div key={x.id} className="border-b pb-3 text-sm"><div className="flex justify-between gap-2"><b className="capitalize">{x.kind} · {x.asset} ({x.network})</b><span className="capitalize">{x.status}</span></div><div className="mt-1 text-xs text-muted-foreground">{Number(x.amount_crypto)} {x.asset} / {Number(x.amount_usd).toFixed(2)} USD</div>{(x.rejection_reason||x.admin_note)&&<div className="mt-1 text-xs text-destructive">{x.rejection_reason||x.admin_note}</div>}</div>)}</div>}</Card></div></div>;
 }
