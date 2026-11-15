@@ -45,14 +45,15 @@ export default function AppLock({children}:{children:ReactNode}) {
   useEffect(()=>{if(pin.length===6)unlock();},[pin,unlock]);
   if(checking)return <div className="grid min-h-screen place-items-center bg-background"><div className="animate-pulse text-sm font-bold">BIGBULLS</div></div>;
   if(!locked)return <>{children}</>;
-  const add=(digit:string)=>{if(pin.length<6)setPin(v=>v+digit);};
+  const add=(digit:string)=>{if(pin.length<6)setPin((v)=>v+digit);};
+  const handleKey=(key:string)=>{if(key==='clear')setPin('');else if(key==='delete')setPin((v)=>v.slice(0,-1));else add(key);};
   return <div className="fixed inset-0 z-[9999] flex min-h-screen flex-col items-center justify-center bg-background px-6">
     <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground"><LockKeyhole className="h-7 w-7"/></div>
     <h1 className="text-xl font-extrabold">Unlock BIGBULLS</h1>
     <p className="mt-1 text-sm text-muted-foreground">Enter your 6-digit app PIN</p>
     <div className="my-7 flex gap-3">{Array.from({length:6},(_,i)=><span key={i} className={`h-3 w-3 rounded-full border-2 border-primary ${i<pin.length?'bg-primary':''}`}/>)}</div>
     <div className="grid w-full max-w-[270px] grid-cols-3 gap-3">
-      {['1','2','3','4','5','6','7','8','9','clear','0','delete'].map(k=><Button key={k} type="button" variant="outline" className="h-14 rounded-xl text-lg font-bold" onClick={()=>k==='clear'?setPin(''):k==='delete'?setPin(v=>v.slice(0,-1)):add(k)}>{k==='delete'?<Delete className="h-5 w-5"/>:k==='clear'?'Clear':k}/></Button>)}
+      {['1','2','3','4','5','6','7','8','9','clear','0','delete'].map(k=><Button key={k} type="button" variant="outline" className="h-14 rounded-xl text-lg font-bold" onClick={()=>handleKey(k)}>{k==='delete'?<Delete className="h-5 w-5"/>:k==='clear'?'Clear':k}/></Button>)}
     </div>
     {attempts>=5&&<p className="mt-4 text-center text-xs text-destructive">Multiple incorrect attempts. Please retry carefully.</p>}
     <Button variant="ghost" className="mt-5" onClick={async()=>{await supabase.auth.signOut();}}>Sign out</Button>
