@@ -53,7 +53,17 @@ export default function AppLock({children}:{children:ReactNode}) {
     <p className="mt-1 text-sm text-muted-foreground">Enter your 6-digit app PIN</p>
     <div className="my-7 flex gap-3">{Array.from({length:6},(_,i)=><span key={i} className={`h-3 w-3 rounded-full border-2 border-primary ${i<pin.length?'bg-primary':''}`}/>)}</div>
     <div className="grid w-full max-w-[270px] grid-cols-3 gap-3">
-      {['1','2','3','4','5','6','7','8','9','clear','0','delete'].map(k=><Button key={k} type="button" variant="outline" className="h-14 rounded-xl text-lg font-bold" onClick={()=>handleKey(k)}>{k==='delete'?<Delete className="h-5 w-5"/>:k==='clear'?'Clear':k}/></Button>)}
+      {['1','2','3','4','5','6','7','8','9','clear','0','delete'].map((key) => (
+        <Button
+          key={key}
+          type="button"
+          variant="outline"
+          className="h-14 rounded-xl text-lg font-bold"
+          onClick={() => handleKey(key)}
+        >
+          {key === 'delete' ? <Delete className="h-5 w-5" /> : key === 'clear' ? 'Clear' : key}
+        </Button>
+      ))}
     </div>
     {attempts>=5&&<p className="mt-4 text-center text-xs text-destructive">Multiple incorrect attempts. Please retry carefully.</p>}
     <Button variant="ghost" className="mt-5" onClick={async()=>{await supabase.auth.signOut();}}>Sign out</Button>
