@@ -22,6 +22,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
   const v = Number(vol);
   const validVol = v >= 0.01 && v <= 200;
   const margin = validVol ? marginFor(symbol, v, t.account.leverage, t.quotes) : 0;
+  const missingDemoSl = t.account.type === 'Demo' && (!useSl || !sl || !(Number(sl) > 0));
   const pip = s.digits >= 3 ? Math.pow(10, -(s.digits - 1)) : Math.pow(10, -s.digits);
   const pipValue = validVol ? pip * v * s.contract : 0;
   const ref = side === 'buy' ? q.ask : q.bid;
@@ -75,7 +76,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
         <Row k="Margin" v={money(margin)} /><Row k="Free margin" v={money(t.free)} />
         <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${t.account.leverage}`} />
       </div>
-      <Button size="lg" disabled={!validVol} onClick={submit} className={cn('mt-auto h-12 text-base font-bold', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
+      {missingDemoSl && <p className="text-xs text-amber-700">Demo paper execution requires a Stop Loss. Enable Stop Loss and enter a valid price before submitting.</p>}\n      <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('mt-auto h-12 text-base font-bold', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
         {mode === 'Market' ? `Confirm ${side === 'buy' ? 'Buy' : 'Sell'} ${vol} lots` : `Place ${side === 'buy' ? 'Buy' : 'Sell'} order`}
       </Button>
     </div>
