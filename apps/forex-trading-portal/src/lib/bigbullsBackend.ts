@@ -91,6 +91,27 @@ export const bigbullsBackend = {
     return data || [];
   },
 
+
+  async walletLedger() {
+    const user = await requireUser();
+    const { data, error } = await supabase.from('client_wallet_ledger')
+      .select('id,reference_id,entry_type,direction,amount,balance_before,balance_after,note,created_at')
+      .eq('user_id',user.id).order('created_at',{ascending:false}).limit(100);
+    if(error) throw error;
+    return data || [];
+  },
+
+  async clientFundsTransfer(input: {fromType:'wallet'|'account';fromAccountId?:string|null;toType:'wallet'|'account';toAccountId?:string|null;amount:number;note?:string}) {
+    await requireUser();
+    const {data,error}=await supabase.rpc('client_funds_transfer',{
+      p_from_type:input.fromType,p_from_account_id:input.fromAccountId||null,
+      p_to_type:input.toType,p_to_account_id:input.toAccountId||null,
+      p_amount:input.amount,p_idempotency_key:crypto.randomUUID(),p_note:input.note||'Android client funds transfer'
+    });
+    if(error) throw error;
+    return data;
+  },
+
   async walletBalance() {
     await requireUser();
     const { data, error } = await supabase.rpc('ensure_client_wallet');
