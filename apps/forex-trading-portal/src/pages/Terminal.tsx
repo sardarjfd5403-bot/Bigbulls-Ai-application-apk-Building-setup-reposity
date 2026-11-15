@@ -13,12 +13,11 @@ import OrderPanel from '../components/OrderPanel';
 import PositionsPanel from '../components/PositionsPanel';
 import Logo from '../components/Logo';
 import { useTrading } from '../lib/store';
-import { money } from '../lib/symbols';
+import { money, SYMBOLS } from '../lib/symbols';
 
 export default function Terminal() {
   const t = useTrading();
   const [symbol, setSymbol] = useState('EURUSD');
-  const [tabs, setTabs] = useState(['EURUSD', 'XAUUSD', 'BTCUSD']);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiSaving, setAiSaving] = useState(false);
   useEffect(() => {
@@ -42,18 +41,25 @@ export default function Terminal() {
       toast.error(error?.message || 'Unable to change AI trading mode');
     } finally { setAiSaving(false); }
   };
-  const select = (s: string) => { setSymbol(s); if (!tabs.includes(s)) setTabs((x) => [...x.slice(-4), s]); };
+
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="terminal-screen flex h-[100dvh] flex-col overflow-hidden bg-background">
       <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-3">
         <Link to="/" className="text-muted-foreground hover:text-foreground" aria-label="Back"><ArrowLeft className="h-5 w-5" /></Link>
         <Logo />
-        <div className="ml-2 hidden gap-1 md:flex">
-          {tabs.map((s) => (
-            <button key={s} onClick={() => setSymbol(s)} className={cn('rounded-md px-3 py-1.5 text-xs font-bold', s === symbol ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted')}>{s}</button>
-          ))}
-        </div>
+        <Select value={symbol} onValueChange={setSymbol}>
+          <SelectTrigger className="ml-2 h-9 w-[132px] shrink-0 font-bold sm:w-[168px]">
+            <SelectValue placeholder="Select pair" />
+          </SelectTrigger>
+          <SelectContent>
+            {SYMBOLS.map((item) => (
+              <SelectItem key={item.symbol} value={item.symbol}>
+                {item.symbol} · {item.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <div className="ml-auto flex items-center gap-4">
           <Stat k="Balance" v={money(t.account.balance)} />
           <Stat k="Equity" v={money(t.equity)} />
@@ -77,15 +83,14 @@ export default function Terminal() {
         </div>
       </header>
       {t.account.type === 'Real' && <div className="flex items-center justify-between border-b bg-card px-3 py-2 sm:hidden"><span className="flex items-center gap-2 text-xs font-semibold"><BrainCircuit className="h-4 w-4 text-primary" />{aiEnabled ? 'AI Trading' : 'Manual Trading'}</span><Switch checked={aiEnabled} disabled={aiSaving || t.account.balance <= 0} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[300px_1fr_300px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] lg:grid-rows-1 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
         <aside className="hidden min-h-0 border-r bg-card lg:block"><Watchlist selected={symbol} onSelect={select} /></aside>
-        <main className="grid min-h-0 grid-rows-[1fr_260px]">
-          <div className="min-h-[320px] bg-card"><PriceChart symbol={symbol} /></div>
+        <main className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_180px] lg:grid-rows-[minmax(0,1fr)_260px]">
+          <div className="min-h-0 min-w-0 overflow-hidden bg-card"><PriceChart symbol={symbol} /></div>
           <div className="min-h-0 border-t bg-card"><PositionsPanel /></div>
         </main>
-        <aside className="min-h-0 border-l bg-card"><OrderPanel symbol={symbol} /></aside>
+        <aside className="max-h-[230px] min-h-0 overflow-y-auto border-t bg-card lg:max-h-none lg:overflow-visible lg:border-l lg:border-t-0"><OrderPanel symbol={symbol} /></aside>
       </div>
-      <div className="h-[45vh] border-t bg-card lg:hidden"><Watchlist selected={symbol} onSelect={select} /></div>
     </div>
   );
 }
