@@ -6,6 +6,7 @@ import { Button } from '@project/components/ui/button';
 import { cn } from '@project/components/lib/utils';
 import { marginFor, useTrading, Side } from '../lib/store';
 import { SYM, money } from '../lib/symbols';
+import AIAutoTradeControl from './AIAutoTradeControl';
 
 type Mode = 'Market' | 'Pending';
 
@@ -45,6 +46,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
         <div className="text-lg font-extrabold">{symbol}</div>
         <div className="text-xs text-muted-foreground">{s.name}</div>
       </div>
+      <AIAutoTradeControl />
       <div className="grid grid-cols-2 gap-2">
         <button onClick={() => setSide('sell')} className={cn('rounded-lg border-2 p-2.5 text-left transition', side === 'sell' ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-destructive/30 text-destructive')}>
           <div className="text-[10px] font-bold uppercase">Sell</div><div className="num text-base font-bold">{q.bid.toFixed(s.digits)}</div>
