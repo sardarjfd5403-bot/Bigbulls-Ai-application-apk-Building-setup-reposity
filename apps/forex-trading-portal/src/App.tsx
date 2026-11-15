@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useAuth, loginWithRedirect } from 'zitejs/auth';
+import { useAuth, loginWithRedirect } from './lib/previewAuth';
 import { Toaster } from '@project/components/ui/sonner';
 import { TradingProvider } from './lib/store';
 import { PortalProvider } from './lib/portal';

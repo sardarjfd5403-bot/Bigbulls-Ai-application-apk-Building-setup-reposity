@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CheckCircle2, Clock, Mail, Phone, User, IdCard, Home, Upload, ShieldCheck, Loader2, XCircle } from 'lucide-react';
-import { useLocalUpload } from '../lib/previewAuth';
+import { useLocalUpload as useUpload } from '../lib/previewAuth';
 import { Card } from '@project/components/ui/card';
 import { Button } from '@project/components/ui/button';
 import { Progress } from '@project/components/ui/progress';
@@ -48,7 +48,7 @@ function Badge({ status }: { status: KycStatus }) {
 }
 
 function StepCard({ step, status }: { step: (typeof STEPS)[number]; status: KycStatus }) {
-  const p = usePortal(); const { upload, isUploading } = useLocalUpload();
+  const p = usePortal(); const { upload, isUploading } = useUpload();
   const [docType, setDocType] = useState(step.key === 'identity' ? 'CNIC' : 'Utility bill');
   const isDoc = step.key === 'identity' || step.key === 'address';
   const locked = isDoc && p.kyc.profile !== 'Verified';

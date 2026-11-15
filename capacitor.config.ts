@@ -1,11 +1,3 @@
 import type { CapacitorConfig } from '@capacitor/cli';
-
-const config: CapacitorConfig = {
-  appId: 'com.bigbullsglobalmarket.client',
-  appName: 'BIGBULLS Global Market',
-  webDir: 'apps/forex-trading-portal/dist',
-  bundledWebRuntime: false,
-  server: { androidScheme: 'https' },
-};
-
+const config: CapacitorConfig = { appId: 'com.bigbulls.globalmarket', appName: 'BIGBULLS Global Market', webDir: 'apps/forex-trading-portal/dist' };
 export default config;

@@ -19,25 +19,24 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-        with:
-          packages: ''
       - name: Install Android SDK packages
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - name: Install original app dependencies
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+      - name: Install monorepo dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
-      - name: Build original React frontend
+      - name: Build BIGBULLS frontend
         run: npm run build --workspace apps/forex-trading-portal
       - name: Install Capacitor Android tooling
-        run: npm install --no-save @capacitor/core @capacitor/cli @capacitor/android
-      - name: Generate Android shell and sync exact frontend build
+        run: npm install --no-save --legacy-peer-deps @capacitor/core @capacitor/cli @capacitor/android
+      - name: Generate Android project and sync frontend
         run: |
           npx cap add android
           npx cap sync android
-      - name: Build debug APK
+      - name: Build installable debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: bigbulls-android-debug-apk
+          name: BIGBULLS-Android-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 14
