@@ -34,7 +34,8 @@ export default function AppLock({children}:{children:ReactNode}){
  const [confirmPin,setConfirmPin]=useState('');
  const [storedPin,setStoredPin]=useState('');
  const [error,setError]=useState('');
- const [attempts,setAttempts]=useState(0);\n const lockActive=useRef(false);
+ const [attempts,setAttempts]=useState(0);
+ const lockActive=useRef(false);
  const load=useCallback(async()=>{
   if(!native){setReady(true);return;}
   try{
