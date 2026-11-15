@@ -40,7 +40,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
   const step = (d: number) => setVol(Math.max(0.01, Math.round((v + d) * 100) / 100).toFixed(2));
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1 overflow-y-auto overscroll-contain p-1 pb-2 sm:gap-3 sm:p-3">
+    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden p-1 sm:gap-1.5 sm:p-2">
       <div>
         <div className="flex items-center justify-between"><div className="text-xs font-extrabold sm:text-lg">{symbol}<span className="ml-2 font-normal text-muted-foreground sm:hidden">{s.name}</span></div><div className="hidden text-xs text-muted-foreground sm:block">{s.name}</div></div>
         
@@ -77,7 +77,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
         <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${t.account.leverage}`} />
       </div>
       {missingDemoSl && <p className="text-[9px] leading-3 text-amber-700 sm:text-xs">Demo requires a valid Stop Loss.</p>}
-      <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('sticky bottom-0 z-10 mt-auto h-7 shrink-0 bg-card text-[11px] font-bold shadow-[0_-4px_10px_rgba(0,0,0,0.08)] sm:h-11 sm:text-base', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
+      <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('mt-auto h-7 shrink-0 bg-card text-[11px] font-bold shadow-[0_-4px_10px_rgba(0,0,0,0.08)] sm:h-11 sm:text-base', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
         {mode === 'Market' ? `Confirm ${side === 'buy' ? 'Buy' : 'Sell'} ${vol} lots` : `Place ${side === 'buy' ? 'Buy' : 'Sell'} order`}
       </Button>
     </div>
