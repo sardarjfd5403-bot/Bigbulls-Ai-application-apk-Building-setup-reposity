@@ -65,12 +65,12 @@ function PersonalInfo() {
 }
 
 function Security() {
-  const p = usePortal(); const { user } = useAuth();
+  const { user } = useAuth();
   return (
     <div className="max-w-2xl space-y-3">
-      <Row title="Sign-in method" desc={`One-time code sent to ${user?.email}`} />
-      <Row title="Two-step verification" desc="Require a code for withdrawals and security changes"><Switch checked={p.twoFA} onCheckedChange={(v) => { p.setTwoFA(v); toast.success(v ? '2-step enabled' : '2-step disabled'); }} /></Row>
-      <Row title="Active session" desc={`This device · ${navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'} browser`} />
+      <Row title="BIGBULLS account" desc={user?.email || 'Authenticated account'} />
+      <Row title="Device app lock" desc="A 6-digit PIN is stored using Android Keystore. Fingerprint / face unlock can be enabled from the secure lock prompt." />
+      <Row title="Session security" desc="Your existing BIGBULLS Supabase session remains active until it expires or is revoked. App lock does not replace account authentication." />
     </div>
   );
 }
