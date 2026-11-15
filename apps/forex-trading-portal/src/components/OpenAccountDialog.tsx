@@ -11,7 +11,7 @@ const KINDS: { kind: Account['kind']; desc: string; spread: string }[] = [
   { kind: 'Raw Spread', desc: 'Low raw spreads, fixed commission', spread: 'From 0.0 pips' },
   { kind: 'Zero', desc: '0 spread on top 30 instruments', spread: 'From 0.0 pips' },
 ];
-export const LEVERAGES = [2, 10, 50, 100, 200, 400, 500, 1000, 2000];
+export const LEVERAGES = [100, 200, 500, 1000, 2000];
 
 export default function OpenAccountDialog({ open, onOpenChange, defaultType }: { open: boolean; onOpenChange: (b: boolean) => void; defaultType: 'Real' | 'Demo' }) {
   const t = useTrading();
