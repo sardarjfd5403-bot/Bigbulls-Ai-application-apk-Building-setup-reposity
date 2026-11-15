@@ -40,44 +40,44 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
   const step = (d: number) => setVol(Math.max(0.01, Math.round((v + d) * 100) / 100).toFixed(2));
 
   return (
-    <div className="flex h-full flex-col gap-2 overflow-hidden p-2 sm:gap-4 sm:overflow-y-auto sm:p-4">
+    <div className="flex h-full flex-col gap-1 overflow-hidden p-1 sm:gap-3 sm:overflow-y-auto sm:p-3">
       <div>
-        <div className="flex items-center justify-between"><div className="text-sm font-extrabold sm:text-lg">{symbol}</div><div className="text-[10px] text-muted-foreground sm:hidden">Fixed order panel</div></div>
+        <div className="flex items-center justify-between"><div className="text-xs font-extrabold sm:text-lg">{symbol}<span className="ml-2 font-normal text-muted-foreground sm:hidden">{s.name}</span></div><div className="hidden text-xs text-muted-foreground sm:block">{s.name}</div></div>
         <div className="text-xs text-muted-foreground">{s.name}</div>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button onClick={() => setSide('sell')} className={cn('rounded-lg border-2 p-1.5 text-left transition sm:p-2.5', side === 'sell' ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-destructive/30 text-destructive')}>
-          <div className="text-[10px] font-bold uppercase">Sell</div><div className="num text-xs font-bold sm:text-base">{q.bid.toFixed(s.digits)}</div>
+        <button onClick={() => setSide('sell')} className={cn('h-9 rounded-md border-2 px-2 py-0.5 text-left transition sm:h-auto sm:rounded-lg sm:p-2.5', side === 'sell' ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-destructive/30 text-destructive')}>
+          <div className="text-[9px] font-bold uppercase leading-3">Sell</div><div className="num text-[11px] font-bold leading-4 sm:text-base">{q.bid.toFixed(s.digits)}</div>
         </button>
         <button onClick={() => setSide('buy')} className={cn('rounded-lg border-2 p-1.5 text-left transition sm:p-2.5', side === 'buy' ? 'border-primary bg-primary text-primary-foreground' : 'border-primary/30 text-primary')}>
-          <div className="text-[10px] font-bold uppercase">Buy</div><div className="num text-xs font-bold sm:text-base">{q.ask.toFixed(s.digits)}</div>
+          <div className="text-[9px] font-bold uppercase leading-3">Buy</div><div className="num text-[11px] font-bold leading-4 sm:text-base">{q.ask.toFixed(s.digits)}</div>
         </button>
       </div>
-      <div className="num -mt-2 text-center text-[11px] text-muted-foreground">Spread {((q.ask - q.bid) / pip).toFixed(1)} pips</div>
-      <div className="grid grid-cols-2 rounded-lg bg-muted p-1">
+      <div className="num -mt-1 text-center text-[9px] leading-3 text-muted-foreground sm:-mt-2 sm:text-[11px]">Spread {((q.ask - q.bid) / pip).toFixed(1)} pips</div>
+      <div className="grid grid-cols-2 rounded-md bg-muted p-0.5">
         {(['Market', 'Pending'] as Mode[]).map((m) => (
-          <button key={m} onClick={() => setMode(m)} className={cn('rounded-md py-1.5 text-xs font-bold', mode === m ? 'bg-card shadow-sm' : 'text-muted-foreground')}>{m}</button>
+          <button key={m} onClick={() => setMode(m)} className={cn('rounded py-1 text-[10px] font-bold sm:py-1.5 sm:text-xs', mode === m ? 'bg-card shadow-sm' : 'text-muted-foreground')}>{m}</button>
         ))}
       </div>
       {mode === 'Pending' && (
         <Field label="Open price"><Input className="num" value={price} onChange={(e) => setPrice(e.target.value)} placeholder={ref.toFixed(s.digits)} /></Field>
       )}
       <Field label="Volume (lots)">
-        <div className="flex">
-          <Button variant="outline" size="icon" className="rounded-r-none" onClick={() => step(-0.01)}><Minus className="h-4 w-4" /></Button>
-          <Input className={cn('num rounded-none text-center', !validVol && 'border-destructive')} value={vol} onChange={(e) => setVol(e.target.value)} />
-          <Button variant="outline" size="icon" className="rounded-l-none" onClick={() => step(0.01)}><Plus className="h-4 w-4" /></Button>
+        <div className="flex h-8 sm:h-auto">
+          <Button variant="outline" size="icon" className="h-8 w-8 rounded-r-none sm:h-10 sm:w-10" onClick={() => step(-0.01)}><Minus className="h-4 w-4" /></Button>
+          <Input className={cn('num h-8 rounded-none px-1 text-center sm:h-10', !validVol && 'border-destructive')} value={vol} onChange={(e) => setVol(e.target.value)} />
+          <Button variant="outline" size="icon" className="h-8 w-8 rounded-l-none sm:h-10 sm:w-10" onClick={() => step(0.01)}><Plus className="h-4 w-4" /></Button>
         </div>
         {!validVol && <p className="mt-1 text-xs text-destructive">Volume 0.01 – 200 lots</p>}
       </Field>
-      <div className="grid grid-cols-2 gap-2"><Toggle label="TP" on={useTp} setOn={setUseTp} value={tp} setValue={setTp} ph={ref.toFixed(s.digits)} />
+      <div className="grid grid-cols-2 gap-1"><Toggle label="TP" on={useTp} setOn={setUseTp} value={tp} setValue={setTp} ph={ref.toFixed(s.digits)} />
       <Toggle label="SL" on={useSl} setOn={setUseSl} value={sl} setValue={setSl} ph={ref.toFixed(s.digits)} /></div>
-      <div className="hidden space-y-1.5 rounded-lg bg-muted/60 p-3 text-xs sm:block">
+      <div className="hidden space-y-1.5 rounded-lg bg-muted/60 p-3 text-xs lg:block">
         <Row k="Margin" v={money(margin)} /><Row k="Free margin" v={money(t.free)} />
         <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${t.account.leverage}`} />
       </div>
-      {missingDemoSl && <p className="text-xs text-amber-700">Demo paper execution requires a Stop Loss. Enable Stop Loss and enter a valid price before submitting.</p>}
-      <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('sticky bottom-0 z-10 mt-auto h-12 shrink-0 bg-card text-base font-bold shadow-[0_-6px_16px_rgba(0,0,0,0.08)]', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
+      {missingDemoSl && <p className="text-[9px] leading-3 text-amber-700 sm:text-xs">Demo requires a valid Stop Loss.</p>}
+      <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('sticky bottom-0 z-10 mt-auto h-8 shrink-0 bg-card text-xs font-bold shadow-[0_-4px_10px_rgba(0,0,0,0.08)] sm:h-11 sm:text-base', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
         {mode === 'Market' ? `Confirm ${side === 'buy' ? 'Buy' : 'Sell'} ${vol} lots` : `Place ${side === 'buy' ? 'Buy' : 'Sell'} order`}
       </Button>
     </div>
@@ -85,7 +85,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
 }
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div><div className="mb-1.5 text-xs font-semibold text-muted-foreground">{label}</div>{children}</div>
+  <div className="min-w-0"><div className="mb-0.5 text-[9px] font-semibold leading-3 text-muted-foreground sm:mb-1.5 sm:text-xs">{label}</div>{children}</div>
 );
 const Row = ({ k, v }: { k: string; v: string }) => (
   <div className="flex justify-between"><span className="text-muted-foreground">{k}</span><span className="num font-semibold">{v}</span></div>
