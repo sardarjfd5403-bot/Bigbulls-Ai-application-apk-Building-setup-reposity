@@ -88,7 +88,7 @@ function usePortalState() {
       };
       const referrals = partner?.referrals || [];
       const commissions = partner?.commissions || [];
-      const partnerWallet = partner?.wallet || {};
+      const partnerWallet: any = partner?.wallet || {};
       const next: Partial<State> = {
         profile: profileValue,
         kyc: {
