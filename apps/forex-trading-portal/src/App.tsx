@@ -18,14 +18,16 @@ import Partner from './pages/Partner';
 import Analytics from './pages/Analytics';
 import Support from './pages/Support';
 import TradeHistory from './pages/TradeHistory';
+import AuthScreen from './pages/AuthScreen';
 
 export default function App() {
   const { user, isLoading } = useAuth();
   useEffect(() => { if (!isLoading && !user) loginWithRedirect(); }, [isLoading, user]);
 
-  if (isLoading || !user) {
+  if (isLoading) {
     return <div className="flex h-screen items-center justify-center"><div className="animate-pulse"><Logo /></div></div>;
   }
+  if (!user) return <AuthScreen />;
 
   return (
     <TradingProvider>
