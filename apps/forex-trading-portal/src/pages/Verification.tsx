@@ -1,83 +1,25 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle2, Clock, Mail, Phone, User, IdCard, Home, Upload, ShieldCheck, Loader2, XCircle } from 'lucide-react';
-import { useLocalUpload as useUpload } from '../lib/previewAuth';
 import { Card } from '@project/components/ui/card';
 import { Button } from '@project/components/ui/button';
-import { Progress } from '@project/components/ui/progress';
+import { Input } from '@project/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
-import { cn } from '@project/components/lib/utils';
-import { usePortal, KycStatus, KycStep } from '../lib/portal';
-
-const STEPS: { key: KycStep; title: string; desc: string; icon: typeof Mail }[] = [
-  { key: 'email', title: 'Email address', desc: 'Confirmed at sign-in', icon: Mail },
-  { key: 'phone', title: 'Phone number', desc: 'Add your mobile number in your profile', icon: Phone },
-  { key: 'profile', title: 'Profile details', desc: 'Name, date of birth and address', icon: User },
-  { key: 'identity', title: 'Identity verification', desc: 'CNIC, passport or driving licence', icon: IdCard },
-  { key: 'address', title: 'Proof of residence', desc: 'Utility bill or bank statement, last 6 months', icon: Home },
-];
-
-export default function Verification() {
-  const p = usePortal();
-  const done = STEPS.filter((s) => p.kyc[s.key] === 'Verified').length;
-  return (
-    <div>
-      <h1 className="text-3xl font-extrabold tracking-tight">Verification</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Complete verification to unlock deposits without limits and withdrawals.</p>
-      <Card className="mt-6 flex flex-wrap items-center gap-5 p-5">
-        <div className={cn('flex h-12 w-12 items-center justify-center rounded-full', p.verified ? 'bg-[hsl(var(--success)/0.12)] text-up' : 'bg-accent text-primary')}><ShieldCheck className="h-6 w-6" /></div>
-        <div className="flex-1">
-          <div className="font-extrabold">{p.level}</div>
-          <div className="text-xs text-muted-foreground">{p.verified ? 'All features unlocked' : 'Deposit limit $2,000 · Withdrawals locked until fully verified'}</div>
-          <Progress value={(done / STEPS.length) * 100} className="mt-2 h-2" />
-        </div>
-        <div className="num text-sm font-bold">{done}/{STEPS.length}</div>
-      </Card>
-      <div className="mt-4 space-y-3">
-        {STEPS.map((s) => <StepCard key={s.key} step={s} status={p.kyc[s.key]} />)}
-      </div>
-    </div>
-  );
-}
-
-function Badge({ status }: { status: KycStatus }) {
-  const map = { Verified: ['bg-[hsl(var(--success)/0.12)] text-up', CheckCircle2], 'Under review': ['bg-accent text-primary', Clock], Rejected: ['bg-destructive/10 text-destructive', XCircle], 'Not started': ['bg-muted text-muted-foreground', Clock] } as const;
-  const [cls, Icon] = map[status];
-  return <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold', cls)}><Icon className="h-3.5 w-3.5" />{status}</span>;
-}
-
-function StepCard({ step, status }: { step: (typeof STEPS)[number]; status: KycStatus }) {
-  const p = usePortal(); const { upload, isUploading } = useUpload();
-  const [docType, setDocType] = useState(step.key === 'identity' ? 'CNIC' : 'Utility bill');
-  const isDoc = step.key === 'identity' || step.key === 'address';
-  const locked = isDoc && p.kyc.profile !== 'Verified';
-
-  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]; if (!f) return;
-    try { const { url } = await upload(f); p.submitDoc(step.key as 'identity' | 'address', url, docType); toast.success('Document submitted for review'); }
-    catch { toast.error('Upload failed, please try again'); }
-  };
-
-  return (
-    <Card className="flex flex-wrap items-center gap-4 p-5">
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-primary"><step.icon className="h-5 w-5" /></div>
-      <div className="min-w-[180px] flex-1"><div className="font-bold">{step.title}</div><div className="text-xs text-muted-foreground">{step.desc}</div></div>
-      <Badge status={status} />
-      {(step.key === 'phone' || step.key === 'profile') && status !== 'Verified' && <Button asChild size="sm"><Link to="/profile">Complete</Link></Button>}
-      {isDoc && status !== 'Verified' && status !== 'Under review' && (
-        locked ? <span className="text-xs text-muted-foreground">Complete profile first</span> : (
-          <div className="flex items-center gap-2">
-            <Select value={docType} onValueChange={setDocType}>
-              <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
-              <SelectContent>{(step.key === 'identity' ? ['CNIC', 'Passport', 'Driving licence'] : ['Utility bill', 'Bank statement', 'Tax document']).map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
-            </Select>
-            <Button size="sm" asChild disabled={isUploading}>
-              <label className="cursor-pointer">{isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}Upload<input type="file" accept="image/*,.pdf" className="hidden" onChange={onFile} disabled={isUploading} /></label>
-            </Button>
-          </div>
-        )
-      )}
-    </Card>
-  );
+import { bigbullsBackend } from '../lib/bigbullsBackend';
+export default function Verification(){
+ const [record,setRecord]=useState<any>(null);const [legalName,setLegalName]=useState('');const [dob,setDob]=useState('');const [country,setCountry]=useState('Pakistan');const [address,setAddress]=useState('');const [docType,setDocType]=useState('CNIC');const [docNumber,setDocNumber]=useState('');const [front,setFront]=useState<File|null>(null);const [back,setBack]=useState<File|null>(null);const [busy,setBusy]=useState(false);
+ const reload=()=>bigbullsBackend.kyc().then(setRecord).catch(e=>toast.error(e.message||'Unable to load KYC status'));
+ useEffect(()=>{reload();},[]);
+ const submit=async()=>{if(!legalName.trim()||!dob||!country||!address.trim()||!docNumber.trim()||!front||!back){toast.error('Complete all identity details and upload front/back documents.');return;}setBusy(true);try{const [frontPath,backPath]=await Promise.all([bigbullsBackend.uploadKycDocument(front,'front'),bigbullsBackend.uploadKycDocument(back,'back')]);await bigbullsBackend.submitKyc({legal_name:legalName.trim(),date_of_birth:dob,country,residential_address:address.trim(),document_type:docType,document_number:docNumber.trim(),document_front_path:frontPath,document_back_path:backPath});toast.success('KYC submitted to BIGBULLS back office for review.');await reload();}catch(e:any){toast.error(e?.message||'KYC submission failed');}finally{setBusy(false);}};
+ const status=record?.status||'not submitted';
+ return <div><h1 className="text-3xl font-extrabold tracking-tight">Identity verification</h1><p className="mt-1 text-sm text-muted-foreground">Your submission is reviewed in the existing BIGBULLS admin back office. Approval is never generated by the app.</p>
+ <Card className="mt-5 max-w-2xl p-5"><div className="mb-4 flex items-center justify-between"><b>Current KYC status</b><span className="rounded-full bg-muted px-3 py-1 text-xs font-bold capitalize">{status.replace('_',' ')}</span></div>
+ {record?.admin_note&&<p className="mb-3 text-sm text-muted-foreground">Admin note: {record.admin_note}</p>}{record?.rejection_reasons?.length>0&&<p className="mb-3 text-sm text-destructive">{record.rejection_reasons.join(', ')}</p>}
+ {record?.status==='pending'?<p className="text-sm text-muted-foreground">Your documents are pending review. The status will update from the BIGBULLS back office.</p>:record?.status==='approved'?<p className="text-sm text-green-700">Your identity verification is approved.</p>:<div className="space-y-4">
+ <label className="block text-xs font-semibold">Full legal name<Input className="mt-1" value={legalName} onChange={e=>setLegalName(e.target.value)} /></label>
+ <div className="grid grid-cols-2 gap-3"><label className="block text-xs font-semibold">Date of birth<Input className="mt-1" type="date" value={dob} onChange={e=>setDob(e.target.value)} /></label><label className="block text-xs font-semibold">Country<Input className="mt-1" value={country} onChange={e=>setCountry(e.target.value)} /></label></div>
+ <label className="block text-xs font-semibold">Residential address<Input className="mt-1" value={address} onChange={e=>setAddress(e.target.value)} /></label>
+ <div className="grid grid-cols-2 gap-3"><label className="block text-xs font-semibold">Document type<Select value={docType} onValueChange={setDocType}><SelectTrigger className="mt-1"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="CNIC">CNIC</SelectItem><SelectItem value="Passport">Passport</SelectItem><SelectItem value="Driving License">Driving License</SelectItem></SelectContent></Select></label><label className="block text-xs font-semibold">Document number<Input className="mt-1" value={docNumber} onChange={e=>setDocNumber(e.target.value)} /></label></div>
+ <div className="grid grid-cols-2 gap-3"><label className="block text-xs font-semibold">Document front (100 KB–20 MB)<Input className="mt-1" type="file" accept="image/*,.pdf" onChange={e=>setFront(e.target.files?.[0]||null)} /></label><label className="block text-xs font-semibold">Document back (100 KB–20 MB)<Input className="mt-1" type="file" accept="image/*,.pdf" onChange={e=>setBack(e.target.files?.[0]||null)} /></label></div>
+ <Button className="w-full" disabled={busy} onClick={submit}>{busy?'Uploading and submitting…':'Submit KYC for review'}</Button>
+ </div>}</Card></div>;
 }
