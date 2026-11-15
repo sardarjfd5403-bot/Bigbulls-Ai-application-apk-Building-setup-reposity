@@ -6,13 +6,14 @@ import { Button } from '@project/components/ui/button';
 import { Input } from '@project/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
 import { useTrading } from '../lib/store';
+import { bigbullsBackend } from '../lib/bigbullsBackend';
 import { money } from '../lib/symbols';
 
 export default function Transfer() {
   const t = useTrading();
   const real = t.state.accounts.filter((a) => a.type === 'Real');
   const [from, setFrom] = useState(real[0]?.id ?? ''); const [to, setTo] = useState(real[1]?.id ?? '');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(''); const [busy,setBusy] = useState(false);
   const src = real.find((a) => a.id === from); const n = Number(amount);
   const err = !amount ? '' : !(n > 0) ? 'Enter a valid amount' : src && n > src.balance ? 'Insufficient balance' : from === to ? 'Choose two different accounts' : '';
   const Pick = ({ v, set, label }: { v: string; set: (s: string) => void; label: string }) => (
@@ -34,7 +35,7 @@ export default function Transfer() {
             <Input className="num mt-1 h-11" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
             {err && <span className="mt-1 block text-xs text-destructive">{err}</span>}
           </label>
-          <Button className="h-11 w-full font-bold" disabled={!n || !!err || !to} onClick={() => { t.transfer(from, to, n); toast.success(`${money(n)} transferred`); setAmount(''); }}>Transfer</Button>
+          <Button className="h-11 w-full font-bold" disabled={busy || !n || !!err || !to} onClick={async () => { setBusy(true); try { await bigbullsBackend.clientFundsTransfer({fromType:'account',fromAccountId:from,toType:'account',toAccountId:to,amount:n,note:'Real account to Real account transfer'}); toast.success(`${money(n)} transferred`); setAmount(''); await t.refresh(); } catch(e:any) { toast.error(e.message || 'Transfer rejected'); } finally { setBusy(false); } }}>{busy?'Processing…':'Transfer'}</Button>
         </>}
       </Card>
     </div>
