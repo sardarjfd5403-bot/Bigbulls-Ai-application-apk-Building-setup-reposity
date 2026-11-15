@@ -54,7 +54,7 @@ function useEngine(){
  const account=state.accounts.find(a=>a.id===state.activeId)||state.accounts[0]||{id:'',number:'—',type:'Demo' as const,platform:'BigBulls Terminal',kind:'Standard' as const,leverage:100,balance:0,currency:'USD' as const};
  const positions=state.positions.filter(p=>p.accountId===account.id),pending=state.pending.filter(p=>p.accountId===account.id),history=state.history.filter(p=>p.accountId===account.id);
  const floating=positions.reduce((n,p)=>n+pnl(p,quotes),0),margin=positions.reduce((n,p)=>n+marginFor(p.symbol,p.volume,account.leverage,quotes),0),equity=account.balance+floating,free=equity-margin,level=margin>0?equity/margin*100:0;
- const run=async(fn:()=>Promise<any>,success?:string)=>{if(busy)return false;setBusy(true);try{await fn();await refresh();if(account.id)await refreshAccount(account.id);if(success)toast.success(success);return true;}catch(e:any){toast.error(e?.message||'BIGBULLS server request failed');return false;}finally{setBusy(false);}};
+ const run=async(fn:()=>Promise<any>,success?:string,skipAccountRefresh=false)=>{if(busy)return false;setBusy(true);try{await fn();await refresh();if(account.id&&!skipAccountRefresh)await refreshAccount(account.id);if(success)toast.success(success);return true;}catch(e:any){toast.error(e?.message||'BIGBULLS server request failed');return false;}finally{setBusy(false);}};
  const actions={
   setActive:(id:string)=>setState(s=>({...s,activeId:id})),
   toggleFav:(sym:string)=>setState(s=>({...s,favorites:s.favorites.includes(sym)?s.favorites.filter(x=>x!==sym):[...s.favorites,sym]})),
@@ -68,9 +68,9 @@ function useEngine(){
   transfer:(_fromId:string,_toId:string,_amount:number)=>{toast.error('Local transfers are disabled until the existing server transfer workflow is wired.');return false;},
   openAccount:(a:{type:'Real'|'Demo';kind:Account['kind'];platform:string;leverage:number})=>run(async()=>{const {data,error}=await supabase.rpc('create_client_trading_account',{p_account_mode:a.type.toLowerCase(),p_account_type:a.kind,p_currency:'USD',p_display_name:a.kind+' '+a.type,p_platform:'BigBulls Terminal',p_leverage:'1:'+String(a.leverage),p_swap_free:false});if(error)throw error;if(!data)throw new Error('Account request was not accepted.');},'Account request submitted'),
   walletMove:(_accountId:string,_amount:number)=>{toast.error('Local wallet mutation is disabled.');return false;},
-  setLeverage:(_id:string,_leverage:number)=>{toast.error('Leverage changes require the existing account-management workflow.');},
+  setLeverage:(id:string,leverage:number)=>run(async()=>{const {error}=await supabase.rpc('manage_client_trading_account',{p_account_id:id,p_action:'leverage',p_display_name:'1:'+String(leverage)});if(error)throw error;},'Account leverage updated'),
   resetDemo:(id:string)=>run(()=>bigbullsBackend.demoSetBalance(id,10000,'set'),'Demo balance reset requested'),
-  archive:(_id:string)=>{toast.error('Account archiving is controlled by the existing back office.');},
+  archive:(id:string)=>run(async()=>{const {error}=await supabase.rpc('manage_client_trading_account',{p_account_id:id,p_action:'archive',p_display_name:null});if(error)throw error;},'Trading account archived',true),
  };
  return {quotes,state,account,positions,pending,history,floating,margin,equity,free,level,busy,refresh,...actions};
 }
