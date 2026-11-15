@@ -40,17 +40,17 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
   const step = (d: number) => setVol(Math.max(0.01, Math.round((v + d) * 100) / 100).toFixed(2));
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+    <div className="flex h-full flex-col gap-2 overflow-hidden p-2 sm:gap-4 sm:overflow-y-auto sm:p-4">
       <div>
-        <div className="text-lg font-extrabold">{symbol}</div>
+        <div className="flex items-center justify-between"><div className="text-sm font-extrabold sm:text-lg">{symbol}</div><div className="text-[10px] text-muted-foreground sm:hidden">Fixed order panel</div></div>
         <div className="text-xs text-muted-foreground">{s.name}</div>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button onClick={() => setSide('sell')} className={cn('rounded-lg border-2 p-2.5 text-left transition', side === 'sell' ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-destructive/30 text-destructive')}>
-          <div className="text-[10px] font-bold uppercase">Sell</div><div className="num text-base font-bold">{q.bid.toFixed(s.digits)}</div>
+        <button onClick={() => setSide('sell')} className={cn('rounded-lg border-2 p-1.5 text-left transition sm:p-2.5', side === 'sell' ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-destructive/30 text-destructive')}>
+          <div className="text-[10px] font-bold uppercase">Sell</div><div className="num text-xs font-bold sm:text-base">{q.bid.toFixed(s.digits)}</div>
         </button>
         <button onClick={() => setSide('buy')} className={cn('rounded-lg border-2 p-2.5 text-left transition', side === 'buy' ? 'border-primary bg-primary text-primary-foreground' : 'border-primary/30 text-primary')}>
-          <div className="text-[10px] font-bold uppercase">Buy</div><div className="num text-base font-bold">{q.ask.toFixed(s.digits)}</div>
+          <div className="text-[10px] font-bold uppercase">Buy</div><div className="num text-xs font-bold sm:text-base">{q.ask.toFixed(s.digits)}</div>
         </button>
       </div>
       <div className="num -mt-2 text-center text-[11px] text-muted-foreground">Spread {((q.ask - q.bid) / pip).toFixed(1)} pips</div>
@@ -70,9 +70,9 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
         </div>
         {!validVol && <p className="mt-1 text-xs text-destructive">Volume 0.01 – 200 lots</p>}
       </Field>
-      <Toggle label="Take Profit" on={useTp} setOn={setUseTp} value={tp} setValue={setTp} ph={ref.toFixed(s.digits)} />
-      <Toggle label="Stop Loss" on={useSl} setOn={setUseSl} value={sl} setValue={setSl} ph={ref.toFixed(s.digits)} />
-      <div className="space-y-1.5 rounded-lg bg-muted/60 p-3 text-xs">
+      <div className="grid grid-cols-2 gap-2"><Toggle label="TP" on={useTp} setOn={setUseTp} value={tp} setValue={setTp} ph={ref.toFixed(s.digits)} />
+      <Toggle label="SL" on={useSl} setOn={setUseSl} value={sl} setValue={setSl} ph={ref.toFixed(s.digits)} /></div>
+      <div className="hidden space-y-1.5 rounded-lg bg-muted/60 p-3 text-xs sm:block">
         <Row k="Margin" v={money(margin)} /><Row k="Free margin" v={money(t.free)} />
         <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${t.account.leverage}`} />
       </div>
