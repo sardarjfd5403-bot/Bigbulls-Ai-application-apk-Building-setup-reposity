@@ -201,6 +201,29 @@ export const bigbullsBackend = {
       .subscribe();
   },
 
+
+  async submitWalletTransaction(input: {
+    account_id: string; kind: 'deposit'|'withdrawal'; asset: string; network: string;
+    destination_address: string; amount_crypto: number; amount_usd: number; tx_hash?: string;
+  }) {
+    const user = await requireUser();
+    const { data, error } = await supabase.from('wallet_transactions')
+      .insert({ user_id:user.id, ...input, status:'pending' })
+      .select('id,kind,status,amount_usd,created_at').single();
+    if (error) throw error;
+    return data;
+  },
+
+  async uploadPaymentProof(file: File) {
+    const user = await requireUser();
+    if (file.size < 100 * 1024 || file.size > 15 * 1024 * 1024) throw new Error('Payment proof must be between 100 KB and 15 MB.');
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+    const { data, error } = await supabase.storage.from('payment-proofs').upload(path,file,{upsert:false,contentType:file.type||'application/octet-stream'});
+    if (error) throw error;
+    return data.path;
+  },
+
   requestWithdrawalOtp(transactionId: string) {
     return invokeAuthed<{ ok: boolean; message: string }>('withdrawal-otp', {
       action: 'request', transaction_id: transactionId,
