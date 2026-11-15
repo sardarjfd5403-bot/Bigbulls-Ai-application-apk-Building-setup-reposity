@@ -49,7 +49,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
         <button onClick={() => setSide('sell')} className={cn('rounded-lg border-2 p-1.5 text-left transition sm:p-2.5', side === 'sell' ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-destructive/30 text-destructive')}>
           <div className="text-[10px] font-bold uppercase">Sell</div><div className="num text-xs font-bold sm:text-base">{q.bid.toFixed(s.digits)}</div>
         </button>
-        <button onClick={() => setSide('buy')} className={cn('rounded-lg border-2 p-2.5 text-left transition', side === 'buy' ? 'border-primary bg-primary text-primary-foreground' : 'border-primary/30 text-primary')}>
+        <button onClick={() => setSide('buy')} className={cn('rounded-lg border-2 p-1.5 text-left transition sm:p-2.5', side === 'buy' ? 'border-primary bg-primary text-primary-foreground' : 'border-primary/30 text-primary')}>
           <div className="text-[10px] font-bold uppercase">Buy</div><div className="num text-xs font-bold sm:text-base">{q.ask.toFixed(s.digits)}</div>
         </button>
       </div>
@@ -76,7 +76,8 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
         <Row k="Margin" v={money(margin)} /><Row k="Free margin" v={money(t.free)} />
         <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${t.account.leverage}`} />
       </div>
-      {missingDemoSl && <p className="text-xs text-amber-700">Demo paper execution requires a Stop Loss. Enable Stop Loss and enter a valid price before submitting.</p>}\n      <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('sticky bottom-0 z-10 mt-auto h-12 shrink-0 bg-card text-base font-bold shadow-[0_-6px_16px_rgba(0,0,0,0.08)]', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
+      {missingDemoSl && <p className="text-xs text-amber-700">Demo paper execution requires a Stop Loss. Enable Stop Loss and enter a valid price before submitting.</p>}
+      <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('sticky bottom-0 z-10 mt-auto h-12 shrink-0 bg-card text-base font-bold shadow-[0_-6px_16px_rgba(0,0,0,0.08)]', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
         {mode === 'Market' ? `Confirm ${side === 'buy' ? 'Buy' : 'Sell'} ${vol} lots` : `Place ${side === 'buy' ? 'Buy' : 'Sell'} order`}
       </Button>
     </div>
