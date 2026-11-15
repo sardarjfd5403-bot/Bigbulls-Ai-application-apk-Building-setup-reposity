@@ -89,8 +89,7 @@ function usePortalState() {
       const referrals = partner?.referrals || [];
       const commissions = partner?.commissions || [];
       const partnerWallet = partner?.wallet || {};
-      const next: State = {
-        ...s,
+      const next = {
         profile: profileValue,
         kyc: {
           email: user.email_confirmed_at ? 'Verified' : 'Under review',
@@ -122,7 +121,7 @@ function usePortalState() {
           time: new Date(x.created_at).getTime(),
         })),
       };
-      set(next);
+      set(old => ({ ...old, ...next }));
       setLoading(false);
       const failures = [profileR, kycR, walletR, ledgerR, partnerR, ticketsR].filter(x => x.status === 'rejected');
       if (failures.length) console.warn('Some BIGBULLS portal sections could not refresh:', failures);
