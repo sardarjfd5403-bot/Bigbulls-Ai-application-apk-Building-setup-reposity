@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [main]
 permissions:
-  contents: read
+  contents: write
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -46,6 +46,16 @@ jobs:
       - name: Build installable debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
+      - name: Publish latest public Android APK release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          gh release create "android-build-${GITHUB_RUN_NUMBER}" "${APK}#BIGBULLS-Android.apk" \
+            --title "BIGBULLS Android Build #${GITHUB_RUN_NUMBER}" \
+            --notes "Installable BIGBULLS Android APK. Built from commit ${GITHUB_SHA}." \
+            --latest
       - uses: actions/upload-artifact@v4
         with:
           name: BIGBULLS-Android-APK
