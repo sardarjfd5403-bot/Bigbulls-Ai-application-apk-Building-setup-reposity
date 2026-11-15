@@ -19,6 +19,7 @@ import Analytics from './pages/Analytics';
 import Support from './pages/Support';
 import TradeHistory from './pages/TradeHistory';
 import AuthScreen from './pages/AuthScreen';
+import AppLock from './components/AppLock';
 
 export default function App() {
   const { user, isLoading } = useAuth();
@@ -32,6 +33,7 @@ export default function App() {
   return (
     <TradingProvider>
       <PortalProvider>
+        <AppLock>
         <BrowserRouter>
           <Routes>
             <Route path="/terminal" element={<Terminal />} />
@@ -52,6 +54,7 @@ export default function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        </AppLock>
         <Toaster />
       </PortalProvider>
     </TradingProvider>
