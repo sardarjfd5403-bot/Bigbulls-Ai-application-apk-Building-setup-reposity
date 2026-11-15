@@ -14,10 +14,10 @@ import { cn } from '@project/components/lib/utils';
 import { usePortal, COUNTRIES, Profile as P } from '../lib/portal';
 
 const schema = z.object({
-  firstName: z.string().min(2, 'Required'), lastName: z.string().min(2, 'Required'),
-  phone: z.string().regex(/^\+?[0-9 ]{8,16}$/, 'Enter a valid phone number'),
-  country: z.string().min(1), dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD'),
-  city: z.string().min(2, 'Required'), address: z.string().min(5, 'Required'), postal: z.string().min(3, 'Required'),
+  firstName: z.string().min(2, 'Required'),
+  lastName: z.string().min(2, 'Required'),
+  phone: z.string().regex(/^\\+?[0-9 ]{8,16}$/, 'Enter a valid phone number'),
+  country: z.string().min(1),
 });
 
 const TABS = ['Personal info', 'Security', 'Trading terminal', 'Notifications'] as const;
@@ -40,9 +40,9 @@ export default function ProfilePage() {
 
 function PersonalInfo() {
   const p = usePortal(); const { user } = useAuth();
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<P>({ resolver: zodResolver(schema), defaultValues: p.profile });
-  useEffect(() => { reset(p.profile); }, [p.profile, reset]);
-  const F = (name: keyof P, label: string, ph?: string) => (
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<Pick<P, 'firstName' | 'lastName' | 'phone' | 'country'>>({ resolver: zodResolver(schema), defaultValues: { firstName: p.profile.firstName, lastName: p.profile.lastName, phone: p.profile.phone, country: p.profile.country } });
+  useEffect(() => { reset({ firstName: p.profile.firstName, lastName: p.profile.lastName, phone: p.profile.phone, country: p.profile.country }); }, [p.profile, reset]);
+  const F = (name: 'firstName' | 'lastName' | 'phone', label: string, ph?: string) => (
     <label key={name} className="block text-xs font-semibold">{label}
       <Input className={cn('mt-1', errors[name] && 'border-destructive')} placeholder={ph} {...register(name)} />
       {errors[name] && <span className="mt-1 block text-xs text-destructive">{errors[name]?.message}</span>}
@@ -50,15 +50,14 @@ function PersonalInfo() {
   );
   return (
     <Card className="max-w-2xl p-6">
-      <form onSubmit={handleSubmit(async (v) => { try { await bigbullsBackend.updateProfile({full_name:(v.firstName+' '+v.lastName).trim(),country:v.country,phone:v.phone}); p.saveProfile(v); toast.success('Profile saved to BIGBULLS account'); } catch(e:any) { toast.error(e.message || 'Profile update failed'); } })} className="grid gap-4 sm:grid-cols-2">
+      <form onSubmit={handleSubmit(async (v) => { try { await bigbullsBackend.updateProfile({full_name:(v.firstName+' '+v.lastName).trim(),country:v.country,phone:v.phone}); p.saveProfile({ ...p.profile, ...v }); toast.success('Profile saved to BIGBULLS account'); } catch(e:any) { toast.error(e.message || 'Profile update failed'); } })} className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2 text-xs font-semibold">Email<div className="mt-1 rounded-md border bg-muted px-3 py-2 text-sm">{user?.email}</div></div>
         {F('firstName', 'First name')}{F('lastName', 'Last name')}
-        {F('phone', 'Phone', '+92 300 1234567')}{F('dob', 'Date of birth', '1995-06-21')}
+        {F('phone', 'Phone', '+92 300 1234567')}
         <label className="block text-xs font-semibold">Country
           <Select value={watch('country')} onValueChange={(v) => setValue('country', v)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
             <SelectContent>{COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
         </label>
-        {F('city', 'City')}<div className="sm:col-span-2">{F('address', 'Street address')}</div>{F('postal', 'Postal code')}
         <div className="sm:col-span-2"><Button type="submit">Save changes</Button></div>
       </form>
     </Card>
