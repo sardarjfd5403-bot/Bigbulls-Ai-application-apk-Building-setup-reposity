@@ -68,12 +68,13 @@ export default function PriceChart({ symbol }: { symbol: string }) {
       });
       observer.observe(element);
     }
-    window.addEventListener('resize', measure, { passive: true });
-    window.addEventListener('orientationchange', measure, { passive: true });
+    const onWindowResize = () => measure();
+    window.addEventListener('resize', onWindowResize, { passive: true });
+    window.addEventListener('orientationchange', onWindowResize, { passive: true });
     return () => {
       observer?.disconnect();
-      window.removeEventListener('resize', measure);
-      window.removeEventListener('orientationchange', measure);
+      window.removeEventListener('resize', onWindowResize);
+      window.removeEventListener('orientationchange', onWindowResize);
       if (frame) window.cancelAnimationFrame(frame);
     };
   }, []);
