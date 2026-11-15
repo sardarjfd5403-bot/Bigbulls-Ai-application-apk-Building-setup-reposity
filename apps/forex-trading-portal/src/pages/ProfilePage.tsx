@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useAuth } from '../lib/previewAuth';
+import { bigbullsBackend } from '../lib/bigbullsBackend';
 import { Card } from '@project/components/ui/card';
 import { Button } from '@project/components/ui/button';
 import { Input } from '@project/components/ui/input';
@@ -48,7 +49,7 @@ function PersonalInfo() {
   );
   return (
     <Card className="max-w-2xl p-6">
-      <form onSubmit={handleSubmit((v) => { p.saveProfile(v); toast.success('Profile saved'); })} className="grid gap-4 sm:grid-cols-2">
+      <form onSubmit={handleSubmit(async (v) => { try { await bigbullsBackend.updateProfile({full_name:(v.firstName+' '+v.lastName).trim(),country:v.country,phone:v.phone}); p.saveProfile(v); toast.success('Profile saved to BIGBULLS account'); } catch(e:any) { toast.error(e.message || 'Profile update failed'); } })} className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2 text-xs font-semibold">Email<div className="mt-1 rounded-md border bg-muted px-3 py-2 text-sm">{user?.email}</div></div>
         {F('firstName', 'First name')}{F('lastName', 'Last name')}
         {F('phone', 'Phone', '+92 300 1234567')}{F('dob', 'Date of birth', '1995-06-21')}
