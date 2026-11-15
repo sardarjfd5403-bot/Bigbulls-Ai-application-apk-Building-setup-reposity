@@ -9,7 +9,7 @@ import { getSymbolInfo, money } from '../lib/symbols';
 
 type Mode = 'Market' | 'Pending';
 
-export default function OrderPanel({ symbol }: { symbol: string }) {
+export default function OrderPanel({ symbol, pendingOpen = false, onPendingOpenChange }: { symbol: string; pendingOpen?: boolean; onPendingOpenChange?: (open: boolean) => void }) {
   const t = useTrading();
   const s = getSymbolInfo(symbol); const liveQuote = t.quotes?.[symbol]; const q = { bid: Number.isFinite(Number(liveQuote?.bid)) ? Number(liveQuote.bid) : s.start, ask: Number.isFinite(Number(liveQuote?.ask)) ? Number(liveQuote.ask) : s.start + s.spread };
   const [side, setSide] = useState<Side>('buy');
@@ -40,7 +40,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
   const step = (d: number) => setVol(Math.max(0.01, Math.round((v + d) * 100) / 100).toFixed(2));
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1 overflow-hidden p-1 sm:gap-1.5 sm:p-2">
+    <div className="hidden h-full min-h-0 flex-col gap-1 overflow-hidden p-1 sm:gap-1.5 sm:p-2 lg:flex">
       <div>
         <div className="flex items-center justify-between"><div className="text-xs font-extrabold sm:text-lg">{symbol}<span className="ml-2 font-normal text-muted-foreground sm:hidden">{s.name}</span></div><div className="hidden text-xs text-muted-foreground sm:block">{s.name}</div></div>
         
@@ -80,6 +80,43 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
       <Button size="lg" disabled={!validVol || missingDemoSl} onClick={submit} className={cn('mt-auto h-7 shrink-0 bg-card text-[11px] font-bold shadow-[0_-4px_10px_rgba(0,0,0,0.08)] sm:h-11 sm:text-base', side === 'sell' && 'bg-destructive hover:bg-destructive/90')}>
         {mode === 'Market' ? `Confirm ${side === 'buy' ? 'Buy' : 'Sell'} ${vol} lots` : `Place ${side === 'buy' ? 'Buy' : 'Sell'} order`}
       </Button>
+    </div>
+    <div className="relative flex h-[58px] items-center gap-1.5 px-2 lg:hidden">
+      {pendingOpen && (
+        <div className="absolute bottom-full left-2 right-2 z-40 rounded-xl border bg-card p-3 shadow-2xl">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-xs font-extrabold">Pending order · {symbol}</div>
+            <button type="button" onClick={() => onPendingOpenChange?.(false)} className="rounded p-1 text-muted-foreground" aria-label="Close pending order">✕</button>
+          </div>
+          <div className="mb-2 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setSide('buy')} className={cn('h-8 rounded-md border text-xs font-bold',side==='buy'?'border-primary bg-primary text-primary-foreground':'border-border text-primary')}>BUY</button>
+            <button type="button" onClick={() => setSide('sell')} className={cn('h-8 rounded-md border text-xs font-bold',side==='sell'?'border-destructive bg-destructive text-destructive-foreground':'border-border text-destructive')}>SELL</button>
+          </div>
+          <label className="mb-2 block text-[10px] font-semibold text-muted-foreground">Open price</label>
+          <Input className="num mb-2 h-9" value={price} onChange={e=>setPrice(e.target.value)} placeholder={ref.toFixed(s.digits)} inputMode="decimal"/>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-[10px] font-semibold text-muted-foreground">Stop Loss<Input className="num mt-1 h-8" value={sl} onChange={e=>setSl(e.target.value)} placeholder="Optional" inputMode="decimal"/></label>
+            <label className="text-[10px] font-semibold text-muted-foreground">Take Profit<Input className="num mt-1 h-8" value={tp} onChange={e=>setTp(e.target.value)} placeholder="Optional" inputMode="decimal"/></label>
+          </div>
+          <Button className="mt-3 h-9 w-full text-xs font-bold" disabled={!validVol || !Number(price)} onClick={()=>{
+            const p=Number(price);
+            const kind=side==='buy'?(p<q.ask?'Limit':'Stop'):(p>q.bid?'Limit':'Stop');
+            t.placePending({symbol,side,kind,volume:v,price:p,sl:sl?Number(sl):undefined,tp:tp?Number(tp):undefined});
+            setPrice(''); onPendingOpenChange?.(false);
+          }}>Place {side.toUpperCase()} pending · {vol} lots</Button>
+        </div>
+      )}
+      <button type="button" onClick={()=>{if(validVol)t.openPosition({symbol,side:'sell',volume:v});}} disabled={!validVol} className="h-10 min-w-0 flex-1 rounded-lg bg-destructive px-2 text-xs font-extrabold text-white shadow-sm disabled:opacity-50">
+        SELL <span className="num ml-1 text-[10px] font-semibold">{q.bid.toFixed(s.digits)}</span>
+      </button>
+      <div className="flex h-10 w-[116px] shrink-0 items-center rounded-lg border bg-background">
+        <button type="button" aria-label="Decrease lot size" onClick={()=>step(-0.01)} className="flex h-full w-8 items-center justify-center text-muted-foreground active:bg-muted"><Minus className="h-4 w-4"/></button>
+        <input aria-label="Lot size" inputMode="decimal" value={vol} onChange={e=>setVol(e.target.value)} className={cn('num h-full w-full min-w-0 bg-transparent text-center text-xs font-extrabold outline-none',!validVol&&'text-destructive')}/>
+        <button type="button" aria-label="Increase lot size" onClick={()=>step(0.01)} className="flex h-full w-8 items-center justify-center text-muted-foreground active:bg-muted"><Plus className="h-4 w-4"/></button>
+      </div>
+      <button type="button" onClick={()=>{if(validVol)t.openPosition({symbol,side:'buy',volume:v});}} disabled={!validVol} className="h-10 min-w-0 flex-1 rounded-lg bg-primary px-2 text-xs font-extrabold text-primary-foreground shadow-sm disabled:opacity-50">
+        BUY <span className="num ml-1 text-[10px] font-semibold">{q.ask.toFixed(s.digits)}</span>
+      </button>
     </div>
   );
 }
