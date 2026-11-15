@@ -18,12 +18,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
       - name: Install Android SDK packages
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-        run: |
-          yes | "$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager" --licenses
-          "$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - name: Install original app dependencies
         run: npm ci
       - name: Build original React frontend
