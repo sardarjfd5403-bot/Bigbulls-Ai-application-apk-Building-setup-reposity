@@ -5,13 +5,13 @@ import { Switch } from '@project/components/ui/switch';
 import { Button } from '@project/components/ui/button';
 import { cn } from '@project/components/lib/utils';
 import { marginFor, useTrading, Side } from '../lib/store';
-import { SYM, money } from '../lib/symbols';
+import { getSymbolInfo, money } from '../lib/symbols';
 
 type Mode = 'Market' | 'Pending';
 
 export default function OrderPanel({ symbol }: { symbol: string }) {
   const t = useTrading();
-  const s = SYM?.[symbol] ?? SYM.EURUSD; const q = t.quotes?.[symbol] ?? { bid: s.start, ask: s.start + s.spread };
+  const s = getSymbolInfo(symbol); const liveQuote = t.quotes?.[symbol]; const q = { bid: Number.isFinite(Number(liveQuote?.bid)) ? Number(liveQuote.bid) : s.start, ask: Number.isFinite(Number(liveQuote?.ask)) ? Number(liveQuote.ask) : s.start + s.spread };
   const [side, setSide] = useState<Side>('buy');
   const [mode, setMode] = useState<Mode>('Market');
   const [vol, setVol] = useState('0.01');
