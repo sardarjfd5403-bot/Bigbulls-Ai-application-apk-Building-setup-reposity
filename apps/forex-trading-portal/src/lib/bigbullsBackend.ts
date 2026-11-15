@@ -92,6 +92,18 @@ export const bigbullsBackend = {
   },
 
 
+
+  async supportTickets() {
+    const user=await requireUser();
+    const {data,error}=await supabase.from('support_tickets').select('id,subject,category,message,status,admin_reply,created_at,updated_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(100);
+    if(error)throw error;return data||[];
+  },
+  async createSupportTicket(input:{subject:string;category:string;message:string}) {
+    const user=await requireUser();
+    const {data,error}=await supabase.from('support_tickets').insert({user_id:user.id,subject:input.subject,category:input.category,message:input.message,status:'open'}).select('id,subject,category,message,status,created_at').single();
+    if(error)throw error;return data;
+  },
+
   async walletLedger() {
     const user = await requireUser();
     const { data, error } = await supabase.from('client_wallet_ledger')
