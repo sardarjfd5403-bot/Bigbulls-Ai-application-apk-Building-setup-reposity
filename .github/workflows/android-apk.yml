@@ -40,6 +40,8 @@ jobs:
           test -f android/variables.gradle
           sed -i -E 's/minSdkVersion[[:space:]]*=[[:space:]]*[0-9]+/minSdkVersion = 24/' android/variables.gradle
           grep -qE 'minSdkVersion[[:space:]]*=[[:space:]]*24' android/variables.gradle
+      - name: Verify Android minimum SDK
+        run: grep -n 'minSdkVersion' android/variables.gradle
       - name: Build installable debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
