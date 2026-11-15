@@ -30,6 +30,8 @@ export default function Terminal() {
     }
     return () => { active = false; };
   }, [t.account.id, t.account.type]);
+  const select = (nextSymbol: string) => setSymbol(nextSymbol);
+
   const changeAiMode = async (enabled: boolean) => {
     if (!t.account.id || t.account.type !== 'Real' || aiSaving) return;
     setAiSaving(true);
