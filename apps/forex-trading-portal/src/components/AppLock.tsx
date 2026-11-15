@@ -13,7 +13,6 @@ export default function AppLock({children}:{children:ReactNode}) {
   const [pin,setPin]=useState('');
   const [savedPin,setSavedPin]=useState<string|null>(null);
   const [attempts,setAttempts]=useState(0);
-  const [userId,setUserId]=useState('');
   const unlock=useCallback(()=>{
     if(!savedPin)return;
     if(pin===savedPin){setLocked(false);setPin('');setAttempts(0);return;}
@@ -33,10 +32,10 @@ export default function AppLock({children}:{children:ReactNode}) {
         if(!enabled){if(alive)setChecking(false);return;}
         const secret=await readAppPin(id);
         if(!secret){await bigbullsBackend.setAppLockEnabled(false);if(alive)setChecking(false);return;}
-        if(alive){setUserId(id);setSavedPin(secret);setLocked(true);setChecking(false);}
+        if(alive){setSavedPin(secret);setLocked(true);setChecking(false);}
         listener=await CapacitorApp.addListener('appStateChange',({isActive})=>{
           if(!isActive){setPin('');}
-          else if(alive&&savedPin){setPin('');setLocked(true);}
+          else if(alive){setPin('');setLocked(true);}
         });
       }catch(e){console.warn('Optional App Lock unavailable:',e);if(alive)setChecking(false);}
     };
