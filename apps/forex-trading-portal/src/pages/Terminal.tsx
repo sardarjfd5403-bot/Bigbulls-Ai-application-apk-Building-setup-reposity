@@ -89,12 +89,28 @@ export default function Terminal() {
       {t.account.type === 'Real' && <div className="flex items-center justify-between border-b bg-card px-3 py-2 sm:hidden"><span className="flex items-center gap-2 text-xs font-semibold"><BrainCircuit className="h-4 w-4 text-primary" />{aiEnabled ? 'AI Trading' : 'Manual Trading'}</span><Switch checked={aiEnabled} disabled={aiSaving || (!aiEnabled && t.account.balance <= 0)} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
       <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] lg:grid-rows-1 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
         <aside className="hidden min-h-0 border-r bg-card lg:block"><Watchlist selected={symbol} onSelect={select} /></aside>
-        <main className="order-2 grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] lg:order-1 lg:grid-rows-[minmax(0,1fr)_260px]">
-          <div className="min-h-0 min-w-0 overflow-hidden bg-card"><ErrorBoundary fallback={<div className="grid h-full place-items-center bg-[#0b1220] p-4 text-center text-sm text-slate-200"><div><p className="font-semibold">Chart temporarily unavailable</p><p className="mt-1 text-xs text-slate-400">Trading controls remain available. Change the symbol or reopen the chart.</p></div></div>}><PriceChart symbol={symbol} /></ErrorBoundary></div>
+        <main className="order-1 grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] lg:order-1 lg:grid-rows-[minmax(0,1fr)_260px]">
+          <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-card">
+            <div className="flex h-9 shrink-0 items-center justify-end border-b bg-card px-2">
+              <Button type="button" size="sm" variant={pendingOpen ? "default" : "outline"} className="h-7 gap-1.5 px-3 text-[11px] font-bold" onClick={() => setPendingOpen(v => !v)}>
+                {pendingOpen ? <X className="h-3.5 w-3.5" /> : <ListPlus className="h-3.5 w-3.5" />}
+                {pendingOpen ? 'Close pending' : 'Pending Order'}
+              </Button>
+            </div>
+            <div className="min-h-0 min-w-0 flex-1"><ErrorBoundary fallback={<div className="grid h-full place-items-center bg-[#0b1220] p-4 text-center text-sm text-slate-200"><div><p className="font-semibold">Chart temporarily unavailable</p><p className="mt-1 text-xs text-slate-400">Trading controls remain available. Change the symbol or reopen the chart.</p></div></div>}><PriceChart symbol={symbol} /></ErrorBoundary></div>
+          </div>
           <div className="hidden min-h-0 border-t bg-card lg:block"><PositionsPanel /></div>
         </main>
         <aside className="relative order-2 h-[58px] min-h-0 overflow-visible border-t bg-card lg:order-2 lg:h-auto lg:border-t-0 lg:border-l"><OrderPanel symbol={symbol} pendingOpen={pendingOpen} onPendingOpenChange={setPendingOpen} /></aside>
       </div>
+      <nav className="flex h-14 shrink-0 border-t bg-card lg:hidden">
+        {[
+          {to:'/',label:'Accounts',Icon:LayoutGrid},
+          {to:'/terminal',label:'Trade',Icon:CandlestickChart},
+          {to:'/analytics',label:'Performance',Icon:PieChart},
+          {to:'/wallet',label:'Profile',Icon:UserCircle},
+        ].map(({to,label,Icon}) => <Link key={to} to={to} className={cn('flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-bold', to==='/terminal' ? 'text-primary' : 'text-muted-foreground')}><Icon className="h-5 w-5"/>{label}</Link>)}
+      </nav>
     </div>
   );
 }
