@@ -97,3 +97,12 @@
   .text-up { color: hsl(var(--success)); }
   .bg-up { background-color: hsl(var(--success)); }
 }
+
+/* Capacitor Android WebView touch reliability */
+html, body, #root { min-height: 100%; }
+button, a, [role="button"], [data-clickable="true"], input, select, textarea {
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+button:disabled, [aria-disabled="true"] { touch-action: auto; }

@@ -8,6 +8,34 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
 
+// Android WebView fallback: some embedded WebViews deliver touchend without
+// synthesizing the expected click. Only synthesize a click when no click was
+// observed for that same interactive target; normal clicks are never repeated.
+(() => {
+  if (typeof window === 'undefined' || !('ontouchend' in window)) return;
+  const selector = 'button, a, [role="button"], [data-clickable="true"]';
+  const lastClick = new WeakMap<Element, number>();
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const control = target.closest(selector);
+    if (control) lastClick.set(control, Date.now());
+  }, true);
+  document.addEventListener('touchend', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const control = target.closest(selector) as HTMLElement | null;
+    if (!control || control.matches(':disabled, [aria-disabled="true"]')) return;
+    const touchTime = Date.now();
+    window.setTimeout(() => {
+      if (!control.isConnected || control.matches(':disabled, [aria-disabled="true"]')) return;
+      if ((lastClick.get(control) ?? 0) >= touchTime) return;
+      lastClick.set(control, Date.now());
+      control.click();
+    }, 280);
+  }, { capture: true, passive: true });
+})();
+
 function reloadApp() {
   if (window._ziteOnReload) {
     window._ziteOnReload();
@@ -22,36 +50,20 @@ function RuntimeErrorFallback(props: { error: Error }) {
   return (
     <div className="fixed inset-0 grid place-items-center">
       <div className="relative w-full max-w-xl rounded border-t-4 border-t-red-500 bg-white p-4 shadow-lg">
-        <h3 className="mb-2 flex items-center gap-2 font-medium">
-          Issue rendering app
-        </h3>
+        <h3 className="mb-2 flex items-center gap-2 font-medium">Issue rendering app</h3>
         <p className="mb-4 text-sm text-gray-600">
           {allowAiFix
             ? 'Try asking Zite to fix the issue or find a workaround.'
             : 'Something went wrong while loading this app. You can try reloading the page.'}
         </p>
-
-        <pre className="overflow-auto rounded border-l-4 border-red-500 bg-red-50 p-4 font-mono text-sm text-red-900">
-          {props.error.message}
-        </pre>
+        <pre className="overflow-auto rounded border-l-4 border-red-500 bg-red-50 p-4 font-mono text-sm text-red-900">{props.error.message}</pre>
         <div className="mt-4 flex gap-2">
           {allowAiFix ? (
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded border border-red-100 bg-red-50 px-2.5 py-1.5 text-sm font-medium text-red-500 transition hover:bg-red-100"
-              onClick={() => window._ziteOnFixError?.(props.error)}
-            >
-              <HammerIcon className="h-4 w-4" />
-              Fix it for me
+            <button type="button" className="flex items-center gap-2 rounded border border-red-100 bg-red-50 px-2.5 py-1.5 text-sm font-medium text-red-500 transition hover:bg-red-100" onClick={() => window._ziteOnFixError?.(props.error)}>
+              <HammerIcon className="h-4 w-4" />Fix it for me
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={reloadApp}
-            className="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
-          >
-            Reload
-          </button>
+          <button type="button" onClick={reloadApp} className="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-sm font-medium text-gray-500 transition hover:bg-gray-100">Reload</button>
         </div>
       </div>
     </div>
@@ -60,12 +72,8 @@ function RuntimeErrorFallback(props: { error: Error }) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary
-      fallbackRender={props => <RuntimeErrorFallback error={props.error} />}
-    >
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
+    <ErrorBoundary fallbackRender={props => <RuntimeErrorFallback error={props.error} />}>
+      <QueryClientProvider client={queryClient}><App /></QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
 );
