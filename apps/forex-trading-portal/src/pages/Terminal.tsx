@@ -64,8 +64,8 @@ export default function Terminal() {
           </SelectContent>
         </Select>
         <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-4">
-          <Stat k="Balance" v={money(t.account.balance)} className="hidden sm:block" />
-          <Stat k="Equity" v={money(t.equity)} className="hidden sm:block" />
+          <Stat k="Balance" v={money(t.account.balance)} className="block [&_div:last-child]:text-[11px] sm:[&_div:last-child]:text-sm" />
+          <Stat k="Equity" v={money(t.equity)} className="block [&_div:last-child]:text-[11px] sm:[&_div:last-child]:text-sm" />
           <Stat k="Margin" v={money(t.margin)} className="hidden lg:block" />
           <Stat k="Free margin" v={money(t.free)} className="hidden lg:block" />
           <Stat k="Margin level" v={t.margin ? `${t.level.toFixed(0)}%` : '—'} className="hidden xl:block" />
@@ -86,13 +86,13 @@ export default function Terminal() {
         </div>
       </header>
       {t.account.type === 'Real' && <div className="flex items-center justify-between border-b bg-card px-3 py-2 sm:hidden"><span className="flex items-center gap-2 text-xs font-semibold"><BrainCircuit className="h-4 w-4 text-primary" />{aiEnabled ? 'AI Trading' : 'Manual Trading'}</span><Switch checked={aiEnabled} disabled={aiSaving || t.account.balance <= 0} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
-      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_200px] lg:grid-rows-1 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_190px] lg:grid-rows-1 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
         <aside className="hidden min-h-0 border-r bg-card lg:block"><Watchlist selected={symbol} onSelect={select} /></aside>
         <main className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_260px]">
           <div className="min-h-0 min-w-0 overflow-hidden bg-card"><ErrorBoundary fallback={<div className="grid h-full place-items-center bg-[#0b1220] p-4 text-center text-sm text-slate-200"><div><p className="font-semibold">Chart temporarily unavailable</p><p className="mt-1 text-xs text-slate-400">Trading controls remain available. Change the symbol or reopen the chart.</p></div></div>}><PriceChart symbol={symbol} /></ErrorBoundary></div>
           <div className="hidden min-h-0 border-t bg-card lg:block"><PositionsPanel /></div>
         </main>
-        <aside className="h-[200px] max-h-[200px] min-h-0 overflow-y-auto border-t bg-card sm:h-[220px] sm:max-h-[220px] lg:h-auto lg:max-h-none lg:overflow-visible lg:border-l lg:border-t-0"><OrderPanel symbol={symbol} /></aside>
+        <aside className="h-[190px] max-h-[190px] min-h-0 overflow-hidden border-t bg-card sm:h-[220px] sm:max-h-[220px] lg:h-auto lg:max-h-none lg:overflow-visible lg:border-l lg:border-t-0"><OrderPanel symbol={symbol} /></aside>
       </div>
     </div>
   );
