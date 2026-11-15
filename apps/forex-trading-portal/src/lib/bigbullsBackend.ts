@@ -112,8 +112,93 @@ export const bigbullsBackend = {
     });
   },
 
-  async executionStatus() {
-    return invokeAuthed<Record<string, unknown>>('trading-gateway', { action: 'execution_status' });
+  async realStatus(accountId: string) {
+    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
+      action: 'status', account_id: accountId,
+    });
+  },
+
+  async demoStatus(accountId: string) {
+    return invokeAuthed<Record<string, unknown>>('paper-execution', {
+      action: 'status', account_id: accountId, account_mode: 'demo',
+    });
+  },
+
+  async demoOpen(accountId: string, input: {
+    symbol: string; side: 'BUY' | 'SELL'; quantity: number;
+    stop_loss: number; take_profit?: number | null;
+  }) {
+    return invokeAuthed<Record<string, unknown>>('paper-execution', {
+      action: 'open', account_id: accountId, account_mode: 'demo', ...input,
+    });
+  },
+
+  async demoClose(accountId: string, tradeId: string) {
+    return invokeAuthed<Record<string, unknown>>('paper-execution', {
+      action: 'close', account_id: accountId, account_mode: 'demo', trade_id: tradeId,
+    });
+  },
+
+  async demoModify(accountId: string, tradeId: string, stopLoss: number, takeProfit?: number | null) {
+    return invokeAuthed<Record<string, unknown>>('paper-execution', {
+      action: 'modify', account_id: accountId, account_mode: 'demo',
+      trade_id: tradeId, stop_loss: stopLoss, take_profit: takeProfit ?? null,
+    });
+  },
+
+  async demoSetBalance(accountId: string, amount: number, operation: 'set' | 'topup' = 'set') {
+    return invokeAuthed<Record<string, unknown>>('paper-execution', {
+      action: 'set_balance', account_id: accountId, account_mode: 'demo',
+      amount, operation,
+    });
+  },
+
+  async realOpen(accountId: string, input: {
+    symbol: string; side: 'BUY' | 'SELL'; quantity: number;
+    stop_loss?: number | null; take_profit?: number | null;
+  }) {
+    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
+      action: 'open', account_id: accountId, ...input,
+    });
+  },
+
+  async realClose(accountId: string, positionId: string) {
+    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
+      action: 'close', account_id: accountId, position_id: positionId,
+    });
+  },
+
+  async realModify(accountId: string, positionId: string, stopLoss?: number | null, takeProfit?: number | null) {
+    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
+      action: 'modify_position', account_id: accountId, position_id: positionId,
+      stop_loss: stopLoss ?? null, take_profit: takeProfit ?? null,
+    });
+  },
+
+  async realPending(accountId: string, input: {
+    symbol: string; side: 'BUY' | 'SELL'; order_type: string;
+    quantity: number; target_price: number; stop_loss?: number | null; take_profit?: number | null;
+  }) {
+    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
+      action: 'pending', account_id: accountId, ...input,
+    });
+  },
+
+  async realCancelPending(accountId: string, orderId: string) {
+    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
+      action: 'cancel_pending', account_id: accountId, order_id: orderId,
+    });
+  },
+
+  subscribeClientData(userId: string, onChange: () => void) {
+    return supabase.channel('bigbulls-client-' + userId)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trading_accounts', filter: 'user_id=eq.' + userId }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wallet_transactions', filter: 'user_id=eq.' + userId }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'kyc_submissions', filter: 'user_id=eq.' + userId }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bb_bbook_positions', filter: 'user_id=eq.' + userId }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bb_bbook_pending_orders', filter: 'user_id=eq.' + userId }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bb_paper_execution_trades', filter: 'user_id=eq.' + userId }, onChange)
+      .subscribe();
   },
 
   requestWithdrawalOtp(transactionId: string) {
