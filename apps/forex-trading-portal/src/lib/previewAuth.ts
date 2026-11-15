@@ -7,14 +7,29 @@ export function useAuth() {
   const [isLoading, setLoading] = useState(true);
   useEffect(() => {
     let alive = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (alive) { setUser(data.session?.user ?? null); setLoading(false); }
-    }).catch(() => { if (alive) setLoading(false); });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    let settled = false;
+    const finish = (next: User | null) => {
+      if (!alive) return;
+      settled = true;
+      setUser(next);
       setLoading(false);
-    });
-    return () => { alive = false; listener.subscription.unsubscribe(); };
+    };
+    const watchdog = window.setTimeout(() => {
+      if (!settled) finish(null);
+    }, 7000);
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => finish(session?.user ?? null));
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (error) console.warn('BIGBULLS session restore failed:', error.message);
+      finish(data.session?.user ?? null);
+    }).catch(error => {
+      console.warn('BIGBULLS session restore failed:', error);
+      finish(null);
+    }).finally(() => window.clearTimeout(watchdog));
+    return () => {
+      alive = false;
+      window.clearTimeout(watchdog);
+      listener.subscription.unsubscribe();
+    };
   }, []);
   return { user: user ? { ...user, name: String(user.user_metadata?.full_name || user.user_metadata?.name || user.email || 'BIGBULLS Client') } : null, isLoading };
 }
