@@ -55,12 +55,14 @@ export default function PriceChart({ symbol }: { symbol: string }) {
         ))}
         <span className="ml-auto text-xs text-muted-foreground">{SYM[symbol].name}</span>
       </div>
-      <div ref={ref} className="relative min-h-0 flex-1">
+      <div ref={ref} className="relative min-h-0 flex-1 overflow-hidden bg-[#0b1220]">
         <svg width={size.w} height={size.h} className="absolute inset-0">
+          <rect x={0} y={0} width={size.w} height={size.h} fill="#0b1220" />
+          {Array.from({ length: 9 }, (_, i) => <line key={'v'+i} x1={W*i/8} x2={W*i/8} y1={0} y2={H} stroke="#263449" strokeWidth={0.7} strokeDasharray="2 5" />)}
           {ticks.map((t) => (
             <g key={t}>
-              <line x1={0} x2={W} y1={y(t)} y2={y(t)} className="stroke-border" strokeDasharray="2 4" />
-              <text x={W + 6} y={y(t) + 4} className="num fill-muted-foreground text-[10px]">{t.toFixed(d)}</text>
+              <line x1={0} x2={W} y1={y(t)} y2={y(t)} stroke="#263449" strokeWidth={0.7} strokeDasharray="3 5" />
+              <text x={W + 6} y={y(t) + 4} fill="#9aaac0" fontSize="10" className="num">{t.toFixed(d)}</text>
             </g>
           ))}
           {candles.map((c, i) => {
@@ -75,13 +77,16 @@ export default function PriceChart({ symbol }: { symbol: string }) {
           })}
           {lines.map((p) => (
             <g key={p.id}>
-              <line x1={0} x2={W} y1={y(p.openPrice)} y2={y(p.openPrice)} className="stroke-primary" strokeDasharray="5 3" />
-              <text x={4} y={y(p.openPrice) - 4} className="fill-primary text-[10px] font-semibold">{p.side.toUpperCase()} {p.volume}</text>
+              <line x1={0} x2={W} y1={y(p.openPrice)} y2={y(p.openPrice)} stroke="#60a5fa" strokeWidth={1.2} strokeDasharray="6 4" />
+              <text x={5} y={y(p.openPrice) - 5} fill="#93c5fd" fontSize="10" fontWeight="700">{p.side.toUpperCase()} {p.volume} · OPEN</text>
+              {p.sl != null && <><line x1={0} x2={W} y1={y(p.sl)} y2={y(p.sl)} stroke="#fb7185" strokeWidth={1} strokeDasharray="4 3" /><text x={5} y={y(p.sl)-4} fill="#fb7185" fontSize="10" fontWeight="700">SL {p.sl.toFixed(d)}</text></>}
+              {p.tp != null && <><line x1={0} x2={W} y1={y(p.tp)} y2={y(p.tp)} stroke="#34d399" strokeWidth={1} strokeDasharray="4 3" /><text x={5} y={y(p.tp)-4} fill="#34d399" fontSize="10" fontWeight="700">TP {p.tp.toFixed(d)}</text></>}
             </g>
           ))}
-          <line x1={0} x2={W} y1={y(bid)} y2={y(bid)} className="stroke-primary" strokeWidth={0.75} />
-          <rect x={W} y={y(bid) - 9} width={axisW} height={18} className="fill-primary" rx={3} />
-          <text x={W + 6} y={y(bid) + 4} className="num fill-primary-foreground text-[10px] font-semibold">{bid.toFixed(d)}</text>
+          <line x1={0} x2={W} y1={y(bid)} y2={y(bid)} stroke="#38bdf8" strokeWidth={1} />
+          <rect x={W} y={y(bid) - 10} width={axisW} height={20} fill="#0284c7" rx={3} />
+          <text x={W + 6} y={y(bid) + 4} fill="#ffffff" className="num" fontSize="10" fontWeight="700">{bid.toFixed(d)}</text>
+          {Array.from({ length: 5 }, (_, i) => <text key={'time'+i} x={W*i/4+4} y={H+16} fill="#8092aa" fontSize="9">{new Date((candles[Math.min(candles.length-1, Math.floor(i*(candles.length-1)/4))]?.t || Date.now()/1000)*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</text>)}
         </svg>
       </div>
     </div>
