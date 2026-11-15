@@ -48,7 +48,7 @@ export default function Terminal() {
 
   return (
     <div className="terminal-screen flex h-[100dvh] flex-col overflow-hidden bg-background">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-3">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-card px-2 sm:h-14 sm:gap-3 sm:px-3">
         <Link to="/" className="text-muted-foreground hover:text-foreground" aria-label="Back"><ArrowLeft className="h-5 w-5" /></Link>
         <Logo />
         <Select value={symbol} onValueChange={setSymbol}>
@@ -63,15 +63,15 @@ export default function Terminal() {
             ))}
           </SelectContent>
         </Select>
-        <div className="ml-auto flex items-center gap-4">
-          <Stat k="Balance" v={money(t.account.balance)} />
-          <Stat k="Equity" v={money(t.equity)} />
+        <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-4">
+          <Stat k="Balance" v={money(t.account.balance)} className="hidden sm:block" />
+          <Stat k="Equity" v={money(t.equity)} className="hidden sm:block" />
           <Stat k="Margin" v={money(t.margin)} className="hidden lg:block" />
           <Stat k="Free margin" v={money(t.free)} className="hidden lg:block" />
           <Stat k="Margin level" v={t.margin ? `${t.level.toFixed(0)}%` : '—'} className="hidden xl:block" />
           {t.account.type === 'Real' && <div className="hidden items-center gap-2 rounded-lg border px-2.5 py-1.5 sm:flex"><BrainCircuit className="h-4 w-4 text-primary" /><div className="leading-tight"><div className="text-[10px] font-bold">{aiEnabled ? 'AI MODE' : 'MANUAL MODE'}</div><div className="text-[9px] text-muted-foreground">Account trading mode</div></div><Switch checked={aiEnabled} disabled={aiSaving || t.account.balance <= 0} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
           <Select value={t.account.id} onValueChange={t.setActive}>
-            <SelectTrigger className="h-9 w-auto gap-2 font-semibold">
+            <SelectTrigger className="h-8 max-w-[94px] gap-1 px-2 text-xs font-semibold sm:h-9 sm:max-w-none sm:gap-2">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -86,13 +86,13 @@ export default function Terminal() {
         </div>
       </header>
       {t.account.type === 'Real' && <div className="flex items-center justify-between border-b bg-card px-3 py-2 sm:hidden"><span className="flex items-center gap-2 text-xs font-semibold"><BrainCircuit className="h-4 w-4 text-primary" />{aiEnabled ? 'AI Trading' : 'Manual Trading'}</span><Switch checked={aiEnabled} disabled={aiSaving || t.account.balance <= 0} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
-      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] lg:grid-rows-1 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_200px] lg:grid-rows-1 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
         <aside className="hidden min-h-0 border-r bg-card lg:block"><Watchlist selected={symbol} onSelect={select} /></aside>
-        <main className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_112px] lg:grid-rows-[minmax(0,1fr)_260px]">
+        <main className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)_260px]">
           <div className="min-h-0 min-w-0 overflow-hidden bg-card"><ErrorBoundary fallback={<div className="grid h-full place-items-center bg-[#0b1220] p-4 text-center text-sm text-slate-200"><div><p className="font-semibold">Chart temporarily unavailable</p><p className="mt-1 text-xs text-slate-400">Trading controls remain available. Change the symbol or reopen the chart.</p></div></div>}><PriceChart symbol={symbol} /></ErrorBoundary></div>
-          <div className="min-h-0 border-t bg-card"><PositionsPanel /></div>
+          <div className="hidden min-h-0 border-t bg-card lg:block"><PositionsPanel /></div>
         </main>
-        <aside className="h-[220px] max-h-[220px] min-h-0 overflow-y-auto border-t bg-card lg:h-auto lg:max-h-none lg:overflow-visible lg:border-l lg:border-t-0"><OrderPanel symbol={symbol} /></aside>
+        <aside className="h-[200px] max-h-[200px] min-h-0 overflow-y-auto border-t bg-card sm:h-[220px] sm:max-h-[220px] lg:h-auto lg:max-h-none lg:overflow-visible lg:border-l lg:border-t-0"><OrderPanel symbol={symbol} /></aside>
       </div>
     </div>
   );
