@@ -1,7 +1,10 @@
 name: BIGBULLS Android APK
+# Rebuild after first-login AppLock watchdog fix
 on:
   workflow_dispatch:
   push:
+    branches: [main, feature/bigbullsglobal-android-app]
+  pull_request:
     branches: [main]
 permissions:
   contents: read
@@ -33,6 +36,13 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+      - name: Set Android 7.0 minimum compatibility
+        run: |
+          test -f android/variables.gradle
+          sed -i -E 's/minSdkVersion[[:space:]]*=[[:space:]]*[0-9]+/minSdkVersion = 24/' android/variables.gradle
+          grep -qE 'minSdkVersion[[:space:]]*=[[:space:]]*24' android/variables.gradle
+      - name: Verify Android minimum SDK
+        run: grep -n 'minSdkVersion' android/variables.gradle
       - name: Build installable debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
