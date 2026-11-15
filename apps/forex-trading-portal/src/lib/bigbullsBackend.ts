@@ -46,6 +46,12 @@ async function invokeAuthed<T>(functionName: string, body: Record<string, unknow
 }
 
 export const bigbullsBackend = {
+  async manageTradingAccount(accountId: string, action: 'archive' | 'restore' | 'delete') {
+    await requireUser();
+    const { error } = await supabase.rpc('manage_client_trading_account', { p_account_id: accountId, p_action: action, p_display_name: null });
+    if (error) throw error;
+  },
+
   async accounts(): Promise<TradingAccountRow[]> {
     const user = await requireUser();
     const { data, error } = await supabase.from('trading_accounts')
