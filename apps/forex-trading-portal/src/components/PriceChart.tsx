@@ -28,7 +28,6 @@ export default function PriceChart({ symbol }: { symbol: string }) {
   const [ma50, setMa50] = useState(false);
   const [showVolume, setShowVolume] = useState(false);
   const [customMAs, setCustomMAs] = useState<{id:number;period:number;color:string;width:number;enabled:boolean}[]>([]);
-  const [priceScale, setPriceScale] = useState(1);
   const [priceShift, setPriceShift] = useState(0);
   const pointers = useRef(new Map<number,{x:number;y:number}>());
   const gesture = useRef({distance:0,count:120,scale:1,startY:0,shift:0});
@@ -103,9 +102,9 @@ export default function PriceChart({ symbol }: { symbol: string }) {
     const mx = Math.max(...prices), mn = Math.min(...prices);
     const pad = (mx-mn)*0.1 || Math.max(Math.abs(mx)*0.0005,0.0001);
     const rawMin=mn-pad, rawMax=mx+pad, center=(rawMin+rawMax)/2+priceShift;
-    const half=(rawMax-rawMin)/(2*Math.max(0.25,Math.min(8,priceScale)));
+    const half=(rawMax-rawMin)/2;
     return {min:center-half,max:center+half};
-  }, [shownCandles,bid,lines,priceScale,priceShift]);
+  }, [shownCandles,bid,lines,priceShift]);
   const width = Math.max(0,size.w), height = Math.max(0,size.h), axisW=64;
   const W=Math.max(width-axisW,1), H=Math.max(height-24,1), plotH=showVolume?H*0.78:H, range=Math.max(max-min,Number.EPSILON);
   const y=(v:number)=>plotH-((v-min)/range)*plotH;
