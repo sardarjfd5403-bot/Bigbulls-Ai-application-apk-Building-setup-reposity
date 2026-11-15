@@ -9,7 +9,6 @@ import { cn } from '@project/components/lib/utils';
 import { useTrading, Account, pnl } from '../lib/store';
 import { money } from '../lib/symbols';
 import OpenAccountDialog from '../components/OpenAccountDialog';
-import LeverageDialog from '../components/LeverageDialog';
 
 export default function Accounts() {
   const t = useTrading();
@@ -40,7 +39,7 @@ export default function Accounts() {
 
 function AccountCard({ a }: { a: Account }) {
   const t = useTrading(); const nav = useNavigate();
-  const [lev, setLev] = useState(false); const [arch, setArch] = useState(false);
+  const [arch, setArch] = useState(false);
   const floating = t.state.positions.filter((p) => p.accountId === a.id).reduce((s, p) => s + pnl(p, t.quotes), 0);
   const go = (path: string) => { t.setActive(a.id); nav(path); };
   return (
@@ -53,7 +52,6 @@ function AccountCard({ a }: { a: Account }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="ml-auto h-7 w-7"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setLev(true)}>Change leverage</DropdownMenuItem>
             {a.type === 'Demo' && <DropdownMenuItem onClick={() => t.resetDemo(a.id)}>Set balance to $10,000</DropdownMenuItem>}
             {t.state.accounts.length > 1 && <DropdownMenuItem className="text-destructive" onClick={() => setArch(true)}>Archive account</DropdownMenuItem>}
           </DropdownMenuContent>
@@ -72,10 +70,9 @@ function AccountCard({ a }: { a: Account }) {
           </>}
         </div>
       </div>
-      <LeverageDialog account={a} open={lev} onOpenChange={setLev} />
       <AlertDialog open={arch} onOpenChange={setArch}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Archive account #{a.number}?</AlertDialogTitle><AlertDialogDescription>Open positions and pending orders on this account will be removed.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>Archive account #{a.number}?</AlertDialogTitle><AlertDialogDescription>This account will be archived from your active account list. Existing financial and trade history is retained.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => t.archive(a.id)}>Archive</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
