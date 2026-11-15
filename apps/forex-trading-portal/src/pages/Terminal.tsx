@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, BrainCircuit } from 'lucide-react';
+import { ArrowLeft, BrainCircuit, CandlestickChart, LayoutGrid, PieChart, UserCircle, ListPlus, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
 import { Button } from '@project/components/ui/button';
 import { Switch } from '@project/components/ui/switch';
@@ -21,6 +21,7 @@ export default function Terminal() {
   const [symbol, setSymbol] = useState('EURUSD');
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiSaving, setAiSaving] = useState(false);
+  const [pendingOpen, setPendingOpen] = useState(false);
   useEffect(() => {
     let active = true;
     setAiEnabled(false);
@@ -86,13 +87,13 @@ export default function Terminal() {
         </div>
       </header>
       {t.account.type === 'Real' && <div className="flex items-center justify-between border-b bg-card px-3 py-2 sm:hidden"><span className="flex items-center gap-2 text-xs font-semibold"><BrainCircuit className="h-4 w-4 text-primary" />{aiEnabled ? 'AI Trading' : 'Manual Trading'}</span><Switch checked={aiEnabled} disabled={aiSaving || (!aiEnabled && t.account.balance <= 0)} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
-      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[250px_minmax(0,1fr)] lg:grid-rows-1 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] lg:grid-rows-1 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
         <aside className="hidden min-h-0 border-r bg-card lg:block"><Watchlist selected={symbol} onSelect={select} /></aside>
         <main className="order-2 grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] lg:order-1 lg:grid-rows-[minmax(0,1fr)_260px]">
           <div className="min-h-0 min-w-0 overflow-hidden bg-card"><ErrorBoundary fallback={<div className="grid h-full place-items-center bg-[#0b1220] p-4 text-center text-sm text-slate-200"><div><p className="font-semibold">Chart temporarily unavailable</p><p className="mt-1 text-xs text-slate-400">Trading controls remain available. Change the symbol or reopen the chart.</p></div></div>}><PriceChart symbol={symbol} /></ErrorBoundary></div>
           <div className="hidden min-h-0 border-t bg-card lg:block"><PositionsPanel /></div>
         </main>
-        <aside className="order-1 h-[250px] max-h-[250px] min-h-0 overflow-hidden border-b bg-card lg:order-2 lg:h-auto lg:max-h-none lg:overflow-visible lg:border-b-0 lg:border-l"><OrderPanel symbol={symbol} /></aside>
+        <aside className="relative order-2 h-[58px] min-h-0 overflow-visible border-t bg-card lg:order-2 lg:h-auto lg:border-t-0 lg:border-l"><OrderPanel symbol={symbol} pendingOpen={pendingOpen} onPendingOpenChange={setPendingOpen} /></aside>
       </div>
     </div>
   );
