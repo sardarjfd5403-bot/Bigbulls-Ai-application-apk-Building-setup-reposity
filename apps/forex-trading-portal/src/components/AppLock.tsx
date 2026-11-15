@@ -43,10 +43,12 @@ export default function AppLock({children}:{children:ReactNode}){
     const [enabled,saved,biometric,skipped]=await Promise.all([
      SecureStorage.get('app_lock_enabled'),
      SecureStorage.get('pin_hash'),
-     SecureStorage.get('biometric_enabled')
+     SecureStorage.get('biometric_enabled'),
+     SecureStorage.get('app_lock_skipped')
     ]);
     setStoredPin(typeof saved==='string'?saved:'');
     setBioEnabled(biometric==='true');
+    if(skipped==='true'){setSetup(false);setLocked(false);return;}
     if(enabled==='true'&&typeof saved==='string'&&saved.length>20){setLocked(true);setSetup(false);}
     else{setSetup(true);setLocked(false);}
    })());
