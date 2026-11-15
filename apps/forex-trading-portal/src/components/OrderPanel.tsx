@@ -40,6 +40,7 @@ export default function OrderPanel({ symbol, pendingOpen = false, onPendingOpenC
   const step = (d: number) => setVol(Math.max(0.01, Math.round((v + d) * 100) / 100).toFixed(2));
 
   return (
+    <>
     <div className="hidden h-full min-h-0 flex-col gap-1 overflow-hidden p-1 sm:gap-1.5 sm:p-2 lg:flex">
       <div>
         <div className="flex items-center justify-between"><div className="text-xs font-extrabold sm:text-lg">{symbol}<span className="ml-2 font-normal text-muted-foreground sm:hidden">{s.name}</span></div><div className="hidden text-xs text-muted-foreground sm:block">{s.name}</div></div>
@@ -118,6 +119,7 @@ export default function OrderPanel({ symbol, pendingOpen = false, onPendingOpenC
         BUY <span className="num ml-1 text-[10px] font-semibold">{q.ask.toFixed(s.digits)}</span>
       </button>
     </div>
+    </>
   );
 }
 
