@@ -1,0 +1,39 @@
+name: BIGBULLS Android APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install original app dependencies
+        run: npm ci
+      - name: Build original React frontend
+        run: npm run build --workspace apps/forex-trading-portal
+      - name: Install Capacitor Android tooling
+        run: npm install --no-save @capacitor/core @capacitor/cli @capacitor/android
+      - name: Generate Android shell and sync exact frontend build
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bigbulls-android-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
