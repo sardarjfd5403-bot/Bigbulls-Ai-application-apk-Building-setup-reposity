@@ -329,7 +329,7 @@ export const bigbullsBackend = {
 
 
   async submitWalletTransaction(input: {
-    account_id: string; kind: 'deposit'|'withdrawal'; asset: string; network: string;
+    account_id: string | null; kind: 'deposit'|'withdrawal'; asset: string; network: string;
     destination_address: string; amount_crypto: number; amount_usd: number; tx_hash?: string; proof_path?: string;
   }) {
     const user = await requireUser();
