@@ -7,7 +7,7 @@ import { supabase } from './supabase';
 
 export type Side = 'buy' | 'sell';
 export type Account = { id:string; number:string; type:'Real'|'Demo'; platform:string; kind:'Standard'|'Pro'|'Raw Spread'|'Zero'; leverage:number; balance:number; currency:'USD' };
-export type Position = { id:string; accountId:string; symbol:string; side:Side; volume:number; openPrice:number; sl?:number; tp?:number; openTime:number; floating?:number };
+export type Position = { id:string; accountId:string; symbol:string; side:Side; volume:number; openPrice:number; sl?:number; tp?:number; openTime:number; floating?:number; marginUsed?:number };
 export type Pending = { id:string; accountId:string; symbol:string; side:Side; kind:'Limit'|'Stop'; volume:number; price:number; sl?:number; tp?:number; created:number };
 export type Closed = Position & { closePrice:number; closeTime:number; profit:number; reason:string };
 export type Txn = { id:string; accountId:string; type:'Deposit'|'Withdrawal'|'Transfer'; method:string; amount:number; status:'Done'|'Pending'; time:number };
@@ -15,7 +15,7 @@ type State = { accounts:Account[]; activeId:string; positions:Position[]; pendin
 const emptyState:State={accounts:[],activeId:'',positions:[],pending:[],history:[],txns:[],favorites:['EURUSD','XAUUSD','BTCUSD','GBPUSD','USDJPY','US30']};
 const executionSymbol=(s:string)=>({BTCUSD:'BTCUSDT',ETHUSD:'ETHUSDT',SOLUSD:'SOLUSDT',XRPUSD:'XRPUSDT',BNBUSD:'BNBUSDT'} as Record<string,string>)[s]||s;
 const mapAccount=(a:TradingAccountRow):Account=>({id:a.id,number:String(a.account_number),type:a.account_mode==='real'?'Real':'Demo',platform:(!a.platform||a.platform==='BIGBULLS')?'BigBulls Terminal':a.platform,kind:(a.account_type||'Standard') as Account['kind'],leverage:Number(String(a.requested_leverage||'100').replace(/^1:/,''))||100,balance:Number(a.balance||0),currency:'USD'});
-const mapPosition=(p:any):Position=>({id:p.id,accountId:p.account_id,symbol:p.symbol,side:String(p.side).toLowerCase()==='buy'?'buy':'sell',volume:Number(p.quantity),openPrice:Number(p.entry_price),sl:p.stop_loss==null?undefined:Number(p.stop_loss),tp:p.take_profit==null?undefined:Number(p.take_profit),openTime:Date.parse(p.opened_at||p.created_at||new Date().toISOString()),floating:Number(p.floating_pnl??p.unrealized_pnl??0)});
+const mapPosition=(p:any):Position=>({id:p.id,accountId:p.account_id,symbol:p.symbol,side:String(p.side).toLowerCase()==='buy'?'buy':'sell',volume:Number(p.quantity),openPrice:Number(p.entry_price),sl:p.stop_loss==null?undefined:Number(p.stop_loss),tp:p.take_profit==null?undefined:Number(p.take_profit),openTime:Date.parse(p.opened_at||p.created_at||new Date().toISOString()),floating:Number(p.floating_pnl??p.unrealized_pnl??0),marginUsed:p.margin_used==null?undefined:Number(p.margin_used)});
 export function pnl(p:Position,q:Quotes){
  const info=SYM[p.symbol], quote=q?.[p.symbol];
  if(info && quote && !quote.stale && Number.isFinite(quote.bid) && Number.isFinite(quote.ask) && quote.bid>0 && quote.ask>=quote.bid){
@@ -69,7 +69,7 @@ function useEngine(){
  useEffect(()=>{let alive=true;let channel:any=null;supabase.auth.getUser().then(({data})=>{if(!alive||!data.user)return;channel=bigbullsBackend.subscribeClientData(data.user.id,()=>{refresh().then(()=>{const id=activeIdRef.current;if(id)refreshAccount(id);}).catch(e=>console.warn('Realtime account refresh failed',e));});}).catch(e=>console.warn('Realtime subscription setup failed',e));return()=>{alive=false;if(channel)void supabase.removeChannel(channel);};},[refresh,refreshAccount]);
  const account=state.accounts.find(a=>a.id===state.activeId)||state.accounts[0]||{id:'',number:'—',type:'Demo' as const,platform:'BigBulls Terminal',kind:'Standard' as const,leverage:100,balance:0,currency:'USD' as const};
  const positions=state.positions.filter(p=>p.accountId===account.id),pending=state.pending.filter(p=>p.accountId===account.id),history=state.history.filter(p=>p.accountId===account.id);
- const floating=positions.reduce((n,p)=>n+pnl(p,quotes),0),margin=positions.reduce((n,p)=>n+marginFor(p.symbol,p.volume,account.leverage,quotes),0),equity=account.balance+floating,free=equity-margin,level=margin>0?equity/margin*100:0;
+ const floating=positions.reduce((n,p)=>n+pnl(p,quotes),0),margin=positions.reduce((n,p)=>n+(p.marginUsed??marginFor(p.symbol,p.volume,account.leverage,quotes)),0),equity=account.balance+floating,free=equity-margin,level=margin>0?equity/margin*100:0;
  const run=async(fn:()=>Promise<any>,success?:string,skipAccountRefresh=false)=>{if(busy)return false;setBusy(true);try{await fn();await refresh();if(account.id&&!skipAccountRefresh)await refreshAccount(account.id);if(success)toast.success(success);return true;}catch(e:any){toast.error(e?.message||'BIGBULLS server request failed');return false;}finally{setBusy(false);}};
  const actions={
   setActive:(id:string)=>setState(s=>({...s,activeId:id})),
