@@ -6,7 +6,7 @@ import { Card } from '@project/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@project/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@project/components/ui/alert-dialog';
 import { cn } from '@project/components/lib/utils';
-import { useTrading, Account, pnl } from '../lib/store';
+import { useTrading, Account, Position, pnl } from '../lib/store';
 import { money } from '../lib/symbols';
 import OpenAccountDialog from '../components/OpenAccountDialog';
 import LeverageDialog from '../components/LeverageDialog';
@@ -41,8 +41,12 @@ export default function Accounts() {
 function AccountCard({ a }: { a: Account }) {
   const t = useTrading(); const nav = useNavigate();
   const [lev, setLev] = useState(false); const [arch, setArch] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState<Position | null>(null);
+  const [confirmCloseAll, setConfirmCloseAll] = useState(false);
   const floating = t.state.positions.filter((p) => p.accountId === a.id).reduce((s, p) => s + pnl(p, t.quotes), 0);
+  const trades = t.state.positions.filter((p) => p.accountId === a.id);
   const go = (path: string) => { t.setActive(a.id); nav(path); };
+  const openTradeActions = (p: Position) => { t.setActive(a.id); setSelectedTrade(p); };
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center gap-2 border-b bg-muted/40 px-5 py-3 text-xs font-bold">
@@ -73,30 +77,54 @@ function AccountCard({ a }: { a: Account }) {
         </div>
       </div>
       <div className="border-t px-5 py-4">
-        {(() => {
-          const trades = t.state.positions.filter((p) => p.accountId === a.id);
-          return (
-            <>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Running trades ({trades.length})</div>
-                <div className="text-xs font-semibold">Total floating P/L <span className={cn('num font-extrabold', floating >= 0 ? 'text-up' : 'text-destructive')}>{money(floating)}</span></div>
-              </div>
-              {trades.length > 0 ? (
-                <div className="mt-3 space-y-2">
-                  {trades.map((p) => {
-                    const profit = pnl(p, t.quotes);
-                    return <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2 text-xs">
-                      <div className="flex items-center gap-2"><span className="font-bold">{p.symbol}</span><span className={cn('rounded px-1.5 py-0.5 font-bold', p.side === 'buy' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive')}>{p.side.toUpperCase()}</span><span className="text-muted-foreground">{p.volume} lot</span></div>
-                      <span className={cn('num font-bold', profit >= 0 ? 'text-up' : 'text-destructive')}>{money(profit)}</span>
-                    </div>;
-                  })}
-                </div>
-              ) : <p className="mt-2 text-xs text-muted-foreground">No running trades on this account.</p>}
-            </>
-          );
-        })()}
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Running trades ({trades.length})</div>
+            <div className="flex items-center gap-3">
+              <div className="text-xs font-semibold">Total floating P/L <span className={cn('num font-extrabold', floating >= 0 ? 'text-up' : 'text-destructive')}>{money(floating)}</span></div>
+              {trades.length > 0 && <Button size="sm" variant="destructive" onClick={() => { t.setActive(a.id); setConfirmCloseAll(true); }}>Close all</Button>}
+            </div>
+          </div>
+          {trades.length > 0 ? (
+            <div className="mt-3 space-y-2">
+              {trades.map((p) => {
+                const profit = pnl(p, t.quotes);
+                return <button type="button" key={p.id} onClick={() => openTradeActions(p)} className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-3 text-left text-xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  <div className="flex items-center gap-2"><span className="font-bold">{p.symbol}</span><span className={cn('rounded px-1.5 py-0.5 font-bold', p.side === 'buy' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive')}>{p.side.toUpperCase()}</span><span className="text-muted-foreground">{p.volume} lot</span><span className="text-muted-foreground">· Tap to manage</span></div>
+                  <span className={cn('num font-bold', profit >= 0 ? 'text-up' : 'text-destructive')}>{money(profit)}</span>
+                </button>;
+              })}
+            </div>
+          ) : <p className="mt-2 text-xs text-muted-foreground">No running trades on this account.</p>}
+        </>
       </div>
       <LeverageDialog account={a} open={lev} onOpenChange={setLev} />
+      <AlertDialog open={!!selectedTrade} onOpenChange={(open) => { if (!open) setSelectedTrade(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Close this running trade?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedTrade ? <span>{selectedTrade.symbol} · {selectedTrade.side.toUpperCase()} · {selectedTrade.volume} lot · Current floating P/L {money(pnl(selectedTrade, t.quotes))}. This will send a close request to the BIGBULLS execution engine.</span> : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep trade open</AlertDialogCancel>
+            <AlertDialogAction disabled={!selectedTrade} onClick={() => { if (selectedTrade) t.closePosition(selectedTrade.id); setSelectedTrade(null); }}>Confirm close trade</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={confirmCloseAll} onOpenChange={setConfirmCloseAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Close all running trades?</AlertDialogTitle>
+            <AlertDialogDescription>All {trades.length} open trade(s) on account #{a.number} will receive close requests. This action cannot be undone. Pending orders are not included.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { t.setActive(a.id); t.closeAll('all'); setConfirmCloseAll(false); }}>Confirm close all</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog open={arch} onOpenChange={setArch}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Archive account #{a.number}?</AlertDialogTitle><AlertDialogDescription>Open positions and pending orders on this account will be removed.</AlertDialogDescription></AlertDialogHeader>
