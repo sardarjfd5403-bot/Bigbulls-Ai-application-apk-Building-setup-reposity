@@ -70,7 +70,7 @@ export default function Terminal() {
           <Stat k="Margin" v={money(t.margin)} className="hidden lg:block" />
           <Stat k="Free margin" v={money(t.free)} className="hidden lg:block" />
           <Stat k="Margin level" v={t.margin ? `${t.level.toFixed(0)}%` : '—'} className="hidden xl:block" />
-          {t.account.type === 'Real' && <div className="hidden items-center gap-2 rounded-lg border px-2.5 py-1.5 sm:flex"><BrainCircuit className="h-4 w-4 text-primary" /><div className="leading-tight"><div className="text-[10px] font-bold">{aiEnabled ? 'AI MODE' : 'MANUAL MODE'}</div><div className="text-[9px] text-muted-foreground">Account trading mode</div></div><Switch checked={aiEnabled} disabled={aiSaving || (!aiEnabled && t.account.balance <= 0)} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
+          {t.account.type === 'Real' && <div className="hidden items-center gap-2 rounded-lg border px-2.5 py-1.5 sm:flex"><BrainCircuit className="h-4 w-4 text-primary" /><div className="leading-tight"><div className="text-[10px] font-bold">{aiEnabled ? 'AI MODE' : 'MANUAL MODE'}</div><div className="text-[9px] text-muted-foreground">Account trading mode</div></div><Switch checked={aiEnabled} disabled={aiSaving} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
           <Select value={t.account.id} onValueChange={t.setActive}>
             <SelectTrigger className="h-8 max-w-[84px] gap-1 px-1.5 text-[10px] font-semibold sm:h-9 sm:max-w-none sm:gap-2 sm:text-xs">
               <SelectValue />
@@ -86,7 +86,7 @@ export default function Terminal() {
           <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/deposit">Deposit</Link></Button>
         </div>
       </header>
-      {t.account.type === 'Real' && <div className="flex items-center justify-between border-b bg-card px-3 py-2 sm:hidden"><span className="flex items-center gap-2 text-xs font-semibold"><BrainCircuit className="h-4 w-4 text-primary" />{aiEnabled ? 'AI Trading' : 'Manual Trading'}</span><Switch checked={aiEnabled} disabled={aiSaving || (!aiEnabled && t.account.balance <= 0)} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
+      {t.account.type === 'Real' && <div className="flex items-center justify-between border-b bg-card px-3 py-2 sm:hidden"><span className="flex items-center gap-2 text-xs font-semibold"><BrainCircuit className="h-4 w-4 text-primary" />{aiEnabled ? 'AI Trading' : 'Manual Trading'}</span><Switch checked={aiEnabled} disabled={aiSaving} onCheckedChange={changeAiMode} aria-label="Enable AI trading mode" /></div>}
       <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] lg:grid-rows-1 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
         <aside className="hidden min-h-0 border-r bg-card lg:block"><Watchlist selected={symbol} onSelect={select} /></aside>
         <main className="order-1 grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)] lg:order-1 lg:grid-rows-[minmax(0,1fr)_260px]">
