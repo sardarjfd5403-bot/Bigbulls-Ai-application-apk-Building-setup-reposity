@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@project/components/ui/table';
 import { cn } from '@project/components/lib/utils';
 import { useTrading } from '../lib/store';
-import { SYM, money } from '../lib/symbols';
+import { getSymbolInfo, money } from '../lib/symbols';
 
 const PAGE = 20;
 
@@ -36,7 +36,7 @@ export default function TradeHistory() {
           <TableHeader><TableRow>{['Closed', 'Account', 'Symbol', 'Type', 'Volume', 'Open', 'Close', 'Reason', 'Profit'].map((h) => <TableHead key={h} className={h === 'Profit' ? 'text-right' : ''}>{h}</TableHead>)}</TableRow></TableHeader>
           <TableBody>
             {rows.slice(page * PAGE, page * PAGE + PAGE).map((r) => {
-              const d = SYM[r.symbol].digits;
+              const d = getSymbolInfo(r.symbol).digits;
               return (
                 <TableRow key={r.id}>
                   <TableCell className="text-muted-foreground">{format(r.closeTime, 'MMM d, HH:mm')}</TableCell><TableCell>#{accNo(r.accountId)}</TableCell>
