@@ -335,7 +335,7 @@ export const bigbullsBackend = {
     const user = await requireUser();
     const { data, error } = await supabase.from('wallet_transactions')
       .insert({ user_id:user.id, ...input, status:'pending' })
-      .select('id,kind,status,amount_usd,created_at').single();
+      .select('id,invoice_id,kind,status,amount_usd,amount_crypto,asset,network,destination_address,created_at').single();
     if (error) throw error;
     return data;
   },
