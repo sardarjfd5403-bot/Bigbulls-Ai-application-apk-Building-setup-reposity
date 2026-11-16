@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, CandlestickChart, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { Plus, MoreVertical, CandlestickChart, ArrowDownToLine, ArrowUpFromLine, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@project/components/ui/button';
 import { Card } from '@project/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@project/components/ui/dropdown-menu';
@@ -44,6 +44,7 @@ function AccountCard({ a }: { a: Account }) {
   const [selectedTrade, setSelectedTrade] = useState<Position | null>(null);
   const [closeTradeDialogOpen, setCloseTradeDialogOpen] = useState(false);
   const [confirmCloseAll, setConfirmCloseAll] = useState(false);
+  const [showAllTrades, setShowAllTrades] = useState(false);
   // Dialogs may only be opened by the explicit row/button handlers below. Ignore
   // unsolicited Radix open requests (for example during WebView focus restoration).
   const closeTradeDialog = () => { setCloseTradeDialogOpen(false); setSelectedTrade(null); };
@@ -55,6 +56,7 @@ function AccountCard({ a }: { a: Account }) {
   }, []);
   const floating = t.state.positions.filter((p) => p.accountId === a.id).reduce((s, p) => s + pnl(p, t.quotes), 0);
   const trades = t.state.positions.filter((p) => p.accountId === a.id);
+  const visibleTrades = showAllTrades ? trades : trades.slice(0, 3);
   const go = (path: string) => { t.setActive(a.id); nav(path); };
   // Open the close confirmation only from an explicit client tap on a trade row.
   const openTradeActions = (p: Position) => { t.setActive(a.id); setSelectedTrade(p); setCloseTradeDialogOpen(true); };
@@ -96,7 +98,10 @@ function AccountCard({ a }: { a: Account }) {
       <div className="border-t px-5 py-4">
         <>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Running trades ({trades.length})</div>
+            <div className="flex items-center gap-2">
+              <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Running trades ({trades.length})</div>
+              {trades.length > 3 && <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label={showAllTrades ? 'Show only first 3 trades' : 'Show all running trades'} title={showAllTrades ? 'Show fewer trades' : 'Show all trades'} onClick={() => setShowAllTrades((value) => !value)}>{showAllTrades ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</Button>}
+            </div>
             <div className="flex items-center gap-3">
               <div className="text-xs font-semibold">Total floating P/L <span className={cn('num font-extrabold tabular-nums', floating >= 0 ? 'text-up' : 'text-destructive')}>{money(floating)}</span><span className="ml-1 inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"/>Live · 1s</span></div>
               {trades.length > 0 && <Button size="sm" variant="destructive" onClick={() => { t.setActive(a.id); setConfirmCloseAll(true); }}>Close all</Button>}
@@ -104,7 +109,7 @@ function AccountCard({ a }: { a: Account }) {
           </div>
           {trades.length > 0 ? (
             <div className="mt-3 space-y-2">
-              {trades.map((p) => {
+              {visibleTrades.map((p) => {
                 const profit = pnl(p, t.quotes);
                 return <button type="button" key={p.id} onClick={() => openTradeActions(p)} className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-3 text-left text-xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                   <div className="flex items-center gap-2"><span className="font-bold">{p.symbol}</span><span className={cn('rounded px-1.5 py-0.5 font-bold', p.side === 'buy' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive')}>{p.side.toUpperCase()}</span><span className="text-muted-foreground">{p.volume} lot</span><span className="text-muted-foreground">· Tap to manage</span></div>
