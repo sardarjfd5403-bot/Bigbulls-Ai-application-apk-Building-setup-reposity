@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, MoreVertical, CandlestickChart, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import { Button } from '@project/components/ui/button';
@@ -43,6 +43,11 @@ function AccountCard({ a }: { a: Account }) {
   const [lev, setLev] = useState(false); const [arch, setArch] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Position | null>(null);
   const [confirmCloseAll, setConfirmCloseAll] = useState(false);
+  const [, setPnlSecond] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setPnlSecond((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   const floating = t.state.positions.filter((p) => p.accountId === a.id).reduce((s, p) => s + pnl(p, t.quotes), 0);
   const trades = t.state.positions.filter((p) => p.accountId === a.id);
   const go = (path: string) => { t.setActive(a.id); nav(path); };
@@ -81,7 +86,7 @@ function AccountCard({ a }: { a: Account }) {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Running trades ({trades.length})</div>
             <div className="flex items-center gap-3">
-              <div className="text-xs font-semibold">Total floating P/L <span className={cn('num font-extrabold', floating >= 0 ? 'text-up' : 'text-destructive')}>{money(floating)}</span></div>
+              <div className="text-xs font-semibold">Total floating P/L <span className={cn('num font-extrabold tabular-nums', floating >= 0 ? 'text-up' : 'text-destructive')}>{money(floating)}</span><span className="ml-1 inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"/>Live · 1s</span></div>
               {trades.length > 0 && <Button size="sm" variant="destructive" onClick={() => { t.setActive(a.id); setConfirmCloseAll(true); }}>Close all</Button>}
             </div>
           </div>
@@ -91,7 +96,7 @@ function AccountCard({ a }: { a: Account }) {
                 const profit = pnl(p, t.quotes);
                 return <button type="button" key={p.id} onClick={() => openTradeActions(p)} className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-3 text-left text-xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                   <div className="flex items-center gap-2"><span className="font-bold">{p.symbol}</span><span className={cn('rounded px-1.5 py-0.5 font-bold', p.side === 'buy' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive')}>{p.side.toUpperCase()}</span><span className="text-muted-foreground">{p.volume} lot</span><span className="text-muted-foreground">· Tap to manage</span></div>
-                  <span className={cn('num font-bold', profit >= 0 ? 'text-up' : 'text-destructive')}>{money(profit)}</span>
+                  <span className={cn('num font-bold tabular-nums', profit >= 0 ? 'text-up' : 'text-destructive')}>{money(profit)}</span>
                 </button>;
               })}
             </div>
