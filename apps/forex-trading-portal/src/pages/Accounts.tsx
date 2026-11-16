@@ -44,6 +44,10 @@ function AccountCard({ a }: { a: Account }) {
   const [selectedTrade, setSelectedTrade] = useState<Position | null>(null);
   const [closeTradeDialogOpen, setCloseTradeDialogOpen] = useState(false);
   const [confirmCloseAll, setConfirmCloseAll] = useState(false);
+  // Dialogs may only be opened by the explicit row/button handlers below. Ignore
+  // unsolicited Radix open requests (for example during WebView focus restoration).
+  const closeTradeDialog = () => { setCloseTradeDialogOpen(false); setSelectedTrade(null); };
+  const closeAllDialog = () => setConfirmCloseAll(false);
   const [, setPnlSecond] = useState(0);
   useEffect(() => {
     const timer = window.setInterval(() => setPnlSecond((value) => value + 1), 1000);
@@ -55,8 +59,10 @@ function AccountCard({ a }: { a: Account }) {
   // Open the close confirmation only from an explicit client tap on a trade row.
   const openTradeActions = (p: Position) => { t.setActive(a.id); setSelectedTrade(p); setCloseTradeDialogOpen(true); };
   const handleCloseTradeDialogChange = (open: boolean) => {
-    setCloseTradeDialogOpen(open);
-    if (!open) setSelectedTrade(null);
+    if (!open) closeTradeDialog();
+  };
+  const handleCloseAllDialogChange = (open: boolean) => {
+    if (!open) closeAllDialog();
   };
   return (
     <Card className="overflow-hidden">
@@ -119,12 +125,12 @@ function AccountCard({ a }: { a: Account }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep trade open</AlertDialogCancel>
+            <AlertDialogCancel onClick={closeTradeDialog}>Keep trade open</AlertDialogCancel>
             <AlertDialogAction disabled={!selectedTrade} onClick={() => { const tradeId = selectedTrade?.id; setCloseTradeDialogOpen(false); setSelectedTrade(null); if (tradeId) t.closePosition(tradeId); }}>Confirm close trade</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog open={confirmCloseAll} onOpenChange={setConfirmCloseAll}>
+      <AlertDialog open={confirmCloseAll} onOpenChange={handleCloseAllDialogChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Close all running trades?</AlertDialogTitle>
