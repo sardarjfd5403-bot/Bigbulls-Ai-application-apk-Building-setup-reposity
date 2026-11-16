@@ -269,6 +269,18 @@ export const bigbullsBackend = {
     return this.directRealAction(accountId, 'close', { position_id: positionId, bid: quote?.bid, ask: quote?.ask });
   },
 
+  async realCloseAll(accountId: string) {
+    await requireUser();
+    const { data, error } = await supabase.rpc('bb_client_bbook_close_all', { p_account_id: accountId });
+    if (error) throw error;
+    const result = data as { closed_count?: number; failed_count?: number; results?: Array<{ status: string; error?: string }> };
+    if (result?.failed_count) {
+      const first = result.results?.find((item) => item.status === 'failed');
+      throw new Error(`${result.closed_count || 0} position(s) closed; ${result.failed_count} failed${first?.error ? ': ' + first.error : '.'}`);
+    }
+    return result;
+  },
+
   async realModify(accountId: string, positionId: string, stopLoss?: number | null, takeProfit?: number | null) {
     return this.directRealAction(accountId, 'modify', {
       position_id: positionId, stop_loss: stopLoss ?? null, take_profit: takeProfit ?? null,
