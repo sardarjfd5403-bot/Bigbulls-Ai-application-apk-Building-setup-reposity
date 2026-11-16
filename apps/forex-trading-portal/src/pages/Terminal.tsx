@@ -18,7 +18,12 @@ import { money, SYMBOLS } from '../lib/symbols';
 
 export default function Terminal() {
   const t = useTrading();
-  const [symbol, setSymbol] = useState('EURUSD');
+  const [symbol, setSymbol] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem('bigbulls-terminal-selected-symbol');
+      return saved && SYMBOLS.some((item) => item.symbol === saved) ? saved : 'EURUSD';
+    } catch { return 'EURUSD'; }
+  });
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiSaving, setAiSaving] = useState(false);
   const [pendingOpen, setPendingOpen] = useState(false);
@@ -32,6 +37,9 @@ export default function Terminal() {
     }
     return () => { active = false; };
   }, [t.account.id, t.account.type]);
+  useEffect(() => {
+    try { window.localStorage.setItem('bigbulls-terminal-selected-symbol', symbol); } catch { /* storage may be unavailable in restricted WebViews */ }
+  }, [symbol]);
   const select = (nextSymbol: string) => setSymbol(nextSymbol);
 
   const changeAiMode = async (enabled: boolean) => {
