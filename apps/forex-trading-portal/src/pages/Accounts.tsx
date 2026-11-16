@@ -42,6 +42,7 @@ function AccountCard({ a }: { a: Account }) {
   const t = useTrading(); const nav = useNavigate();
   const [lev, setLev] = useState(false); const [arch, setArch] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Position | null>(null);
+  const [closeTradeDialogOpen, setCloseTradeDialogOpen] = useState(false);
   const [confirmCloseAll, setConfirmCloseAll] = useState(false);
   const [, setPnlSecond] = useState(0);
   useEffect(() => {
@@ -51,7 +52,12 @@ function AccountCard({ a }: { a: Account }) {
   const floating = t.state.positions.filter((p) => p.accountId === a.id).reduce((s, p) => s + pnl(p, t.quotes), 0);
   const trades = t.state.positions.filter((p) => p.accountId === a.id);
   const go = (path: string) => { t.setActive(a.id); nav(path); };
-  const openTradeActions = (p: Position) => { t.setActive(a.id); setSelectedTrade(p); };
+  // Open the close confirmation only from an explicit client tap on a trade row.
+  const openTradeActions = (p: Position) => { t.setActive(a.id); setSelectedTrade(p); setCloseTradeDialogOpen(true); };
+  const handleCloseTradeDialogChange = (open: boolean) => {
+    setCloseTradeDialogOpen(open);
+    if (!open) setSelectedTrade(null);
+  };
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center gap-2 border-b bg-muted/40 px-5 py-3 text-xs font-bold">
@@ -104,7 +110,7 @@ function AccountCard({ a }: { a: Account }) {
         </>
       </div>
       <LeverageDialog account={a} open={lev} onOpenChange={setLev} />
-      <AlertDialog open={!!selectedTrade} onOpenChange={(open) => { if (!open) setSelectedTrade(null); }}>
+      <AlertDialog open={closeTradeDialogOpen} onOpenChange={handleCloseTradeDialogChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Close this running trade?</AlertDialogTitle>
@@ -114,7 +120,7 @@ function AccountCard({ a }: { a: Account }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep trade open</AlertDialogCancel>
-            <AlertDialogAction disabled={!selectedTrade} onClick={() => { if (selectedTrade) t.closePosition(selectedTrade.id); setSelectedTrade(null); }}>Confirm close trade</AlertDialogAction>
+            <AlertDialogAction disabled={!selectedTrade} onClick={() => { const tradeId = selectedTrade?.id; setCloseTradeDialogOpen(false); setSelectedTrade(null); if (tradeId) t.closePosition(tradeId); }}>Confirm close trade</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
