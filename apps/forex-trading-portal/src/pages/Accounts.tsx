@@ -137,8 +137,8 @@ function AccountCard({ a }: { a: Account }) {
             <AlertDialogDescription>All {trades.length} open trade(s) on account #{a.number} will receive close requests. This action cannot be undone. Pending orders are not included.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { t.setActive(a.id); t.closeAll('all'); setConfirmCloseAll(false); }}>Confirm close all</AlertDialogAction>
+            <AlertDialogCancel onClick={closeAllDialog}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { t.setActive(a.id); closeAllDialog(); t.closeAll('all'); }}>Confirm close all</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
