@@ -116,7 +116,7 @@ function AccountCard({ a }: { a: Account }) {
         </>
       </div>
       <LeverageDialog account={a} open={lev} onOpenChange={setLev} />
-      <AlertDialog open={closeTradeDialogOpen} onOpenChange={handleCloseTradeDialogChange}>
+      {closeTradeDialogOpen && <AlertDialog open={true} onOpenChange={handleCloseTradeDialogChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Close this running trade?</AlertDialogTitle>
@@ -129,8 +129,8 @@ function AccountCard({ a }: { a: Account }) {
             <AlertDialogAction disabled={!selectedTrade} onClick={() => { const tradeId = selectedTrade?.id; setCloseTradeDialogOpen(false); setSelectedTrade(null); if (tradeId) t.closePosition(tradeId); }}>Confirm close trade</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={confirmCloseAll} onOpenChange={handleCloseAllDialogChange}>
+      </AlertDialog>}
+      {confirmCloseAll && <AlertDialog open={true} onOpenChange={handleCloseAllDialogChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Close all running trades?</AlertDialogTitle>
@@ -141,7 +141,7 @@ function AccountCard({ a }: { a: Account }) {
             <AlertDialogAction onClick={() => { t.setActive(a.id); closeAllDialog(); t.closeAll('all'); }}>Confirm close all</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
       <AlertDialog open={arch} onOpenChange={setArch}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Archive account #{a.number}?</AlertDialogTitle><AlertDialogDescription>Open positions and pending orders on this account will be removed.</AlertDialogDescription></AlertDialogHeader>
