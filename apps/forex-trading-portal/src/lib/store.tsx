@@ -16,7 +16,15 @@ const emptyState:State={accounts:[],activeId:'',positions:[],pending:[],history:
 const executionSymbol=(s:string)=>({BTCUSD:'BTCUSDT',ETHUSD:'ETHUSDT',SOLUSD:'SOLUSDT',XRPUSD:'XRPUSDT',BNBUSD:'BNBUSDT'} as Record<string,string>)[s]||s;
 const mapAccount=(a:TradingAccountRow):Account=>({id:a.id,number:String(a.account_number),type:a.account_mode==='real'?'Real':'Demo',platform:a.platform||'BigBulls Terminal',kind:(a.account_type||'Standard') as Account['kind'],leverage:Number(String(a.requested_leverage||'100').replace(/^1:/,''))||100,balance:Number(a.balance||0),currency:'USD'});
 const mapPosition=(p:any):Position=>({id:p.id,accountId:p.account_id,symbol:p.symbol,side:String(p.side).toLowerCase()==='buy'?'buy':'sell',volume:Number(p.quantity),openPrice:Number(p.entry_price),sl:p.stop_loss==null?undefined:Number(p.stop_loss),tp:p.take_profit==null?undefined:Number(p.take_profit),openTime:Date.parse(p.opened_at||p.created_at||new Date().toISOString()),floating:Number(p.floating_pnl??p.unrealized_pnl??0)});
-export function pnl(p:Position,_q:Quotes){return Number(p.floating||0);}
+export function pnl(p:Position,q:Quotes){
+ const info=SYM[p.symbol], quote=q?.[p.symbol];
+ if(info && quote && !quote.stale && Number.isFinite(quote.bid) && Number.isFinite(quote.ask) && quote.bid>0 && quote.ask>=quote.bid){
+  const exit=p.side==='buy'?quote.bid:quote.ask;
+  const direction=p.side==='buy'?1:-1;
+  return (exit-p.openPrice)*direction*p.volume*info.contract*quoteToUsd(p.symbol,q);
+ }
+ return Number(p.floating||0);
+}
 export function marginFor(symbol:string,volume:number,leverage:number,q:Quotes){const s=SYM[symbol];if(!s||!q[symbol])return 0;return volume*s.contract*q[symbol].ask*quoteToUsd(symbol,q)/Math.max(1,leverage);}
 function useEngine(){
  const [quotes,setQuotes]=useState<Quotes>(initialQuotes);
@@ -50,7 +58,14 @@ function useEngine(){
   }
  },[]);
  useEffect(()=>{const stop=subscribePrices(setQuotes);let alive=true;refresh().catch(e=>toast.error(e.message||'Unable to load trading accounts'));return()=>{alive=false;stop();};},[refresh]);
- useEffect(()=>{if(!state.activeId)return;refreshAccount(state.activeId).catch(e=>console.warn('Account refresh failed',e));const id=setInterval(()=>refreshAccount(state.activeId).catch(()=>{}),30000);return()=>clearInterval(id);},[state.activeId,refreshAccount]);
+ const accountIds=state.accounts.map(a=>a.id).join('|');
+ useEffect(()=>{
+  if(!accountIds)return;
+  const refreshAll=()=>accountsRef.current.forEach(a=>refreshAccount(a.id).catch(e=>console.warn('Account refresh failed',e)));
+  refreshAll();
+  const id=setInterval(refreshAll,15000);
+  return()=>clearInterval(id);
+ },[accountIds,refreshAccount]);
  useEffect(()=>{let alive=true;let channel:any=null;supabase.auth.getUser().then(({data})=>{if(!alive||!data.user)return;channel=bigbullsBackend.subscribeClientData(data.user.id,()=>{refresh().then(()=>{const id=activeIdRef.current;if(id)refreshAccount(id);}).catch(e=>console.warn('Realtime account refresh failed',e));});}).catch(e=>console.warn('Realtime subscription setup failed',e));return()=>{alive=false;if(channel)void supabase.removeChannel(channel);};},[refresh,refreshAccount]);
  const account=state.accounts.find(a=>a.id===state.activeId)||state.accounts[0]||{id:'',number:'—',type:'Demo' as const,platform:'BigBulls Terminal',kind:'Standard' as const,leverage:100,balance:0,currency:'USD' as const};
  const positions=state.positions.filter(p=>p.accountId===account.id),pending=state.pending.filter(p=>p.accountId===account.id),history=state.history.filter(p=>p.accountId===account.id);
