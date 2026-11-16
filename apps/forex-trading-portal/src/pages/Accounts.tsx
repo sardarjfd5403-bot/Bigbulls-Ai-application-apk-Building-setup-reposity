@@ -111,10 +111,13 @@ function AccountCard({ a }: { a: Account }) {
             <div className="mt-3 space-y-2">
               {visibleTrades.map((p) => {
                 const profit = pnl(p, t.quotes);
-                return <button type="button" key={p.id} onClick={() => openTradeActions(p)} className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-3 text-left text-xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                  <div className="flex items-center gap-2"><span className="font-bold">{p.symbol}</span><span className={cn('rounded px-1.5 py-0.5 font-bold', p.side === 'buy' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive')}>{p.side.toUpperCase()}</span><span className="text-muted-foreground">{p.volume} lot</span><span className="text-muted-foreground">· Tap to manage</span></div>
-                  <span className={cn('num font-bold tabular-nums', profit >= 0 ? 'text-up' : 'text-destructive')}>{money(profit)}</span>
-                </button>;
+                return <div key={p.id} className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-3 text-left text-xs">
+                  <div className="flex items-center gap-2"><span className="font-bold">{p.symbol}</span><span className={cn('rounded px-1.5 py-0.5 font-bold', p.side === 'buy' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive')}>{p.side.toUpperCase()}</span><span className="text-muted-foreground">{p.volume} lot</span></div>
+                  <div className="flex items-center gap-2">
+                    <span className={cn('num font-bold tabular-nums', profit >= 0 ? 'text-up' : 'text-destructive')}>{money(profit)}</span>
+                    <button type="button" aria-label={`Close ${p.symbol} trade`} title="Close trade" onClick={() => openTradeActions(p)} className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">Close</button>
+                  </div>
+                </div>;
               })}
             </div>
           ) : <p className="mt-2 text-xs text-muted-foreground">No running trades on this account.</p>}
