@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTrading, Position } from '../lib/store';
+import { useTrading, Position, pnl } from '../lib/store';
+import { money } from '../lib/symbols';
 import { fetchCandles } from '../lib/feed';
 import { SYM, getSymbolInfo } from '../lib/symbols';
 import { cn } from '@project/components/lib/utils';
@@ -139,7 +140,7 @@ export default function PriceChart({ symbol }: { symbol: string }) {
           {ma50 && <polyline points={ma50Values.map((v,i)=>v==null?'':`${i*cw+cw/2},${y(v)}`).filter(Boolean).join(' ')} fill="none" stroke="#fbbf24" strokeWidth="1.5"/>}
           {customMAValues.filter(m=>m.enabled).map(m=><polyline key={m.id} points={m.values.map((v,i)=>v==null?'':`${i*cw+cw/2},${y(v)}`).filter(Boolean).join(' ')} fill="none" stroke={m.color} strokeWidth={m.width}/>)}
           {showVolume && <g>{shownCandles.map((c,i)=>{const maxV=Math.max(1,...shownCandles.map(x=>Number(x.v)||0));const vh=((Number(c.v)||0)/maxV)*(H-plotH-3);return <rect key={'vol'+c.t} x={i*cw+cw*.15} y={H-vh} width={Math.max(1,cw*.7)} height={vh} fill={c.c>=c.o?'#16a34a':'#dc2626'} opacity="0.55"/>;})}</g>}
-          {lines.map(p=><g key={p.id} onClick={()=>openEdit(p)} style={{cursor:'pointer'}}><line x1={0} x2={W} y1={y(p.openPrice)} y2={y(p.openPrice)} stroke={p.side==='buy'?'#3b82f6':'#ef4444'} strokeWidth={2} strokeDasharray="7 3"/><rect x={4} y={y(p.openPrice)-15} width={145} height={14} rx={3} fill={p.side==='buy'?'#1d4ed8':'#b91c1c'}/><text x={9} y={y(p.openPrice)-5} fill="white" fontSize="10">{p.side.toUpperCase()} {p.volume} · {p.openPrice.toFixed(digits)} · EDIT</text><rect x={0} y={y(p.openPrice)-10} width={W} height={20} fill="transparent"/></g>)}
+          {lines.map(p=><g key={p.id} onClick={()=>openEdit(p)} style={{cursor:'pointer'}}><line x1={0} x2={W} y1={y(p.openPrice)} y2={y(p.openPrice)} stroke={p.side==='buy'?'#3b82f6':'#ef4444'} strokeWidth={2} strokeDasharray="7 3"/><rect x={4} y={y(p.openPrice)-15} width={205} height={14} rx={3} fill={p.side==='buy'?'#1d4ed8':'#b91c1c'}/><text x={9} y={y(p.openPrice)-5} fill="white" fontSize="10">{p.side.toUpperCase()} {p.volume} · {p.openPrice.toFixed(digits)} · {money(pnl(p,trading.quotes))} · EDIT</text><rect x={0} y={y(p.openPrice)-10} width={W} height={20} fill="transparent"/></g>)}
           {pending.filter(o=>o.symbol===symbol).map(o=><g key={o.id}><line x1={0} x2={W} y1={y(o.price)} y2={y(o.price)} stroke={o.side==='buy'?'#60a5fa':'#f87171'} strokeWidth={1.3} strokeDasharray="2 4"/><text x={5} y={y(o.price)-4} fill={o.side==='buy'?'#93c5fd':'#fca5a5'} fontSize="10">{o.side.toUpperCase()} {o.kind.toUpperCase()} {o.price.toFixed(digits)}</text></g>)}
           <line x1={0} x2={W} y1={y(bid)} y2={y(bid)} stroke="#38bdf8" strokeWidth={1}/><rect x={W} y={y(bid)-10} width={axisW} height={20} fill="#0284c7" rx={3}/><text x={W+5} y={y(bid)+4} fill="white" fontSize="10" fontWeight="700">{bid.toFixed(digits)}</text>
           {Array.from({length:5},(_,i)=>{const c=shownCandles[Math.min(Math.max(shownCandles.length-1,0),Math.floor(i*Math.max(shownCandles.length-1,0)/4))];return <text key={i} x={W*i/4+4} y={H+16} fill="#8092aa" fontSize="9">{new Date(Number(c?.t)>0?Number(c.t)*1000:Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</text>;})}
