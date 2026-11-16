@@ -72,6 +72,30 @@ function AccountCard({ a }: { a: Account }) {
           </>}
         </div>
       </div>
+      <div className="border-t px-5 py-4">
+        {(() => {
+          const trades = t.state.positions.filter((p) => p.accountId === a.id);
+          return (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Running trades ({trades.length})</div>
+                <div className="text-xs font-semibold">Total floating P/L <span className={cn('num font-extrabold', floating >= 0 ? 'text-up' : 'text-destructive')}>{money(floating)}</span></div>
+              </div>
+              {trades.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {trades.map((p) => {
+                    const profit = pnl(p, t.quotes);
+                    return <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2 text-xs">
+                      <div className="flex items-center gap-2"><span className="font-bold">{p.symbol}</span><span className={cn('rounded px-1.5 py-0.5 font-bold', p.side === 'buy' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive')}>{p.side.toUpperCase()}</span><span className="text-muted-foreground">{p.volume} lot</span></div>
+                      <span className={cn('num font-bold', profit >= 0 ? 'text-up' : 'text-destructive')}>{money(profit)}</span>
+                    </div>;
+                  })}
+                </div>
+              ) : <p className="mt-2 text-xs text-muted-foreground">No running trades on this account.</p>}
+            </>
+          );
+        })()}
+      </div>
       <LeverageDialog account={a} open={lev} onOpenChange={setLev} />
       <AlertDialog open={arch} onOpenChange={setArch}>
         <AlertDialogContent>
