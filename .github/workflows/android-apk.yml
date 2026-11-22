@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
 permissions:
-  contents: read
+  contents: write
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -59,3 +59,12 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+      - name: Publish installable APK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "android-build-${GITHUB_RUN_NUMBER}" android/app/build/outputs/apk/debug/app-debug.apk \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --title "BIGBULLS Android Build ${GITHUB_RUN_NUMBER}" \
+            --notes "Installable BIGBULLS Android debug APK built from commit ${GITHUB_SHA}."
