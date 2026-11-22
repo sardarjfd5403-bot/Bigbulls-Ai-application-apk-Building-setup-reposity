@@ -7,6 +7,7 @@ import { cn } from '@project/components/lib/utils';
 const TFS: [string, number][] = [['1m', 60], ['5m', 300], ['15m', 900], ['1h', 3600], ['4h', 14400], ['1D', 86400]];
 const TF_API: Record<number,string> = {60:'1m',300:'5m',900:'15m',3600:'1h',14400:'4h',86400:'1d'};
 type Candle = { t: number; o: number; h: number; l: number; c: number };
+type Pointer = { x:number; y:number };
 
 export default function PriceChart({ symbol }: { symbol: string }) {
   const { quotes, positions } = useTrading();
@@ -14,10 +15,14 @@ export default function PriceChart({ symbol }: { symbol: string }) {
   const [candles, setCandles] = useState<Candle[]>([]);
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 800, h: 400 });
+  const [zoom, setZoom] = useState({ x: 1, y: 1, panX: 0, panY: 0 });
+  const pointers = useRef(new Map<number, Pointer>());
+  const gesture = useRef<{distance:number; midpoint:Pointer; startZoom:typeof zoom}|null>(null);
+  const drag = useRef<{point:Pointer; startZoom:typeof zoom}|null>(null);
   const bid = quotes[symbol].bid;
   const d = SYM[symbol].digits;
 
-  useEffect(() => { let live = true; setCandles([]); fetchCandles(symbol, TF_API[tf] || '15m', 300).then(rows => { if (live) setCandles(rows); }).catch(err => console.warn('Live OHLC unavailable:', err)); return () => { live = false; }; }, [symbol, tf]);
+  useEffect(() => { let live = true; setCandles([]); setZoom({x:1,y:1,panX:0,panY:0}); fetchCandles(symbol, TF_API[tf] || '15m', 300).then(rows => { if (live) setCandles(rows); }).catch(err => console.warn('Live OHLC unavailable:', err)); return () => { live = false; }; }, [symbol, tf]);
 
   useEffect(() => {
     setCandles((cs) => {
@@ -36,27 +41,68 @@ export default function PriceChart({ symbol }: { symbol: string }) {
   }, []);
 
   const lines = positions.filter((p) => p.symbol === symbol);
-  const { min, max } = useMemo(() => {
+  const { min:baseMin, max:baseMax } = useMemo(() => {
     const hs = candles.map((c) => c.h), ls = candles.map((c) => c.l);
     const mx = Math.max(...hs, bid), mn = Math.min(...ls, bid), pad = (mx - mn) * 0.08 || 1;
     return { min: mn - pad, max: mx + pad };
   }, [candles, bid]);
-
+  const range = baseMax-baseMin;
+  const mid=(baseMax+baseMin)/2 + zoom.panY*range;
+  const visibleRange=range/zoom.y;
+  const min=mid-visibleRange/2, max=mid+visibleRange/2;
   const axisW = 72, W = Math.max(size.w - axisW, 100), H = Math.max(size.h - 24, 100);
   const y = (v: number) => H - ((v - min) / (max - min)) * H;
-  const cw = W / Math.max(candles.length, 1);
+  const count=Math.max(candles.length,1);
+  const visibleCount=Math.max(8,count/zoom.x);
+  const center=(count-1)/2+zoom.panX*count;
+  const first=center-visibleCount/2;
+  const cw=W/visibleCount;
+  const xAt=(i:number)=>((i-first)+0.5)*cw;
   const ticks = Array.from({ length: 6 }, (_, i) => min + ((max - min) * (i + 0.5)) / 6);
 
+  const onWheel=(e:React.WheelEvent<HTMLDivElement>)=>{
+    e.preventDefault();
+    const rect=ref.current?.getBoundingClientRect(); if(!rect)return;
+    const overAxis=e.clientX-rect.left>W;
+    const factor=Math.exp(-e.deltaY*0.0015);
+    setZoom(z=>overAxis?{...z,y:Math.min(12,Math.max(0.5,z.y*factor))}:{...z,x:Math.min(12,Math.max(0.5,z.x*factor)),y:Math.min(12,Math.max(0.5,z.y*factor))});
+  };
+  const onPointerDown=(e:React.PointerEvent<HTMLDivElement>)=>{
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const p={x:e.clientX,y:e.clientY}; pointers.current.set(e.pointerId,p);
+    if(pointers.current.size===2){
+      const [a,b]=Array.from(pointers.current.values());
+      gesture.current={distance:Math.hypot(a.x-b.x,a.y-b.y),midpoint:{x:(a.x+b.x)/2,y:(a.y+b.y)/2},startZoom:zoom}; drag.current=null;
+    }else drag.current={point:p,startZoom:zoom};
+  };
+  const onPointerMove=(e:React.PointerEvent<HTMLDivElement>)=>{
+    if(!pointers.current.has(e.pointerId))return;
+    pointers.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pointers.current.size===2&&gesture.current){
+      const [a,b]=Array.from(pointers.current.values()); const dist=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y));
+      const start=gesture.current; const factor=dist/Math.max(1,start.distance);
+      setZoom({...start.startZoom,x:Math.min(12,Math.max(0.5,start.startZoom.x*factor)),y:Math.min(12,Math.max(0.5,start.startZoom.y*factor))});
+    }else if(drag.current){
+      const dx=e.clientX-drag.current.point.x,dy=e.clientY-drag.current.point.y, start=drag.current.startZoom;
+      setZoom({...start,panX:start.panX-dx/Math.max(W,1)/start.x,panY:start.panY+dy/Math.max(H,1)/start.y});
+    }
+  };
+  const onPointerUp=(e:React.PointerEvent<HTMLDivElement>)=>{
+    pointers.current.delete(e.pointerId);
+    if(pointers.current.size<2)gesture.current=null;
+    if(pointers.current.size===0)drag.current=null;
+  };
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-1 border-b px-3 py-1.5">
+    <div className="flex h-full min-w-0 flex-col">
+      <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b px-2 py-1.5">
         {TFS.map(([l, v]) => (
-          <button key={l} onClick={() => setTf(v)} className={cn('rounded px-2 py-1 text-xs font-semibold', tf === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')}>{l}</button>
+          <button key={l} onClick={() => setTf(v)} className={cn('shrink-0 rounded px-2 py-1 text-xs font-semibold', tf === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')}>{l}</button>
         ))}
-        <span className="ml-auto text-xs text-muted-foreground">{SYM[symbol].name}</span>
+        <span className="ml-auto shrink-0 text-xs text-muted-foreground">{SYM[symbol].name}</span>
       </div>
-      <div ref={ref} className="relative min-h-0 flex-1">
-        <svg width={size.w} height={size.h} className="absolute inset-0">
+      <div ref={ref} onWheel={onWheel} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} className="relative min-h-0 flex-1 overflow-hidden select-none" style={{touchAction:'none'}}>
+        <svg width={size.w} height={size.h} className="absolute inset-0 block">
           {ticks.map((t) => (
             <g key={t}>
               <line x1={0} x2={W} y1={y(t)} y2={y(t)} className="stroke-border" strokeDasharray="2 4" />
@@ -64,12 +110,12 @@ export default function PriceChart({ symbol }: { symbol: string }) {
             </g>
           ))}
           {candles.map((c, i) => {
-            const up = c.c >= c.o; const x = i * cw + cw / 2;
-            const cls = up ? 'fill-[hsl(var(--success))] stroke-[hsl(var(--success))]' : 'fill-destructive stroke-destructive';
+            const x=xAt(i); if(x < -cw || x > W+cw)return null;
+            const up = c.c >= c.o; const cls = up ? 'fill-[hsl(var(--success))] stroke-[hsl(var(--success))]' : 'fill-destructive stroke-destructive';
             return (
               <g key={c.t} className={cls}>
                 <line x1={x} x2={x} y1={y(c.h)} y2={y(c.l)} strokeWidth={1} />
-                <rect x={x - cw * 0.35} width={cw * 0.7} y={y(Math.max(c.o, c.c))} height={Math.max(1, Math.abs(y(c.o) - y(c.c)))} />
+                <rect x={x - Math.max(1,cw*0.35)} width={Math.max(1,cw*0.7)} y={y(Math.max(c.o, c.c))} height={Math.max(1, Math.abs(y(c.o) - y(c.c)))} />
               </g>
             );
           })}
