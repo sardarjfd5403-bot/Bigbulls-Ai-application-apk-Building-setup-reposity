@@ -10,11 +10,14 @@ import { pnl, useTrading, Position } from '../lib/store';
 import { SYM, money } from '../lib/symbols';
 
 const TABS = ['Open', 'Pending', 'Closed'] as const;
+const positionsCountLabel = (n: number) => `${n} open trade${n === 1 ? '' : 's'}`;
 
 export default function PositionsPanel() {
   const t = useTrading();
   const [tab, setTab] = useState<(typeof TABS)[number]>('Open');
   const [edit, setEdit] = useState<Position | null>(null);
+  const [closeTarget, setCloseTarget] = useState<Position | null>(null);
+  const [closeFilter, setCloseFilter] = useState<'all' | 'profit' | 'loss' | null>(null);
   const counts = { Open: t.positions.length, Pending: t.pending.length, Closed: t.history.length };
 
   return (
@@ -29,9 +32,9 @@ export default function PositionsPanel() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button size="sm" variant="ghost" className="ml-auto h-7 text-xs">Close all ▾</Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => t.closeAll('all')}>Close all positions</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => t.closeAll('profit')}>Close profitable</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => t.closeAll('loss')}>Close losing</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCloseFilter('all')}>Close all positions</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCloseFilter('profit')}>Close profitable</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCloseFilter('loss')}>Close losing</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -54,7 +57,7 @@ export default function PositionsPanel() {
                   <td className={cn('num px-3 font-bold', pr >= 0 ? 'text-up' : 'text-destructive')}>{money(pr)}</td>
                   <td className="whitespace-nowrap px-3 text-right">
                     <button onClick={() => setEdit(p)} className="mr-2 text-muted-foreground hover:text-primary" aria-label="Modify"><Pencil className="h-3.5 w-3.5" /></button>
-                    <button onClick={() => t.closePosition(p.id)} className="text-muted-foreground hover:text-destructive" aria-label="Close"><X className="h-4 w-4" /></button>
+                    <button onClick={() => setCloseTarget(p)} className="text-muted-foreground hover:text-destructive" aria-label="Close"><X className="h-4 w-4" /></button>
                   </td>
                 </tr>
               );
@@ -90,6 +93,18 @@ export default function PositionsPanel() {
         {counts[tab] === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No {tab.toLowerCase()} orders</p>}
       </div>
       {edit && <ModifyDialog p={edit} onClose={() => setEdit(null)} />}
+      <Dialog open={!!closeTarget || !!closeFilter} onOpenChange={(open) => { if (!open) { setCloseTarget(null); setCloseFilter(null); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{closeTarget ? `Close ${closeTarget.side.toUpperCase()} ${closeTarget.volume} ${closeTarget.symbol}?` : closeFilter === 'all' ? 'Close all open trades?' : closeFilter === 'profit' ? 'Close all profitable trades?' : 'Close all losing trades?'}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{closeTarget ? 'This trade will be sent to the BIGBULLS execution engine for closing.' : `This will submit close requests for ${closeFilter === 'all' ? positionsCountLabel(counts.Open) : closeFilter === 'profit' ? 'profitable open trades' : 'losing open trades'}.`}</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCloseTarget(null); setCloseFilter(null); }}>Cancel</Button>
+            <Button variant="destructive" onClick={() => { if (closeTarget) t.closePosition(closeTarget.id); else if (closeFilter) t.closeAll(closeFilter); setCloseTarget(null); setCloseFilter(null); }}>Confirm close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
