@@ -320,7 +320,7 @@ export const bigbullsBackend = {
 
   async uploadPaymentProof(file: File) {
     const user = await requireUser();
-    if (file.size < 100 * 1024 || file.size > 15 * 1024 * 1024) throw new Error('Payment proof must be between 100 KB and 15 MB.');
+    if (file.size < 100 * 1024 || file.size > 10 * 1024 * 1024) throw new Error('Payment proof must be between 100 KB and 10 MB.');
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
     const { data, error } = await supabase.storage.from('payment-proofs').upload(path,file,{upsert:false,contentType:file.type||'application/octet-stream'});
