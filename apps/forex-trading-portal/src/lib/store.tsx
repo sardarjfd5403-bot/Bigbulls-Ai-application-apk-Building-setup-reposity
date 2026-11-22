@@ -16,7 +16,19 @@ const emptyState:State={accounts:[],activeId:'',positions:[],pending:[],history:
 const executionSymbol=(s:string)=>({BTCUSD:'BTCUSDT',ETHUSD:'ETHUSDT',SOLUSD:'SOLUSDT',XRPUSD:'XRPUSDT',BNBUSD:'BNBUSDT'} as Record<string,string>)[s]||s;
 const mapAccount=(a:TradingAccountRow):Account=>({id:a.id,number:String(a.account_number),type:a.account_mode==='real'?'Real':'Demo',platform:a.platform||'BigBulls Terminal',kind:(a.account_type||'Standard') as Account['kind'],leverage:Number(String(a.requested_leverage||'100').replace(/^1:/,''))||100,balance:Number(a.balance||0),currency:'USD'});
 const mapPosition=(p:any):Position=>({id:p.id,accountId:p.account_id,symbol:p.symbol,side:String(p.side).toLowerCase()==='buy'?'buy':'sell',volume:Number(p.quantity),openPrice:Number(p.entry_price),sl:p.stop_loss==null?undefined:Number(p.stop_loss),tp:p.take_profit==null?undefined:Number(p.take_profit),openTime:Date.parse(p.opened_at||p.created_at||new Date().toISOString()),floating:Number(p.floating_pnl??p.unrealized_pnl??0)});
-export function pnl(p:Position,_q:Quotes){return Number(p.floating||0);}
+export function positionPips(p:Position,q:Quotes){
+ const info=SYM[p.symbol]; if(!info)return 0;
+ const quote=q[p.symbol]; if(!quote)return 0;
+ const exit=p.side==='buy'?quote.bid:quote.ask;
+ const pipSize=info.digits===5||info.digits===3?Math.pow(10,-(info.digits-1)):Math.pow(10,-info.digits);
+ return ((p.side==='buy'?exit-p.openPrice:p.openPrice-exit)/pipSize);
+}
+export function pnl(p:Position,q:Quotes){
+ const info=SYM[p.symbol]; const quote=q[p.symbol]; if(!info||!quote)return Number(p.floating||0);
+ const exit=p.side==='buy'?quote.bid:quote.ask;
+ const priceMove=p.side==='buy'?exit-p.openPrice:p.openPrice-exit;
+ return priceMove*info.contract*p.volume*quoteToUsd(p.symbol,q);
+}
 export function marginFor(symbol:string,volume:number,leverage:number,q:Quotes){const s=SYM[symbol];if(!s||!q[symbol])return 0;return volume*s.contract*q[symbol].ask*quoteToUsd(symbol,q)/Math.max(1,leverage);}
 function useEngine(){
  const [quotes,setQuotes]=useState<Quotes>(initialQuotes);
@@ -54,7 +66,18 @@ function useEngine(){
  const account=state.accounts.find(a=>a.id===state.activeId)||state.accounts[0]||{id:'',number:'—',type:'Demo' as const,platform:'BigBulls Terminal',kind:'Standard' as const,leverage:100,balance:0,currency:'USD' as const};
  const positions=state.positions.filter(p=>p.accountId===account.id),pending=state.pending.filter(p=>p.accountId===account.id),history=state.history.filter(p=>p.accountId===account.id);
  const floating=positions.reduce((n,p)=>n+pnl(p,quotes),0),margin=positions.reduce((n,p)=>n+marginFor(p.symbol,p.volume,account.leverage,quotes),0),equity=account.balance+floating,free=equity-margin,level=margin>0?equity/margin*100:0;
- const run=async(fn:()=>Promise<any>,success?:string)=>{if(busy)return false;setBusy(true);try{await fn();await refresh();if(account.id)await refreshAccount(account.id);if(success)toast.success(success);return true;}catch(e:any){toast.error(e?.message||'BIGBULLS server request failed');return false;}finally{setBusy(false);}};
+ const run=async(fn:()=>Promise<any>,success?:string)=>{
+  if(busy)return false;
+  setBusy(true);
+  try{
+   await fn();
+   if(success)toast.success(success);
+   // Do not hold the order/close action open while secondary account/history reads finish.
+   void refresh().then(()=>account.id?refreshAccount(account.id):undefined).catch(e=>console.warn('Post-execution refresh failed',e));
+   return true;
+  }catch(e:any){toast.error(e?.message||'BIGBULLS server request failed');return false;}
+  finally{setBusy(false);}
+ };
  const actions={
   setActive:(id:string)=>setState(s=>({...s,activeId:id})),
   toggleFav:(sym:string)=>setState(s=>({...s,favorites:s.favorites.includes(sym)?s.favorites.filter(x=>x!==sym):[...s.favorites,sym]})),
@@ -62,7 +85,12 @@ function useEngine(){
   placePending:(o:Omit<Pending,'id'|'accountId'|'created'>)=>{if(!account.id||account.type!=='Real'){toast.error('Pending orders are currently supported by the Real B-Book engine only.');return false;}return run(()=>bigbullsBackend.realPending(account.id,{symbol:executionSymbol(o.symbol),side:o.side.toUpperCase() as 'BUY'|'SELL',order_type:o.side.toUpperCase()+'_'+o.kind.toUpperCase(),quantity:o.volume,target_price:o.price,stop_loss:o.sl??null,take_profit:o.tp??null}),'Pending order submitted to BIGBULLS');},
   cancelPending:(id:string)=>run(()=>bigbullsBackend.realCancelPending(account.id,id),'Pending order cancelled'),
   closePosition:(id:string)=>run(()=>account.type==='Real'?bigbullsBackend.realClose(account.id,id):bigbullsBackend.demoClose(account.id,id),'Close request sent to execution engine'),
-  closeAll:(filter:'all'|'profit'|'loss')=>run(async()=>{const selected=positions.filter(p=>filter==='all'||(filter==='profit'?pnl(p,quotes)>0:pnl(p,quotes)<0));for(const p of selected){if(account.type==='Real')await bigbullsBackend.realClose(account.id,p.id);else await bigbullsBackend.demoClose(account.id,p.id);}},'Close requests submitted'),
+  closeAll:(filter:'all'|'profit'|'loss')=>run(async()=>{
+   const selected=positions.filter(p=>filter==='all'||(filter==='profit'?pnl(p,quotes)>0:pnl(p,quotes)<0));
+   const results=await Promise.allSettled(selected.map(p=>account.type==='Real'?bigbullsBackend.realClose(account.id,p.id):bigbullsBackend.demoClose(account.id,p.id)));
+   const failed=results.filter(r=>r.status==='rejected');
+   if(failed.length)throw new Error(`${selected.length-failed.length} closed; ${failed.length} close request(s) failed. Refresh and retry remaining trades.`);
+  },'Close requests submitted'),
   modifyPosition:(id:string,sl?:number,tp?:number)=>run(async()=>{if(account.type==='Real'){await bigbullsBackend.realModify(account.id,id,sl??null,tp??null);return;}if(!(Number(sl)>0))throw new Error('Demo paper positions require a valid Stop Loss.');await bigbullsBackend.demoModify(account.id,id,Number(sl),tp??null);},'Stop Loss / Take Profit update submitted'),
   transact:(_accountId:string,_type:any,_method:string,_amount:number)=>{toast.error('Use the secure BIGBULLS payment workflow; local balance credit is disabled.');return false;},
   transfer:(_fromId:string,_toId:string,_amount:number)=>{toast.error('Local transfers are disabled until the existing server transfer workflow is wired.');return false;},
