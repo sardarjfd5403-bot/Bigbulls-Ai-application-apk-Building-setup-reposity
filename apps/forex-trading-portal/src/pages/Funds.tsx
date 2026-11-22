@@ -58,11 +58,12 @@ export default function Funds({mode}:{mode:'Deposit'|'Withdrawal'}){
  const submit=async()=>{
   const usdValue=Number(usd);
   if(!selected||!accountId||usdValue<=0){toast.error('Select a payment method and Real account, then enter a valid USD amount.');return;}
-  if(selected.min_amount_usd!==undefined&&usdValue<Number(selected.min_amount_usd)){toast.error('Minimum deposit is $'+Number(selected.min_amount_usd).toFixed(2)+'.');return;}
-  if(selected.max_amount_usd!==null&&selected.max_amount_usd!==undefined&&usdValue>Number(selected.max_amount_usd)){toast.error('Maximum deposit is $'+Number(selected.max_amount_usd).toFixed(2)+'.');return;}
+  if(selectedMethod&&usdValue<Number(selectedMethod.min_amount_usd)){toast.error('Minimum deposit is $'+Number(selected.min_amount_usd).toFixed(2)+'.');return;}
+  if(selectedMethod&&selectedMethod.max_amount_usd!==null&&usdValue>Number(selectedMethod.max_amount_usd)){toast.error('Maximum deposit is $'+Number(selected.max_amount_usd).toFixed(2)+'.');return;}
   const isCrypto=mode==='Withdrawal'||(selected as DepositMethod).method_type==='crypto';
   if(mode==='Deposit'&&isCrypto&&(!(Number(crypto)>0)||txid.trim().length<=10)){toast.error('Enter the crypto amount and a valid blockchain TXID.');return;}
   if(mode==='Withdrawal'&&(!(Number(crypto)>0)||destination.trim().length<=10)){toast.error('Enter a valid crypto amount and destination address.');return;}
+  if(mode==='Deposit'&&!isCrypto&&!(Number(crypto)>0)){toast.error('Enter the amount paid in the payment currency.');return;}
   if(mode==='Deposit'&&!isCrypto&&!proof){toast.error('Attach your transfer receipt or payment screenshot.');return;}
   if(mode==='Deposit'&&isCrypto&&proof&&proof.size<100*1024){toast.error('Payment proof must be at least 100 KB.');return;}
   setBusy(true);
