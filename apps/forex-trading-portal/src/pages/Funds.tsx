@@ -7,27 +7,106 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { bigbullsBackend } from '../lib/bigbullsBackend';
 import { supabase } from '../lib/supabase';
 import { useTrading } from '../lib/store';
+
 type PayWallet={id:string;asset:string;network:string;label:string|null;address:string;active:boolean};
+type DepositMethod={id:string;method_key:string;display_name:string;method_type:'crypto'|'fiat';crypto_wallet_id:string|null;asset:string;network:string;destination_details:string;account_title:string|null;account_number:string|null;logo_url:string|null;instructions:string|null;min_amount_usd:number;max_amount_usd:number|null;active_app:boolean;sort_order:number};
 type PayTxn={id:string;kind:string;asset:string;network:string;amount_usd:number;amount_crypto:number;status:string;created_at:string;admin_note?:string|null;rejection_reason?:string|null};
+
 export default function Funds({mode}:{mode:'Deposit'|'Withdrawal'}){
- const trading=useTrading();const [wallets,setWallets]=useState<PayWallet[]>([]);const [txns,setTxns]=useState<PayTxn[]>([]);const [kyc,setKyc]=useState<any>(null);const [kycLoading,setKycLoading]=useState(true);
- const [walletId,setWalletId]=useState('');const [accountId,setAccountId]=useState('');const [usd,setUsd]=useState('');const [crypto,setCrypto]=useState('');const [txid,setTxid]=useState('');const [destination,setDestination]=useState('');const [otp,setOtp]=useState('');const [otpTxn,setOtpTxn]=useState('');const [proof,setProof]=useState<File|null>(null);const [busy,setBusy]=useState(false);
- const selected=wallets.find(w=>w.id===walletId);const real=trading.state.accounts.filter(a=>a.type==='Real');
- const reload=async()=>{const results=await Promise.all([bigbullsBackend.cryptoWallets(),bigbullsBackend.walletTransactions(),bigbullsBackend.kyc()]);setWallets(results[0] as PayWallet[]);setTxns(results[1] as PayTxn[]);setKyc(results[2]);setKycLoading(false);if(!walletId&&results[0][0])setWalletId(results[0][0].id);};
- useEffect(()=>{reload().catch(e=>toast.error(e.message||'Payment data could not be loaded'));},[]);
+ const trading=useTrading();
+ const [wallets,setWallets]=useState<PayWallet[]>([]);
+ const [methods,setMethods]=useState<DepositMethod[]>([]);
+ const [txns,setTxns]=useState<PayTxn[]>([]);
+ const [kyc,setKyc]=useState<any>(null);
+ const [kycLoading,setKycLoading]=useState(true);
+ const [walletId,setWalletId]=useState('');
+ const [accountId,setAccountId]=useState('');
+ const [usd,setUsd]=useState('');
+ const [crypto,setCrypto]=useState('');
+ const [txid,setTxid]=useState('');
+ const [destination,setDestination]=useState('');
+ const [otp,setOtp]=useState('');
+ const [otpTxn,setOtpTxn]=useState('');
+ const [proof,setProof]=useState<File|null>(null);
+ const [busy,setBusy]=useState(false);
+ const selectedWallet=wallets.find(w=>w.id===walletId);
+ const selectedMethod=methods.find(m=>m.id===walletId);
+ const real=trading.state.accounts.filter(a=>a.type==='Real');
+ const selected=mode==='Deposit'?selectedMethod:selectedWallet;
+
+ const reload=async()=>{
+  const [paymentOptions,history,verification]=await Promise.all([
+   mode==='Deposit'?bigbullsBackend.depositMethodSettings():bigbullsBackend.cryptoWallets(),
+   bigbullsBackend.walletTransactions(),
+   bigbullsBackend.kyc()
+  ]);
+  if(mode==='Deposit'){
+   setMethods(paymentOptions as DepositMethod[]);
+   if(!walletId&&(paymentOptions as DepositMethod[])[0])setWalletId((paymentOptions as DepositMethod[])[0].id);
+  }else{
+   setWallets(paymentOptions as PayWallet[]);
+   if(!walletId&&(paymentOptions as PayWallet[])[0])setWalletId((paymentOptions as PayWallet[])[0].id);
+  }
+  setTxns(history as PayTxn[]);
+  setKyc(verification);
+  setKycLoading(false);
+ };
+ useEffect(()=>{reload().catch(e=>toast.error(e.message||'Payment data could not be loaded'));},[mode]);
  useEffect(()=>{let alive=true;let channel:any=null;void supabase.auth.getUser().then(({data})=>{if(alive&&data.user)channel=bigbullsBackend.subscribeClientData(data.user.id,()=>{void reload().catch(e=>console.warn('Payment refresh failed',e));});});return()=>{alive=false;if(channel)void supabase.removeChannel(channel);};},[]);
  useEffect(()=>{if(!accountId&&real[0])setAccountId(real[0].id);},[accountId,real]);
- const submit=async()=>{const usdValue=Number(usd),cryptoValue=Number(crypto);if(!selected||!accountId||usdValue<=0||cryptoValue<=0){toast.error('Select a payment network and Real account, then enter valid amounts.');return;}if(mode==='Deposit'&&txid.trim().length<=10){toast.error('Blockchain TXID must be longer than 10 characters.');return;}if(mode==='Withdrawal'&&destination.trim().length<=10){toast.error('Enter a valid destination address.');return;}setBusy(true);try{let proofPath:string|undefined;if(mode==='Deposit'&&proof)proofPath=await bigbullsBackend.uploadPaymentProof(proof);const payload:any={account_id:accountId,kind:mode.toLowerCase(),asset:selected.asset,network:selected.network,destination_address:mode==='Deposit'?selected.address:destination.trim(),amount_crypto:cryptoValue,amount_usd:usdValue};if(mode==='Deposit'){payload.tx_hash=txid.trim();if(proofPath)payload.proof_path=proofPath;}const created=await bigbullsBackend.submitWalletTransaction(payload);if(mode==='Withdrawal'){await bigbullsBackend.requestWithdrawalOtp(created.id);setOtpTxn(created.id);toast.success('Withdrawal request saved; email OTP sent.');}else toast.success('Deposit request sent for admin review.');setUsd('');setCrypto('');setTxid('');setDestination('');setProof(null);await reload();}catch(e:any){toast.error(e.message||'Payment request failed');}finally{setBusy(false);}};
+
+ const submit=async()=>{
+  const usdValue=Number(usd);
+  if(!selected||!accountId||usdValue<=0){toast.error('Select a payment method and Real account, then enter a valid USD amount.');return;}
+  if(selected.min_amount_usd!==undefined&&usdValue<Number(selected.min_amount_usd)){toast.error('Minimum deposit is $'+Number(selected.min_amount_usd).toFixed(2)+'.');return;}
+  if(selected.max_amount_usd!==null&&selected.max_amount_usd!==undefined&&usdValue>Number(selected.max_amount_usd)){toast.error('Maximum deposit is $'+Number(selected.max_amount_usd).toFixed(2)+'.');return;}
+  const isCrypto=mode==='Withdrawal'||(selected as DepositMethod).method_type==='crypto';
+  if(mode==='Deposit'&&isCrypto&&(!(Number(crypto)>0)||txid.trim().length<=10)){toast.error('Enter the crypto amount and a valid blockchain TXID.');return;}
+  if(mode==='Withdrawal'&&(!(Number(crypto)>0)||destination.trim().length<=10)){toast.error('Enter a valid crypto amount and destination address.');return;}
+  if(mode==='Deposit'&&!isCrypto&&!proof){toast.error('Attach your transfer receipt or payment screenshot.');return;}
+  if(mode==='Deposit'&&isCrypto&&proof&&proof.size<100*1024){toast.error('Payment proof must be at least 100 KB.');return;}
+  setBusy(true);
+  try{
+   let proofPath:string|undefined;
+   if(mode==='Deposit'&&proof)proofPath=await bigbullsBackend.uploadPaymentProof(proof);
+   const method=selected as DepositMethod;
+   const wallet=selected as PayWallet;
+   const asset=mode==='Deposit'?method.asset:wallet.asset;
+   const network=mode==='Deposit'?method.network:wallet.network;
+   const address=mode==='Deposit'
+     ?(method.method_type==='crypto'?method.destination_details:([method.account_title,method.account_number,method.destination_details].filter(Boolean).join(' · ')))
+     :destination.trim();
+   const cryptoAmount=mode==='Withdrawal'||(mode==='Deposit'&&isCrypto)?Number(crypto):Number(crypto||usd);
+   const payload:any={account_id:accountId,kind:mode.toLowerCase(),asset,network,destination_address:mode==='Deposit'?address:destination.trim(),amount_crypto:cryptoAmount,amount_usd:usdValue};
+   if(mode==='Deposit'){
+    if(isCrypto)payload.tx_hash=txid.trim();
+    else payload.tx_hash=String(txid||'').trim()||null;
+    if(proofPath)payload.proof_path=proofPath;
+   }
+   const created=await bigbullsBackend.submitWalletTransaction(payload);
+   if(mode==='Withdrawal'){await bigbullsBackend.requestWithdrawalOtp(created.id);setOtpTxn(created.id);toast.success('Withdrawal request saved; email OTP sent.');}
+   else toast.success('Deposit request sent for admin review.');
+   setUsd('');setCrypto('');setTxid('');setDestination('');setProof(null);await reload();
+  }catch(e:any){toast.error(e.message||'Payment request failed');}
+  finally{setBusy(false);}
+ };
  const verify=async()=>{if(!/^\d{6}$/.test(otp)){toast.error('Enter the 6-digit OTP.');return;}setBusy(true);try{await bigbullsBackend.verifyWithdrawalOtp(otpTxn,otp);setOtpTxn('');setOtp('');toast.success('OTP verified; withdrawal awaits back-office approval.');await reload();}catch(e:any){toast.error(e.message||'OTP verification failed');}finally{setBusy(false);}};
+ const cryptoMode=mode==='Withdrawal'||(selectedMethod?.method_type==='crypto');
+ const destinationText=selectedMethod?.method_type==='crypto'
+  ? selectedMethod.destination_details
+  : [selectedMethod?.account_title,selectedMethod?.account_number,selectedMethod?.destination_details].filter(Boolean).join(' · ');
+
  return <div><h1 className="text-3xl font-extrabold tracking-tight">{mode}</h1><p className="mt-1 text-sm text-muted-foreground">Requests are stored in the existing BIGBULLS payment ledger. Balances change only after admin approval.</p>
  {!kycLoading&&!['approved','verified'].includes(String(kyc?.status||''))&&<div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">KYC: {kyc?.status||'not submitted'}. Withdrawals remain subject to KYC and security controls.</div>}
- <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_380px]"><Card className="space-y-4 p-5"><b>Payment network</b>
- <Select value={walletId} onValueChange={setWalletId}><SelectTrigger><SelectValue placeholder="Choose asset and network"/></SelectTrigger><SelectContent>{wallets.map((w) => (<SelectItem key={w.id} value={w.id}>{w.asset} · {w.network} {w.label}</SelectItem>))}</SelectContent></Select>
- {selected&&<div className="rounded-xl border bg-card p-4 text-center"><b className="text-sm">{selected.asset} · {selected.network}</b><div className="mx-auto my-3 flex h-56 w-56 items-center justify-center rounded-xl border bg-white p-3"><img className="h-full w-full object-contain" src={"https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=" + encodeURIComponent(selected.address)} alt={selected.asset+" "+selected.network+" deposit QR code"}/></div><div className="text-xs font-semibold">BIGBULLS deposit address</div><div className="mt-2 break-all rounded-lg bg-muted p-3 text-left font-mono text-xs">{selected.address}</div><Button size="sm" variant="outline" className="mt-3 w-full" onClick={()=>navigator.clipboard.writeText(selected.address)}>Copy address</Button></div>}
+ <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_380px]"><Card className="space-y-4 p-5"><b>{mode==='Deposit'?'Payment method':'Payment network'}</b>
+ <Select value={walletId} onValueChange={setWalletId}><SelectTrigger><SelectValue placeholder="Choose payment method"/></SelectTrigger><SelectContent>{mode==='Deposit'?methods.map(m=><SelectItem key={m.id} value={m.id}>{m.display_name} · {m.network}</SelectItem>):wallets.map(w=><SelectItem key={w.id} value={w.id}>{w.asset} · {w.network} {w.label}</SelectItem>)}</SelectContent></Select>
+ {mode==='Deposit'&&selectedMethod&&<div className="flex items-center gap-3 rounded-xl border bg-card p-3"><img className="h-12 w-12 rounded-md object-contain" src={selectedMethod.logo_url||'/icons/payment-method-fallback.png'} alt={selectedMethod.display_name} onError={e=>{(e.currentTarget as HTMLImageElement).style.visibility='hidden';}}/><div><b className="text-sm">{selectedMethod.display_name}</b><div className="text-xs text-muted-foreground">{selectedMethod.asset} · {selectedMethod.network}</div></div></div>}
+ {mode==='Deposit'&&selectedMethod&&<div className="rounded-xl border bg-card p-4"><b className="text-sm">Payment destination</b>{selectedMethod.method_type==='crypto'&&<div className="mx-auto my-3 flex h-48 w-48 items-center justify-center rounded-xl border bg-white p-3"><img className="h-full w-full object-contain" src={"https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data="+encodeURIComponent(destinationText)} alt="Crypto deposit QR code"/></div>}<div className="mt-2 break-all rounded-lg bg-muted p-3 text-left text-xs">{destinationText||'Payment details will be provided by Admin.'}</div><Button size="sm" variant="outline" className="mt-3 w-full" onClick={()=>navigator.clipboard.writeText(destinationText)}>Copy payment details</Button>{selectedMethod.instructions&&<p className="mt-3 text-xs text-muted-foreground">{selectedMethod.instructions}</p>}</div>}
+ {mode==='Withdrawal'&&selectedWallet&&<div className="rounded-xl border bg-card p-4 text-center"><b className="text-sm">{selectedWallet.asset} · {selectedWallet.network}</b><div className="mt-2 break-all rounded-lg bg-muted p-3 text-left font-mono text-xs">{selectedWallet.address}</div></div>}
  <label className="block text-xs font-semibold">Real account<Select value={accountId} onValueChange={setAccountId}><SelectTrigger className="mt-1"><SelectValue placeholder="Select Real account"/></SelectTrigger><SelectContent>{real.map(a=><SelectItem key={a.id} value={a.id}>#{a.number} · {a.balance.toFixed(2)} USD</SelectItem>)}</SelectContent></Select></label>
- <div className="grid grid-cols-2 gap-3"><label className="block text-xs font-semibold">Amount USD<Input className="mt-1" type="number" value={usd} onChange={e=>setUsd(e.target.value)}/></label><label className="block text-xs font-semibold">Amount crypto<Input className="mt-1" type="number" value={crypto} onChange={e=>setCrypto(e.target.value)}/></label></div>
- {mode==='Deposit'?<><label className="block text-xs font-semibold">Blockchain TXID<Input className="mt-1" value={txid} onChange={e=>setTxid(e.target.value)}/></label><label className="block text-xs font-semibold">Payment proof (optional)<Input className="mt-1" type="file" accept="image/*,.pdf" onChange={e=>setProof(e.target.files?.[0]||null)}/></label></>:<label className="block text-xs font-semibold">Your withdrawal address<Input className="mt-1" value={destination} onChange={e=>setDestination(e.target.value)}/></label>}
- <Button className="w-full" disabled={busy||!wallets.length||!real.length} onClick={submit}>{busy?'Submitting…':'Submit '+mode+' request'}</Button>
+ <div className="grid grid-cols-2 gap-3"><label className="block text-xs font-semibold">Amount USD<Input className="mt-1" type="number" min={selectedMethod?.min_amount_usd||1} max={selectedMethod?.max_amount_usd||undefined} value={usd} onChange={e=>setUsd(e.target.value)}/></label><label className="block text-xs font-semibold">{cryptoMode?'Amount crypto':'Amount paid (payment currency)'}<Input className="mt-1" type="number" value={crypto} onChange={e=>setCrypto(e.target.value)} placeholder={cryptoMode?'0.00':'Enter amount paid'}/></label></div>
+ {mode==='Deposit'?<>{cryptoMode?<label className="block text-xs font-semibold">Blockchain TXID<Input className="mt-1" value={txid} onChange={e=>setTxid(e.target.value)}/></label>:<label className="block text-xs font-semibold">Transfer reference (optional)<Input className="mt-1" value={txid} onChange={e=>setTxid(e.target.value)}/></label>}<label className="block text-xs font-semibold">Payment proof {cryptoMode?'(optional)':'(required)'}<Input className="mt-1" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={e=>setProof(e.target.files?.[0]||null)}/></label></>:<label className="block text-xs font-semibold">Your withdrawal address<Input className="mt-1" value={destination} onChange={e=>setDestination(e.target.value)}/></label>}
+ <Button className="w-full" disabled={busy||(mode==='Deposit'?!methods.length:!wallets.length)||!real.length} onClick={submit}>{busy?'Submitting…':'Submit '+mode+' request'}</Button>
  {otpTxn&&<div className="space-y-2 rounded-lg border p-3"><b className="text-sm">Email OTP verification</b><Input inputMode="numeric" maxLength={6} value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="6-digit OTP"/><Button className="w-full" disabled={busy} onClick={verify}>Verify OTP</Button></div>}
  </Card><Card className="p-5"><b>Recent requests</b>{txns.length===0?<p className="mt-3 text-sm text-muted-foreground">No payment requests yet.</p>:<div className="mt-3 space-y-3">{txns.slice(0,25).map(x=><div key={x.id} className="border-b pb-3 text-sm"><div className="flex justify-between gap-2"><b className="capitalize">{x.kind} · {x.asset} ({x.network})</b><span className="capitalize">{x.status}</span></div><div className="mt-1 text-xs text-muted-foreground">{Number(x.amount_crypto)} {x.asset} / {Number(x.amount_usd).toFixed(2)} USD</div>{(x.rejection_reason||x.admin_note)&&<div className="mt-1 text-xs text-destructive">{x.rejection_reason||x.admin_note}</div>}</div>)}</div>}</Card></div></div>;
 }
