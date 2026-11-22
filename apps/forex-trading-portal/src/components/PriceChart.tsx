@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTrading } from '../lib/store';
+import { pnl, useTrading } from '../lib/store';
 import { fetchCandles } from '../lib/feed';
-import { SYM } from '../lib/symbols';
+import { SYM, money } from '../lib/symbols';
 import { initialQuotes } from '../lib/feed';
 import { cn } from '@project/components/lib/utils';
 
@@ -124,12 +124,19 @@ export default function PriceChart({ symbol }: { symbol: string }) {
               </g>
             );
           })}
-          {lines.map((p) => (
-            <g key={p.id}>
-              <line x1={0} x2={W} y1={y(p.openPrice)} y2={y(p.openPrice)} className="stroke-primary" strokeDasharray="5 3" />
-              <text x={4} y={y(p.openPrice) - 4} className="fill-primary text-[10px] font-semibold">{p.side.toUpperCase()} {p.volume}</text>
-            </g>
-          ))}
+          {lines.map((p) => {
+            const tradePnl = pnl(p, quotes);
+            const sideClass = p.side === 'buy' ? 'stroke-primary' : 'stroke-destructive';
+            const labelClass = p.side === 'buy' ? 'fill-primary' : 'fill-destructive';
+            return (
+              <g key={p.id}>
+                <line x1={0} x2={W} y1={y(p.openPrice)} y2={y(p.openPrice)} className={sideClass} strokeDasharray="5 3" strokeWidth={1.25} />
+                <text x={4} y={y(p.openPrice) - 5} className={cn(labelClass, 'text-[10px] font-semibold')}>
+                  {p.side.toUpperCase()} @ {p.openPrice.toFixed(d)} · {money(tradePnl)}
+                </text>
+              </g>
+            );
+          })}
           <line x1={0} x2={W} y1={y(bid)} y2={y(bid)} className="stroke-primary" strokeWidth={0.75} />
           <rect x={W} y={y(bid) - 9} width={axisW} height={18} className="fill-primary" rx={3} />
           <text x={W + 6} y={y(bid) + 4} className="num fill-primary-foreground text-[10px] font-semibold">{bid.toFixed(d)}</text>
