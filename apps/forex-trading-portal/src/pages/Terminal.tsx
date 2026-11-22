@@ -20,22 +20,22 @@ export default function Terminal() {
   const select=(s:string)=>{setSymbol(s);if(!tabs.includes(s))setTabs(x=>[...x.slice(-4),s]);setMobileMarkets(false);};
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
-      <header className="z-20 flex min-h-14 shrink-0 items-center gap-2 border-b bg-card px-3 py-2">
-        <Link to="/" className="text-muted-foreground hover:text-foreground" aria-label="Back"><ArrowLeft className="h-5 w-5"/></Link>
-        <Logo/>
+      <header className="z-20 flex min-h-14 shrink-0 items-center gap-1.5 border-b bg-card px-2 py-2 sm:gap-2 sm:px-3">
+        <Link to="/" className="flex h-8 w-6 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground" aria-label="Back"><ArrowLeft className="h-5 w-5"/></Link>
+        <div className="min-w-0 shrink"><Logo/></div>
         <div className="ml-2 hidden gap-1 md:flex">
           {tabs.map(s=><button key={s} onClick={()=>setSymbol(s)} className={cn('rounded-md px-3 py-1.5 text-xs font-bold',s===symbol?'bg-accent text-accent-foreground':'text-muted-foreground hover:bg-muted')}>{s}</button>)}
         </div>
-        <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-4">
+        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1 sm:gap-4">
           <div className="hidden sm:block"><Stat k="Balance" v={money(t.account.balance)}/></div>
           <div className="hidden md:block"><Stat k="Equity" v={money(t.equity)}/></div>
           <Select value={t.account.id} onValueChange={t.setActive}>
-            <SelectTrigger className="h-9 w-auto max-w-[130px] gap-2 text-xs font-semibold sm:max-w-none"><SelectValue placeholder="Account"/></SelectTrigger>
+            <SelectTrigger className="h-8 w-[96px] min-w-0 shrink-0 gap-1 overflow-hidden px-1.5 text-[10px] font-semibold sm:h-9 sm:w-auto sm:max-w-[130px] sm:gap-2 sm:px-3 sm:text-xs"><SelectValue placeholder="Account"/></SelectTrigger>
             <SelectContent>{t.state.accounts.map(a=><SelectItem key={a.id} value={a.id}><span className={cn('mr-2 rounded px-1.5 py-0.5 text-[10px] font-bold',a.type==='Real'?'bg-primary text-primary-foreground':'bg-muted')}>{a.type}</span>#{a.number}</SelectItem>)}</SelectContent>
           </Select>
           <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/deposit">Deposit</Link></Button>
-          <Button size="sm" variant="outline" className="h-9 px-2 lg:hidden" onClick={()=>setMobileMarkets(v=>!v)}>
-            {mobileMarkets?<><ChevronLeft className="mr-1 h-4 w-4"/>Chart</>:<><ListFilter className="mr-1 h-4 w-4"/>Markets</>}
+          <Button size="sm" variant="outline" className="h-8 shrink-0 gap-1 whitespace-nowrap px-1.5 text-[10px] sm:h-9 sm:px-2 sm:text-xs lg:hidden" onClick={()=>setMobileMarkets(v=>!v)}>
+            {mobileMarkets?<><ChevronLeft className="h-3.5 w-3.5"/>Chart</>:<><ListFilter className="h-3.5 w-3.5"/>Markets</>}
           </Button>
         </div>
       </header>
