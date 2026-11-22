@@ -20,9 +20,9 @@ export default function Terminal() {
   const select=(s:string)=>{setSymbol(s);if(!tabs.includes(s))setTabs(x=>[...x.slice(-4),s]);setMobileMarkets(false);};
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
-      <header className="z-20 flex min-h-14 shrink-0 items-center gap-1.5 border-b bg-card px-2 py-2 sm:gap-2 sm:px-3">
-        <Link to="/" className="flex h-8 w-6 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground" aria-label="Back"><ArrowLeft className="h-5 w-5"/></Link>
-        <div className="min-w-0 shrink"><Logo/></div>
+      <header className="z-20 flex min-h-12 shrink-0 flex-nowrap items-center gap-1 border-b bg-card px-1.5 py-1.5 sm:min-h-14 sm:gap-2 sm:px-3 sm:py-2">
+        <Link to="/" className="flex h-8 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground sm:w-6" aria-label="Back"><ArrowLeft className="h-[18px] w-[18px] sm:h-5 sm:w-5"/></Link>
+        <div className="w-[82px] min-w-0 shrink-0 sm:w-auto"><Logo compact/></div>
         <div className="ml-2 hidden gap-1 md:flex">
           {tabs.map(s=><button key={s} onClick={()=>setSymbol(s)} className={cn('rounded-md px-3 py-1.5 text-xs font-bold',s===symbol?'bg-accent text-accent-foreground':'text-muted-foreground hover:bg-muted')}>{s}</button>)}
         </div>
@@ -30,16 +30,16 @@ export default function Terminal() {
           <div className="hidden sm:block"><Stat k="Balance" v={money(t.account.balance)}/></div>
           <div className="hidden md:block"><Stat k="Equity" v={money(t.equity)}/></div>
           <Select value={t.account.id} onValueChange={t.setActive}>
-            <SelectTrigger className="h-9 w-[154px] min-w-0 shrink-0 gap-1 overflow-hidden px-2 text-[10px] font-semibold sm:w-[190px] sm:gap-2 sm:px-3 sm:text-xs">
+            <SelectTrigger className="h-9 w-[104px] min-w-0 shrink-0 gap-0.5 overflow-hidden px-1.5 text-[9px] font-semibold min-[360px]:w-[112px] min-[400px]:w-[124px] sm:w-[190px] sm:gap-2 sm:px-3 sm:text-xs">
               <div className="flex min-w-0 flex-1 flex-col items-start leading-tight">
-                <SelectValue placeholder="Account"/>
-                <span className="num whitespace-nowrap text-[9px] font-bold text-primary sm:text-[10px]">Equity {money(t.equity)}</span>
+                <SelectValue placeholder="Account" className="max-w-full truncate text-[9px] sm:text-xs"/>
+                <span className="num whitespace-nowrap text-[8px] font-bold text-primary min-[360px]:text-[8.5px] sm:text-[10px]">Equity {money(t.equity)}</span>
               </div>
             </SelectTrigger>
             <SelectContent>{t.state.accounts.map(a=><SelectItem key={a.id} value={a.id}><span className={cn('mr-2 rounded px-1.5 py-0.5 text-[10px] font-bold',a.type==='Real'?'bg-primary text-primary-foreground':'bg-muted')}>{a.type}</span>#{a.number}</SelectItem>)}</SelectContent>
           </Select>
           <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/deposit">Deposit</Link></Button>
-          <Button size="sm" variant="outline" className="h-8 shrink-0 gap-1 whitespace-nowrap px-1.5 text-[10px] sm:h-9 sm:px-2 sm:text-xs lg:hidden" onClick={()=>setMobileMarkets(v=>!v)}>
+          <Button size="sm" variant="outline" className="h-8 w-[58px] shrink-0 gap-0.5 whitespace-nowrap px-1 text-[9px] sm:w-auto sm:gap-1 sm:h-9 sm:px-2 sm:text-xs lg:hidden" onClick={()=>setMobileMarkets(v=>!v)}>
             {mobileMarkets?<><ChevronLeft className="h-3.5 w-3.5"/>Chart</>:<><ListFilter className="h-3.5 w-3.5"/>Markets</>}
           </Button>
         </div>
