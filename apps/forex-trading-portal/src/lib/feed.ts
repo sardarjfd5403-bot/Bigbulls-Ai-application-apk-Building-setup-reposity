@@ -51,9 +51,13 @@ export function subscribePrices(onTick: (fn: (prev: Quotes) => Quotes) => void) 
       console.warn('BIGBULLS live market feed unavailable; retaining last quote.', e);
     }
   };
-  void refresh();
-  const id = setInterval(refresh, 3000);
-  return () => { active = false; clearInterval(id); };
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const poll = async () => {
+    await refresh();
+    if (active) timer = setTimeout(poll, 1000);
+  };
+  void poll();
+  return () => { active = false; if (timer) clearTimeout(timer); };
 }
 
 /** Converts an amount in a symbol's quote currency to USD */
