@@ -63,7 +63,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "android-build-${GITHUB_RUN_NUMBER}" android/app/build/outputs/apk/debug/app-debug.apk \
+          cp android/app/build/outputs/apk/debug/app-debug.apk BIGBULLS-Android.apk
+          gh release create "android-build-${GITHUB_RUN_NUMBER}" BIGBULLS-Android.apk \
             --repo "${GITHUB_REPOSITORY}" \
             --target "${GITHUB_SHA}" \
             --title "BIGBULLS Android Build ${GITHUB_RUN_NUMBER}" \
