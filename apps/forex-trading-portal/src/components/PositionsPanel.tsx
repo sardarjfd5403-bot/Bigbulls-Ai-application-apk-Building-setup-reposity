@@ -20,15 +20,14 @@ export default function PositionsPanel() {
   const [closeFilter, setCloseFilter] = useState<'all' | 'profit' | 'loss' | null>(null);
   const counts = { Open: t.positions.length, Pending: t.pending.length, Closed: t.history.length };
   const runningTotal = t.positions.reduce((sum, position) => sum + pnl(position, t.quotes), 0);
-  const runningPips = t.positions.reduce((sum, position) => sum + positionPips(position, t.quotes), 0);
 
   return (
     <div className="flex h-full flex-col">
       {tab === 'Open' && <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
         <div><div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Total running P&L</div>
           <div className={cn('num text-lg font-extrabold', runningTotal >= 0 ? 'text-up' : 'text-destructive')}>{money(runningTotal)}</div></div>
-        <div className="text-right"><div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Net pips</div>
-          <div className={cn('num text-sm font-bold', runningPips >= 0 ? 'text-up' : 'text-destructive')}>{runningPips.toFixed(1)} pips</div></div>
+        <div className="text-right"><div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Open trades</div>
+          <div className="num text-sm font-bold">{counts.Open}</div></div>
       </div>}
       <div className="flex items-center gap-1 border-b px-3">
         {TABS.map((x) => (
