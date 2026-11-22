@@ -6,13 +6,15 @@ import { Button } from '@project/components/ui/button';
 import { cn } from '@project/components/lib/utils';
 import { marginFor, useTrading, Side } from '../lib/store';
 import { SYM, money } from '../lib/symbols';
+import { initialQuotes } from '../lib/feed';
 import AIAutoTradeControl from './AIAutoTradeControl';
 
 type Mode = 'Market' | 'Pending';
 
 export default function OrderPanel({ symbol }: { symbol: string }) {
   const t = useTrading();
-  const s = SYM[symbol]; const q = t.quotes[symbol];
+  const s = SYM[symbol] ?? SYM.EURUSD;
+  const q = t.quotes?.[symbol] ?? initialQuotes()[symbol] ?? initialQuotes().EURUSD;
   const [side, setSide] = useState<Side>('buy');
   const [mode, setMode] = useState<Mode>('Market');
   const [vol, setVol] = useState('0.01');
@@ -22,14 +24,14 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
 
   const v = Number(vol);
   const validVol = Number.isFinite(v) && v >= 0.01 && v <= 200;
-  const margin = validVol ? marginFor(symbol, v, t.account.leverage, t.quotes) : 0;
-  const missingDemoSl = t.account.type === 'Demo' && (!useSl || !sl || !(Number(sl) > 0));
+  const margin = validVol ? marginFor(symbol, v, t.account?.leverage ?? 100, t.quotes ?? initialQuotes()) : 0;
+  const missingDemoSl = (t.account?.type ?? 'Demo') === 'Demo' && (!useSl || !sl || !(Number(sl) > 0));
   const pip = s.digits >= 3 ? Math.pow(10, -(s.digits - 1)) : Math.pow(10, -s.digits);
   const pipValue = validVol ? pip * v * s.contract : 0;
   const ref = side === 'buy' ? q.ask : q.bid;
 
   const submit = (orderSide: Side = side) => {
-    if (!validVol || t.busy || !t.account.id) return;
+    if (!validVol || t.busy || !(t.account?.id ?? '')) return;
     const slN = useSl && sl ? Number(sl) : undefined, tpN = useTp && tp ? Number(tp) : undefined;
     if (useSl && (!slN || !Number.isFinite(slN))) return;
     if (useTp && (!tpN || !Number.isFinite(tpN))) return;
@@ -89,7 +91,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
       {missingDemoSl && <p className="text-xs text-amber-700">Demo paper execution requires a Stop Loss. Enable Stop Loss and enter a valid price before submitting.</p>}
       <div className="space-y-1.5 rounded-lg bg-muted/60 p-3 text-xs">
         <Row k="Margin" v={money(margin)} /><Row k="Free margin" v={money(t.free)} />
-        <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${t.account.leverage}`} />
+        <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${(t.account?.leverage ?? 100)}`} />
       </div>
       {mode === 'Pending' && <Button size="lg" disabled={!validVol || !t.account.id || t.busy || missingDemoSl || !(Number(price) > 0)} onClick={() => submit()} className="mt-auto h-12 text-base font-bold">Place {side === 'buy' ? 'Buy' : 'Sell'} pending order · {vol} lots</Button>}
       {mode === 'Market' && <p className="mt-auto text-center text-[11px] text-muted-foreground">{t.busy ? 'Sending order securely…' : 'Tap BUY or SELL to execute immediately'}</p>}
