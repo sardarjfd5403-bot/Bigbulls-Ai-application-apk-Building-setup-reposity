@@ -30,7 +30,12 @@ export default function Terminal() {
           <div className="hidden sm:block"><Stat k="Balance" v={money(t.account.balance)}/></div>
           <div className="hidden md:block"><Stat k="Equity" v={money(t.equity)}/></div>
           <Select value={t.account.id} onValueChange={t.setActive}>
-            <SelectTrigger className="h-8 w-[96px] min-w-0 shrink-0 gap-1 overflow-hidden px-1.5 text-[10px] font-semibold sm:h-9 sm:w-auto sm:max-w-[130px] sm:gap-2 sm:px-3 sm:text-xs"><SelectValue placeholder="Account"/></SelectTrigger>
+            <SelectTrigger className="h-9 w-[154px] min-w-0 shrink-0 gap-1 overflow-hidden px-2 text-[10px] font-semibold sm:w-[190px] sm:gap-2 sm:px-3 sm:text-xs">
+              <div className="flex min-w-0 flex-1 flex-col items-start leading-tight">
+                <SelectValue placeholder="Account"/>
+                <span className="num whitespace-nowrap text-[9px] font-bold text-primary-foreground/90 sm:text-[10px]">Equity {money(t.equity)}</span>
+              </div>
+            </SelectTrigger>
             <SelectContent>{t.state.accounts.map(a=><SelectItem key={a.id} value={a.id}><span className={cn('mr-2 rounded px-1.5 py-0.5 text-[10px] font-bold',a.type==='Real'?'bg-primary text-primary-foreground':'bg-muted')}>{a.type}</span>#{a.number}</SelectItem>)}</SelectContent>
           </Select>
           <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/deposit">Deposit</Link></Button>
