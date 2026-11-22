@@ -34,18 +34,21 @@ export function subscribePrices(onTick: (fn: (prev: Quotes) => Quotes) => void) 
       if (!active) return;
       onTick(prev => {
         const next = { ...prev };
+        let changed = false;
         for (const row of rows) {
           const entry = SYMBOLS.find(s => providerName(s.symbol) === row.symbol);
           if (!entry || !(Number(row.bid) > 0) || !(Number(row.ask) >= Number(row.bid))) continue;
           const old = prev[entry.symbol];
           const bid = Number(row.bid), ask = Number(row.ask);
+          if (old.bid === bid && old.ask === ask && old.stale === (row.stale === true || row.fallback === true)) continue;
+          changed = true;
           next[entry.symbol] = {
             ...old, bid, ask, high: Math.max(old.high, bid), low: Math.min(old.low, bid),
             dir: bid > old.bid ? 1 : bid < old.bid ? -1 : 0,
             stale: row.stale === true || row.fallback === true
           };
         }
-        return next;
+        return changed ? next : prev;
       });
     } catch (e) {
       console.warn('BIGBULLS live market feed unavailable; retaining last quote.', e);
