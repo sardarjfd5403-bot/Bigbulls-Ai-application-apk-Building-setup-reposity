@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, CandlestickChart, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { Plus, MoreVertical, CandlestickChart, ArrowDownToLine, ArrowUpFromLine, ChevronDown, ChevronUp } from 'lucide-react';
+import PositionsPanel from '../components/PositionsPanel';
 import { Button } from '@project/components/ui/button';
 import { Card } from '@project/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@project/components/ui/dropdown-menu';
@@ -14,6 +15,7 @@ export default function Accounts() {
   const t = useTrading();
   const [tab, setTab] = useState<'Real' | 'Demo'>('Real');
   const [openNew, setOpenNew] = useState(false);
+  const [expandedAccountId, setExpandedAccountId] = useState<string | null>(null);
   const list = t.state.accounts.filter((a) => a.type === tab);
   return (
     <div>
@@ -27,7 +29,7 @@ export default function Accounts() {
         ))}
       </div>
       <div className="space-y-4">
-        {list.map((a) => <AccountCard key={a.id} a={a} />)}
+        {list.map((a) => <AccountCard key={a.id} a={a} expanded={expandedAccountId === a.id} onToggleTrades={() => { const next = expandedAccountId === a.id ? null : a.id; setExpandedAccountId(next); if (next) t.setActive(next); }} />)}
         {list.length === 0 && (
           <Card className="p-10 text-center"><p className="text-muted-foreground">No {tab.toLowerCase()} accounts yet.</p><Button className="mt-4" onClick={() => setOpenNew(true)}>Open account</Button></Card>
         )}
@@ -37,7 +39,7 @@ export default function Accounts() {
   );
 }
 
-function AccountCard({ a }: { a: Account }) {
+function AccountCard({ a, expanded, onToggleTrades }: { a: Account; expanded: boolean; onToggleTrades: () => void }) {
   const t = useTrading(); const nav = useNavigate();
   const [arch, setArch] = useState(false);
   const floating = t.state.positions.filter((p) => p.accountId === a.id).reduce((s, p) => s + pnl(p, t.quotes), 0);
@@ -69,6 +71,13 @@ function AccountCard({ a }: { a: Account }) {
             <Button variant="outline" onClick={() => go('/withdraw')}><ArrowUpFromLine className="mr-2 h-4 w-4" />Withdraw</Button>
           </>}
         </div>
+      </div>
+      <div className="border-t bg-card">
+        <button type="button" onClick={onToggleTrades} aria-expanded={expanded} className="flex w-full items-center justify-between px-5 py-3 text-sm font-bold hover:bg-muted/40">
+          <span>Running trades &amp; trade history</span>
+          <span className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">{expanded ? 'Hide' : 'Show'} {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
+        </button>
+        {expanded && <div className="h-[320px] min-h-[240px] border-t bg-card"><PositionsPanel /></div>}
       </div>
       <AlertDialog open={arch} onOpenChange={setArch}>
         <AlertDialogContent>
