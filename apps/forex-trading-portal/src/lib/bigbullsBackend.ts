@@ -129,6 +129,14 @@ export const bigbullsBackend = {
     return data;
   },
 
+  async depositMethodSettings() {
+    const { data, error } = await supabase.from('deposit_method_settings')
+      .select('id,method_key,display_name,method_type,crypto_wallet_id,asset,network,destination_details,account_title,account_number,logo_url,instructions,min_amount_usd,max_amount_usd,active_app,sort_order')
+      .eq('active_app', true).order('sort_order').order('display_name');
+    if (error) throw error;
+    return data || [];
+  },
+
   async cryptoWallets() {
     const { data, error } = await supabase.from('crypto_wallets')
       .select('id,asset,network,label,address,active')
