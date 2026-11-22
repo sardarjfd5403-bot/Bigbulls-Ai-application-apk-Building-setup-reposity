@@ -6,7 +6,7 @@ import { Input } from '@project/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@project/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@project/components/ui/dropdown-menu';
 import { cn } from '@project/components/lib/utils';
-import { pnl, useTrading, Position } from '../lib/store';
+import { pnl, positionPips, useTrading, Position } from '../lib/store';
 import { SYM, money } from '../lib/symbols';
 
 const TABS = ['Open', 'Pending', 'Closed'] as const;
@@ -19,9 +19,17 @@ export default function PositionsPanel() {
   const [closeTarget, setCloseTarget] = useState<Position | null>(null);
   const [closeFilter, setCloseFilter] = useState<'all' | 'profit' | 'loss' | null>(null);
   const counts = { Open: t.positions.length, Pending: t.pending.length, Closed: t.history.length };
+  const runningTotal = t.positions.reduce((sum, position) => sum + pnl(position, t.quotes), 0);
+  const runningPips = t.positions.reduce((sum, position) => sum + positionPips(position, t.quotes), 0);
 
   return (
     <div className="flex h-full flex-col">
+      {tab === 'Open' && <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
+        <div><div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Total running P&L</div>
+          <div className={cn('num text-lg font-extrabold', runningTotal >= 0 ? 'text-up' : 'text-destructive')}>{money(runningTotal)}</div></div>
+        <div className="text-right"><div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Net pips</div>
+          <div className={cn('num text-sm font-bold', runningPips >= 0 ? 'text-up' : 'text-destructive')}>{runningPips.toFixed(1)} pips</div></div>
+      </div>}
       <div className="flex items-center gap-1 border-b px-3">
         {TABS.map((x) => (
           <button key={x} onClick={() => setTab(x)} className={cn('border-b-2 px-3 py-2 text-xs font-bold', tab === x ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>
@@ -42,11 +50,11 @@ export default function PositionsPanel() {
       <div className="min-h-0 flex-1 overflow-auto">
         <table className="w-full min-w-[760px] text-xs">
           <thead className="sticky top-0 bg-muted/80 text-[10px] uppercase text-muted-foreground backdrop-blur">
-            <tr className="text-left">{['Symbol', 'Type', 'Volume', 'Open price', tab === 'Closed' ? 'Close price' : tab === 'Pending' ? 'Current' : 'Current', 'S/L', 'T/P', 'Time', tab === 'Pending' ? '' : 'Profit', ''].map((h, i) => <th key={i} className="px-3 py-1.5 font-bold">{h}</th>)}</tr>
+            <tr className="text-left">{['Symbol', 'Type', 'Volume', 'Open price', tab === 'Closed' ? 'Close price' : 'Current', 'S/L', 'T/P', 'Time', tab === 'Pending' ? '' : 'Running P&L / Pips', ''].map((h, i) => <th key={i} className="px-3 py-1.5 font-bold">{h}</th>)}</tr>
           </thead>
           <tbody>
             {tab === 'Open' && t.positions.map((p) => {
-              const pr = pnl(p, t.quotes ?? {}); const info = SYM[p.symbol] ?? SYM.EURUSD; const d = info.digits; const q = t.quotes?.[p.symbol] ?? { bid: info.start, ask: info.start + info.spread };
+              const pr = pnl(p, t.quotes ?? {}); const pips = positionPips(p, t.quotes ?? {}); const info = SYM[p.symbol] ?? SYM.EURUSD; const d = info.digits; const q = t.quotes?.[p.symbol] ?? { bid: info.start, ask: info.start + info.spread };
               return (
                 <tr key={p.id} className="border-b hover:bg-muted/40">
                   <td className="px-3 py-2 font-bold">{p.symbol}</td><td className={cn('px-3 font-bold', p.side === 'buy' ? 'text-primary' : 'text-destructive')}>{p.side.toUpperCase()}</td>
@@ -54,7 +62,7 @@ export default function PositionsPanel() {
                   <td className="num px-3">{(p.side === 'buy' ? q.bid : q.ask).toFixed(d)}</td>
                   <td className="num px-3">{p.sl?.toFixed(d) ?? '—'}</td><td className="num px-3">{p.tp?.toFixed(d) ?? '—'}</td>
                   <td className="px-3 text-muted-foreground">{format(p.openTime, 'MMM d HH:mm:ss')}</td>
-                  <td className={cn('num px-3 font-bold', pr >= 0 ? 'text-up' : 'text-destructive')}>{money(pr)}</td>
+                  <td className={cn('num px-3 font-bold', pr >= 0 ? 'text-up' : 'text-destructive')}><div>{money(pr)}</div><div className="text-[10px] font-medium opacity-80">{pips >= 0 ? '+' : ''}{pips.toFixed(1)} pips</div></td>
                   <td className="whitespace-nowrap px-3 text-right">
                     <button onClick={() => setEdit(p)} className="mr-2 text-muted-foreground hover:text-primary" aria-label="Modify"><Pencil className="h-3.5 w-3.5" /></button>
                     <button onClick={() => setCloseTarget(p)} className="text-muted-foreground hover:text-destructive" aria-label="Close"><X className="h-4 w-4" /></button>
