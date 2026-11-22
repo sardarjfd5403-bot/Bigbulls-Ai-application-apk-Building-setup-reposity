@@ -4,6 +4,7 @@ import { Input } from '@project/components/ui/input';
 import { cn } from '@project/components/lib/utils';
 import { useTrading } from '../lib/store';
 import { CATEGORIES, SYMBOLS } from '../lib/symbols';
+import { initialQuotes } from '../lib/feed';
 
 export default function Watchlist({ selected, onSelect }: { selected: string; onSelect: (s: string) => void }) {
   const { quotes, state, toggleFav } = useTrading();
@@ -35,7 +36,7 @@ export default function Watchlist({ selected, onSelect }: { selected: string; on
       <div className="min-h-0 flex-1 overflow-y-auto">
         {list.length === 0 && <p className="p-4 text-center text-sm text-muted-foreground">No instruments</p>}
         {list.map((s) => {
-          const qt = quotes[s.symbol]; const chg = ((qt.bid - qt.open) / qt.open) * 100;
+          const qt = quotes?.[s.symbol] ?? initialQuotes()[s.symbol]; const chg = qt?.open ? ((qt.bid - qt.open) / qt.open) * 100 : 0;
           const fav = state.favorites.includes(s.symbol);
           return (
             <div key={s.symbol} onClick={() => onSelect(s.symbol)} className={cn('grid cursor-pointer grid-cols-[1fr_auto_auto] items-center gap-x-3 border-b px-3 py-2 hover:bg-accent', selected === s.symbol && 'bg-accent')}>
@@ -48,8 +49,8 @@ export default function Watchlist({ selected, onSelect }: { selected: string; on
                   <div className={cn('num text-[10px]', chg >= 0 ? 'text-up' : 'text-destructive')}>{chg >= 0 ? '+' : ''}{chg.toFixed(2)}%</div>
                 </div>
               </div>
-              <span className={cn('num w-[72px] text-right text-xs font-medium', qt.dir > 0 ? 'text-up' : qt.dir < 0 ? 'text-destructive' : '')}>{qt.bid.toFixed(s.digits)}</span>
-              <span className={cn('num w-[72px] text-right text-xs font-medium', qt.dir > 0 ? 'text-up' : qt.dir < 0 ? 'text-destructive' : '')}>{qt.ask.toFixed(s.digits)}</span>
+              <span className={cn('num w-[72px] text-right text-xs font-medium', (qt?.dir ?? 0) > 0 ? 'text-up' : (qt?.dir ?? 0) < 0 ? 'text-destructive' : '')}>{(qt?.bid ?? s.start).toFixed(s.digits)}</span>
+              <span className={cn('num w-[72px] text-right text-xs font-medium', qt.dir > 0 ? 'text-up' : qt.dir < 0 ? 'text-destructive' : '')}>{(qt?.ask ?? s.start + s.spread).toFixed(s.digits)}</span>
             </div>
           );
         })}
