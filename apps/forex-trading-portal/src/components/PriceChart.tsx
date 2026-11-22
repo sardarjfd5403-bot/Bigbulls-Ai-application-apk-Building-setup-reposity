@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTrading } from '../lib/store';
 import { fetchCandles } from '../lib/feed';
 import { SYM } from '../lib/symbols';
+import { initialQuotes } from '../lib/feed';
 import { cn } from '@project/components/lib/utils';
 
 const TFS: [string, number][] = [['1m', 60], ['5m', 300], ['15m', 900], ['1h', 3600], ['4h', 14400], ['1D', 86400]];
@@ -10,7 +11,9 @@ type Candle = { t: number; o: number; h: number; l: number; c: number };
 type Pointer = { x:number; y:number };
 
 export default function PriceChart({ symbol }: { symbol: string }) {
-  const { quotes, positions } = useTrading();
+  const trading = useTrading();
+  const quotes = trading.quotes ?? initialQuotes();
+  const positions = trading.positions ?? [];
   const [tf, setTf] = useState(900);
   const [candles, setCandles] = useState<Candle[]>([]);
   const ref = useRef<HTMLDivElement>(null);
@@ -19,8 +22,10 @@ export default function PriceChart({ symbol }: { symbol: string }) {
   const pointers = useRef(new Map<number, Pointer>());
   const gesture = useRef<{distance:number; midpoint:Pointer; startZoom:typeof zoom}|null>(null);
   const drag = useRef<{point:Pointer; startZoom:typeof zoom}|null>(null);
-  const bid = quotes[symbol].bid;
-  const d = SYM[symbol].digits;
+  const info = SYM[symbol] ?? SYM.EURUSD;
+  const quote = quotes[symbol] ?? initialQuotes()[symbol] ?? initialQuotes().EURUSD;
+  const bid = Number.isFinite(quote?.bid) ? quote.bid : info.start;
+  const d = info.digits;
 
   useEffect(() => { let live = true; setCandles([]); setZoom({x:1,y:1,panX:0,panY:0}); fetchCandles(symbol, TF_API[tf] || '15m', 300).then(rows => { if (live) setCandles(rows); }).catch(err => console.warn('Live OHLC unavailable:', err)); return () => { live = false; }; }, [symbol, tf]);
 
@@ -99,7 +104,7 @@ export default function PriceChart({ symbol }: { symbol: string }) {
         {TFS.map(([l, v]) => (
           <button key={l} onClick={() => setTf(v)} className={cn('shrink-0 rounded px-2 py-1 text-xs font-semibold', tf === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')}>{l}</button>
         ))}
-        <span className="ml-auto shrink-0 text-xs text-muted-foreground">{SYM[symbol].name}</span>
+        <span className="ml-auto shrink-0 text-xs text-muted-foreground">{info.name}</span>
       </div>
       <div ref={ref} onWheel={onWheel} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} className="relative min-h-0 flex-1 overflow-hidden select-none" style={{touchAction:'none'}}>
         <svg width={size.w} height={size.h} className="absolute inset-0 block">
