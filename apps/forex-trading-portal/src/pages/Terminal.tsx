@@ -33,7 +33,7 @@ export default function Terminal() {
             <SelectTrigger className="h-9 w-[154px] min-w-0 shrink-0 gap-1 overflow-hidden px-2 text-[10px] font-semibold sm:w-[190px] sm:gap-2 sm:px-3 sm:text-xs">
               <div className="flex min-w-0 flex-1 flex-col items-start leading-tight">
                 <SelectValue placeholder="Account"/>
-                <span className="num whitespace-nowrap text-[9px] font-bold text-primary-foreground/90 sm:text-[10px]">Equity {money(t.equity)}</span>
+                <span className="num whitespace-nowrap text-[9px] font-bold text-primary sm:text-[10px]">Equity {money(t.equity)}</span>
               </div>
             </SelectTrigger>
             <SelectContent>{t.state.accounts.map(a=><SelectItem key={a.id} value={a.id}><span className={cn('mr-2 rounded px-1.5 py-0.5 text-[10px] font-bold',a.type==='Real'?'bg-primary text-primary-foreground':'bg-muted')}>{a.type}</span>#{a.number}</SelectItem>)}</SelectContent>
