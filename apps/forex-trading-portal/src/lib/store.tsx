@@ -10,7 +10,7 @@ export type Account = { id:string; number:string; type:'Real'|'Demo'; platform:s
 export type Position = { id:string; accountId:string; symbol:string; side:Side; volume:number; openPrice:number; sl?:number; tp?:number; openTime:number; floating?:number };
 export type Pending = { id:string; accountId:string; symbol:string; side:Side; kind:'Limit'|'Stop'; volume:number; price:number; sl?:number; tp?:number; created:number };
 export type Closed = Position & { closePrice:number; closeTime:number; profit:number; reason:string };
-export type Txn = { id:string; accountId:string; type:'Deposit'|'Withdrawal'|'Transfer'; method:string; amount:number; status:'Done'|'Pending'; time:number };
+export type Txn = { id:string; accountId:string; type:'Deposit'|'Withdrawal'|'Transfer'; method:string; amount:number; status:string; time:number };
 type State = { accounts:Account[]; activeId:string; positions:Position[]; pending:Pending[]; history:Closed[]; txns:Txn[]; favorites:string[] };
 const emptyState:State={accounts:[],activeId:'',positions:[],pending:[],history:[],txns:[],favorites:['EURUSD','XAUUSD','BTCUSD','GBPUSD','USDJPY','US30']};
 const executionSymbol=(s:string)=>({BTCUSD:'BTCUSDT',ETHUSD:'ETHUSDT',SOLUSD:'SOLUSDT',XRPUSD:'XRPUSDT',BNBUSD:'BNBUSDT'} as Record<string,string>)[s]||s;
@@ -36,9 +36,26 @@ function useEngine(){
  const [busy,setBusy]=useState(false);
  const accountsRef=useRef(state.accounts); useEffect(()=>{accountsRef.current=state.accounts;},[state.accounts]);
  const refresh=useCallback(async()=>{
-  const rows=await bigbullsBackend.accounts();
+  const [rows, history]=await Promise.all([bigbullsBackend.accounts(),bigbullsBackend.transactionHistory()]);
   const accounts=rows.filter(a=>a.status==='approved'&&!a.archived_at&&!a.deleted_at).map(mapAccount);
-  setState(old=>({...old,accounts,activeId:accounts.some(a=>a.id===old.activeId)?old.activeId:(accounts[0]?.id||'')}));
+  const walletTxns=(history.wallet||[]).map((x:any)=>({
+   id:x.id,accountId:x.account_id||'',type:x.kind==='deposit'?'Deposit':'Withdrawal',
+   method:[x.asset,x.network].filter(Boolean).join(' / ')||'Wallet',
+   amount:Number(x.amount_usd||0),
+   status:['approved','completed','confirmed'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),
+   time:Date.parse(x.created_at)
+  }));
+  const accountTxns=(history.accountTransfers||[]).map((x:any)=>({
+   id:x.id,accountId:x.from_account||x.to_account||'',type:'Transfer',method:'Account transfer',
+   amount:Number(x.amount_usd||0),status:['approved','completed'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),time:Date.parse(x.created_at)
+  }));
+  const fundTxns=(history.fundTransfers||[]).map((x:any)=>({
+   id:x.id,accountId:x.to_account_id||x.from_account_id||'',type:'Transfer',
+   method:(x.from_type==='wallet'?'Main Wallet':'Trading Account')+' → '+(x.to_type==='wallet'?'Main Wallet':'Trading Account'),
+   amount:Number(x.amount||0),status:['completed','approved'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),time:Date.parse(x.created_at)
+  }));
+  const txns=[...walletTxns,...accountTxns,...fundTxns].filter(x=>Number.isFinite(x.time)).sort((a,b)=>b.time-a.time);
+  setState(old=>({...old,accounts,txns,activeId:accounts.some(a=>a.id===old.activeId)?old.activeId:(accounts[0]?.id||'')}));
  },[]);
  const refreshAccount=useCallback(async(accountId:string)=>{
   const account=accountsRef.current.find(a=>a.id===accountId); if(!account)return;
