@@ -38,18 +38,18 @@ function useEngine(){
  const refresh=useCallback(async()=>{
   const [rows, history]=await Promise.all([bigbullsBackend.accounts(),bigbullsBackend.transactionHistory()]);
   const accounts=rows.filter(a=>a.status==='approved'&&!a.archived_at&&!a.deleted_at).map(mapAccount);
-  const walletTxns=(history.wallet||[]).map((x:any)=>({
+  const walletTxns=(history.wallet||[]).map<Txn>((x:any)=>({
    id:x.id,accountId:x.account_id||'',type:x.kind==='deposit'?'Deposit':'Withdrawal',
    method:[x.asset,x.network].filter(Boolean).join(' / ')||'Wallet',
    amount:Number(x.amount_usd||0),
    status:['approved','completed','confirmed'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),
    time:Date.parse(x.created_at)
   }));
-  const accountTxns=(history.accountTransfers||[]).map((x:any)=>({
+  const accountTxns=(history.accountTransfers||[]).map<Txn>((x:any)=>({
    id:x.id,accountId:x.from_account||x.to_account||'',type:'Transfer',method:'Account transfer',
    amount:Number(x.amount_usd||0),status:['approved','completed'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),time:Date.parse(x.created_at)
   }));
-  const fundTxns=(history.fundTransfers||[]).map((x:any)=>({
+  const fundTxns=(history.fundTransfers||[]).map<Txn>((x:any)=>({
    id:x.id,accountId:x.to_account_id||x.from_account_id||'',type:'Transfer',
    method:(x.from_type==='wallet'?'Main Wallet':'Trading Account')+' → '+(x.to_type==='wallet'?'Main Wallet':'Trading Account'),
    amount:Number(x.amount||0),status:['completed','approved'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),time:Date.parse(x.created_at)
