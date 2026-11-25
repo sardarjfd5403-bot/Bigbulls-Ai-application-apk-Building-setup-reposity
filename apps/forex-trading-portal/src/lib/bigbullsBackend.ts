@@ -154,6 +154,28 @@ export const bigbullsBackend = {
     return data || [];
   },
 
+  async transactionHistory() {
+    const user = await requireUser();
+    const [wallet, accountTransfers, fundTransfers] = await Promise.all([
+      supabase.from('wallet_transactions')
+        .select('id,account_id,kind,asset,network,amount_usd,status,created_at,invoice_id,tx_hash,rejection_reason,payout_reference')
+        .eq('user_id', user.id).order('created_at', { ascending: false }).limit(250),
+      supabase.from('account_transfers')
+        .select('id,from_account,to_account,amount_usd,status,created_at')
+        .eq('user_id', user.id).order('created_at', { ascending: false }).limit(250),
+      supabase.from('client_fund_transfers')
+        .select('id,from_type,from_account_id,to_type,to_account_id,amount,currency,status,created_at')
+        .eq('user_id', user.id).order('created_at', { ascending: false }).limit(250),
+    ]);
+    const failed = [wallet, accountTransfers, fundTransfers].find(x => x.error);
+    if (failed?.error) throw failed.error;
+    return {
+      wallet: wallet.data || [],
+      accountTransfers: accountTransfers.data || [],
+      fundTransfers: fundTransfers.data || [],
+    };
+  },
+
 
 
   async supportTickets() {
