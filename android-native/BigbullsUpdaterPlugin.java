@@ -84,10 +84,47 @@ public class BigbullsUpdaterPlugin extends Plugin {
           if (successful) {
             Uri apkUri = manager.getUriForDownloadedFile(downloadId);
             if (apkUri != null) {
-              Intent install = new Intent(Intent.ACTION_VIEW);
-              install.setDataAndType(apkUri, "application/vnd.android.package-archive");
-              install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-              try { context.startActivity(install); } catch (Exception ignored) {}
+              // Android blocks launching the package installer from a background
+              // BroadcastReceiver on many OS versions. Post a user-tappable
+              // notification whose PendingIntent opens the system installer.
+              try {
+                android.app.NotificationManager notifications =
+                  (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                String channelId = "bigbulls_app_updates";
+                if (Build.VERSION.SDK_INT >= 26) {
+                  android.app.NotificationChannel channel = new android.app.NotificationChannel(
+                    channelId, "BIGBULLS app updates", android.app.NotificationManager.IMPORTANCE_HIGH);
+                  channel.setDescription("Install downloaded BIGBULLS app updates");
+                  notifications.createNotificationChannel(channel);
+                }
+
+                Intent install = new Intent(Intent.ACTION_VIEW);
+                install.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                int pendingFlags = android.app.PendingIntent.FLAG_UPDATE_CURRENT;
+                if (Build.VERSION.SDK_INT >= 23) pendingFlags |= android.app.PendingIntent.FLAG_IMMUTABLE;
+                android.app.PendingIntent pendingInstall = android.app.PendingIntent.getActivity(
+                  context, (int) (downloadId & 0x7fffffff), install, pendingFlags);
+
+                android.app.Notification.Builder builder = Build.VERSION.SDK_INT >= 26
+                  ? new android.app.Notification.Builder(context, channelId)
+                  : new android.app.Notification.Builder(context);
+                builder.setSmallIcon(context.getApplicationInfo().icon)
+                  .setContentTitle("BIGBULLS update ready")
+                  .setContentText("Tap here to install the latest version")
+                  .setAutoCancel(true)
+                  .setContentIntent(pendingInstall);
+
+                if (Build.VERSION.SDK_INT < 33 ||
+                    context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+                      android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                  notifications.notify((int) (downloadId & 0x7fffffff), builder.build());
+                }
+              } catch (Exception ignored) {
+                // DownloadManager's completed-download notification remains available
+                // as a fallback if notification permission/channel setup is unavailable.
+              }
             }
           }
           try { context.unregisterReceiver(this); } catch (Exception ignored) {}
