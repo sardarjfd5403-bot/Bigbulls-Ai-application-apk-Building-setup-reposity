@@ -44,9 +44,17 @@ jobs:
           from pathlib import Path
           p = Path('android/app/src/main/AndroidManifest.xml')
           s = p.read_text()
-          permission = '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />'
-          if 'android.permission.REQUEST_INSTALL_PACKAGES' not in s:
-              s = s.replace('<application', permission + '\n    <application', 1)
+          permissions = [
+              'android.permission.REQUEST_INSTALL_PACKAGES',
+              'android.permission.CAMERA',
+              'android.permission.ACCESS_FINE_LOCATION',
+              'android.permission.ACCESS_COARSE_LOCATION',
+              'android.permission.POST_NOTIFICATIONS',
+          ]
+          for name in permissions:
+              tag = f'<uses-permission android:name="{name}" />'
+              if name not in s:
+                  s = s.replace('<application', f'    {tag}\n    <application', 1)
           p.write_text(s)
           PY
       - name: Set Android version from update manifest
