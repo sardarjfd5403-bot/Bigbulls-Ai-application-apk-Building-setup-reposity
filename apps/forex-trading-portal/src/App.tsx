@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
 import { useAuth, loginWithRedirect } from './lib/previewAuth';
+import { BigbullsUpdater } from './lib/bigbullsUpdater';
 import { Toaster } from '@project/components/ui/sonner';
 import { TradingProvider } from './lib/store';
 import { PortalProvider } from './lib/portal';
@@ -25,6 +26,7 @@ import AppLock from './components/AppLock';
 
 const UPDATE_MANIFEST = 'https://raw.githubusercontent.com/sardarjfd5403-bot/Bigbulls-Ai-application-apk-Building-setup-reposity/main/app-update.json';
 
+type UpdateInfo = { version: string; build: number; notes?: string; apkUrl: string; mandatory?: boolean };
 function versionParts(v: string) { return v.replace(/^v/i, '').split('.').map(n => Number.parseInt(n, 10) || 0); }
 function isNewer(remote: string, local: string) {
   const a = versionParts(remote), b = versionParts(local);
@@ -35,25 +37,30 @@ function isNewer(remote: string, local: string) {
 }
 
 function InAppUpdateNotice() {
-  const [update, setUpdate] = useState<{version:string; notes?:string; url:string; mandatory?:boolean} | null>(null);
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
   useEffect(() => {
     let alive = true;
     const check = async () => {
       try {
         const response = await fetch(UPDATE_MANIFEST, { cache: 'no-store' });
         if (!response.ok) return;
-        const remote = await response.json();
+        const remote: UpdateInfo = await response.json();
+        if (!remote.version || !remote.apkUrl || !Number.isFinite(Number(remote.build))) return;
         let localVersion = '0.0.0';
+        let localBuild = 0;
         if (Capacitor.isNativePlatform()) {
-          const info = await NativeApp.getInfo();
+          const info = await BigbullsUpdater.getAppInfo();
           localVersion = info.version || localVersion;
+          localBuild = Number(info.build) || 0;
         } else {
-          localVersion = '3.6.0';
+          const info = await NativeApp.getInfo().catch(() => null);
+          localVersion = info?.version || '3.6.0';
         }
-        if (alive && remote.version && remote.apkUrl && isNewer(remote.version, localVersion)) {
-          setUpdate({ version: remote.version, notes: remote.notes, url: remote.apkUrl, mandatory: !!remote.mandatory });
-        }
+        const newer = Number(remote.build) > localBuild || (Number(remote.build) === localBuild && isNewer(remote.version, localVersion));
+        if (alive && newer) setUpdate(remote);
       } catch (error) {
         console.warn('BIGBULLS update check unavailable:', error);
       }
@@ -63,22 +70,38 @@ function InAppUpdateNotice() {
     return () => { alive = false; window.clearInterval(interval); };
   }, []);
   if (!update || dismissed) return null;
-  const startUpdate = () => {
-    if (Capacitor.isNativePlatform()) {
-      window.open(update.url, '_system');
-    } else {
-      window.open(update.url, '_blank', 'noopener,noreferrer');
+
+  const startUpdate = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      window.open(update.apkUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setBusy(true);
+    setMessage('Preparing secure download…');
+    try {
+      const result = await BigbullsUpdater.installApk({ url: update.apkUrl });
+      if (result.permissionRequired) {
+        setMessage('Android ki “Install unknown apps” permission allow karein, phir Update Now dobara dabayein.');
+      } else {
+        setMessage('Download complete. Android installer mein update confirm karein.');
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Update download failed. Please try again.');
+    } finally {
+      setBusy(false);
     }
   };
+
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-labelledby="bb-update-title">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-slate-900 shadow-2xl">
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-xl font-black text-white">B</div>
         <h2 id="bb-update-title" className="text-lg font-bold">New BIGBULLS update available</h2>
-        <p className="mt-1 text-sm text-slate-600">Version v{update.version} is ready.</p>
+        <p className="mt-1 text-sm text-slate-600">Version v{update.version} · Build {update.build}</p>
         {update.notes && <p className="mt-3 text-sm text-slate-600">{update.notes}</p>}
-        <button onClick={startUpdate} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white">Update Now</button>
-        {!update.mandatory && <button onClick={() => setDismissed(true)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">Later</button>}
+        <button onClick={startUpdate} disabled={busy} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? 'Please wait…' : 'Update Now'}</button>
+        {message && <p className="mt-3 text-center text-xs text-slate-600">{message}</p>}
+        {!update.mandatory && <button onClick={() => setDismissed(true)} disabled={busy} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">Later</button>}
         <p className="mt-3 text-center text-xs text-slate-500">Your BIGBULLS account and trading data remain on the existing secure service.</p>
       </div>
     </div>
