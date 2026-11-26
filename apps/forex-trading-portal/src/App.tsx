@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
 import OneSignal from '@onesignal/capacitor-plugin';
+import { Camera } from '@capacitor/camera';
+import { Geolocation } from '@capacitor/geolocation';
 import { initializeBigbullsPush } from './lib/oneSignal';
 import { useAuth, loginWithRedirect } from './lib/previewAuth';
 import { BigbullsUpdater } from './lib/bigbullsUpdater';
@@ -112,24 +114,54 @@ function InAppUpdateNotice() {
 export default function App() {
   const { user, isLoading } = useAuth();
 
-  // Initialize OneSignal only in the native Android/iOS app, then bind the
-  // signed-in Supabase user as OneSignal's external_id for targeted pushes.
+  // Ask for native Android permissions on first launch. Each permission is
+  // requested independently so one failure cannot prevent the other prompts.
   useEffect(() => {
     if (isLoading || !Capacitor.isNativePlatform()) return;
     let active = true;
     void (async () => {
+      const requestOnce = async (key: string, explanation: string, request: () => Promise<unknown>) => {
+        if (localStorage.getItem(key) === 'done') return;
+        try {
+          if (window.confirm(explanation)) await request();
+        } catch (error) {
+          console.error('BIGBULLS permission request failed:', key, error);
+        } finally {
+          localStorage.setItem(key, 'done');
+        }
+      };
+
+      await requestOnce(
+        'bb-permission-notifications-v1',
+        'Allow BIGBULLS notifications to receive important account, deposit, withdrawal and trading alerts?',
+        async () => {
+          await initializeBigbullsPush();
+          const granted = await OneSignal.Notifications.hasPermission();
+          if (!granted) await OneSignal.Notifications.requestPermission(true);
+        },
+      );
+      await requestOnce(
+        'bb-permission-camera-v1',
+        'Allow BIGBULLS to use your camera when you capture KYC verification documents?',
+        async () => {
+          const status = await Camera.checkPermissions();
+          if (status.camera !== 'granted') await Camera.requestPermissions({ permissions: ['camera'] });
+        },
+      );
+      await requestOnce(
+        'bb-permission-location-v1',
+        'Allow BIGBULLS to access your location for account security and location-based features? Location is not collected by this prompt alone.',
+        async () => {
+          const status = await Geolocation.checkPermissions();
+          if (status.location !== 'granted') await Geolocation.requestPermissions();
+        },
+      );
+
+      if (!active) return;
       try {
         await initializeBigbullsPush();
-        const hasPermission = await OneSignal.Notifications.hasPermission();
-        if (!hasPermission) {
-          await OneSignal.Notifications.requestPermission(true);
-        }
-        if (!active) return;
-        if (user?.id) {
-          await OneSignal.login(user.id);
-        } else {
-          await OneSignal.logout();
-        }
+        if (user?.id) await OneSignal.login(user.id);
+        else await OneSignal.logout();
         const [subscriptionId, token, optedIn] = await Promise.all([
           OneSignal.User.pushSubscription.getIdAsync(),
           OneSignal.User.pushSubscription.getTokenAsync(),
