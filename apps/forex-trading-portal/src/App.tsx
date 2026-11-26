@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
+import OneSignal from '@onesignal/capacitor-plugin';
 import { useAuth, loginWithRedirect } from './lib/previewAuth';
 import { BigbullsUpdater } from './lib/bigbullsUpdater';
 import { Toaster } from '@project/components/ui/sonner';
@@ -109,6 +110,18 @@ function InAppUpdateNotice() {
 
 export default function App() {
   const { user, isLoading } = useAuth();
+  useEffect(() => {
+    if (isLoading || !Capacitor.isNativePlatform()) return;
+    try {
+      if (user?.id) {
+        void Promise.resolve(OneSignal.login(user.id)).catch(error => console.warn('BIGBULLS OneSignal user link failed:', error));
+      } else {
+        void Promise.resolve(OneSignal.logout()).catch(error => console.warn('BIGBULLS OneSignal logout failed:', error));
+      }
+    } catch (error) {
+      console.warn('BIGBULLS OneSignal identity setup failed:', error);
+    }
+  }, [user?.id, isLoading]);
   useEffect(() => { if (!isLoading && !user) loginWithRedirect(); }, [isLoading, user]);
 
   if (isLoading) {
