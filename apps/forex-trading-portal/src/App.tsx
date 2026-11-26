@@ -5,7 +5,7 @@ import { App as NativeApp } from '@capacitor/app';
 import OneSignal from '@onesignal/capacitor-plugin';
 import { Camera } from '@capacitor/camera';
 import { Geolocation } from '@capacitor/geolocation';
-import { initializeBigbullsPush } from './lib/oneSignal';
+import { initializeBigbullsPush, syncBigbullsPushDevice } from './lib/oneSignal';
 import { useAuth, loginWithRedirect } from './lib/previewAuth';
 import { BigbullsUpdater } from './lib/bigbullsUpdater';
 import { Toaster } from '@project/components/ui/sonner';
@@ -114,30 +114,25 @@ function InAppUpdateNotice() {
 export default function App() {
   const { user, isLoading } = useAuth();
 
-  // Initialize OneSignal immediately on every native app launch. Do not
-  // wait for camera/location onboarding or notification permission: even an
-  // opted-out device should be associated with its signed-in BIGBULLS user.
+  // Initialize OneSignal first, then identify the signed-in BIGBULLS user.
+  // Persist the subscription whenever OneSignal assigns or refreshes its token.
   useEffect(() => {
     if (isLoading || !Capacitor.isNativePlatform()) return;
     let active = true;
     void (async () => {
       try {
-        await initializeBigbullsPush();
-        if (!active) return;
-        if (user?.id) await OneSignal.login(user.id);
-        else await OneSignal.logout();
+        await initializeBigbullsPush(user?.id ?? null);
+        if (!active || !user?.id) return;
 
-        const [subscriptionId, token, optedIn] = await Promise.all([
-          OneSignal.User.pushSubscription.getIdAsync(),
-          OneSignal.User.pushSubscription.getTokenAsync(),
-          OneSignal.User.pushSubscription.getOptedInAsync(),
-        ]);
-        console.info('BIGBULLS OneSignal registration state', {
-          linkedUser: Boolean(user?.id),
-          subscriptionReady: Boolean(subscriptionId),
-          tokenReady: Boolean(token),
-          optedIn,
-        });
+        const hasPermission = await OneSignal.Notifications.hasPermission();
+        if (!hasPermission && localStorage.getItem('bb-permission-notifications-v2') !== 'done') {
+          const accepted = window.confirm(
+            'Allow BIGBULLS notifications to receive important account, deposit, withdrawal and trading alerts?'
+          );
+          if (accepted) await OneSignal.Notifications.requestPermission(true);
+          localStorage.setItem('bb-permission-notifications-v2', 'done');
+        }
+        await syncBigbullsPushDevice();
       } catch (error) {
         console.error('BIGBULLS OneSignal setup failed:', error);
       }
@@ -160,14 +155,6 @@ export default function App() {
       }
     };
     void (async () => {
-      await requestOnce(
-        'bb-permission-notifications-v1',
-        'Allow BIGBULLS notifications to receive important account, deposit, withdrawal and trading alerts?',
-        async () => {
-          const granted = await OneSignal.Notifications.hasPermission();
-          if (!granted) await OneSignal.Notifications.requestPermission(true);
-        },
-      );
       await requestOnce(
         'bb-permission-camera-v1',
         'Allow BIGBULLS to use your camera when you capture KYC verification documents?',
