@@ -79,8 +79,15 @@ jobs:
         run: |
           BUILD_NUMBER=$(python -c "import json; print(json.load(open('app-update.json'))['build'])")
           cp android/app/build/outputs/apk/debug/app-debug.apk BIGBULLS-Android.apk
-          gh release create "android-build-${BUILD_NUMBER}" BIGBULLS-Android.apk \
-            --repo "${GITHUB_REPOSITORY}" \
-            --target "${GITHUB_SHA}" \
-            --title "BIGBULLS Android Build ${BUILD_NUMBER}" \
-            --notes "BIGBULLS v$(python -c "import json; print(json.load(open('app-update.json'))['version'])") build ${BUILD_NUMBER}."
+          TAG="android-build-${BUILD_NUMBER}"
+          NOTES="BIGBULLS v$(python -c "import json; print(json.load(open('app-update.json'))['version'])") build ${BUILD_NUMBER}."
+          if gh release view "$TAG" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "$TAG" BIGBULLS-Android.apk --repo "${GITHUB_REPOSITORY}" --clobber
+            gh release edit "$TAG" --repo "${GITHUB_REPOSITORY}" --title "BIGBULLS Android Build ${BUILD_NUMBER}" --notes "$NOTES"
+          else
+            gh release create "$TAG" BIGBULLS-Android.apk \
+              --repo "${GITHUB_REPOSITORY}" \
+              --target "${GITHUB_SHA}" \
+              --title "BIGBULLS Android Build ${BUILD_NUMBER}" \
+              --notes "$NOTES"
+          fi
