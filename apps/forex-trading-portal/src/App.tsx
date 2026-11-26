@@ -114,28 +114,56 @@ function InAppUpdateNotice() {
 export default function App() {
   const { user, isLoading } = useAuth();
 
-  // Ask for native Android permissions on first launch. Each permission is
-  // requested independently so one failure cannot prevent the other prompts.
+  // Initialize OneSignal immediately on every native app launch. Do not
+  // wait for camera/location onboarding or notification permission: even an
+  // opted-out device should be associated with its signed-in BIGBULLS user.
   useEffect(() => {
     if (isLoading || !Capacitor.isNativePlatform()) return;
     let active = true;
     void (async () => {
-      const requestOnce = async (key: string, explanation: string, request: () => Promise<unknown>) => {
-        if (localStorage.getItem(key) === 'done') return;
-        try {
-          if (window.confirm(explanation)) await request();
-        } catch (error) {
-          console.error('BIGBULLS permission request failed:', key, error);
-        } finally {
-          localStorage.setItem(key, 'done');
-        }
-      };
+      try {
+        await initializeBigbullsPush();
+        if (!active) return;
+        if (user?.id) await OneSignal.login(user.id);
+        else await OneSignal.logout();
 
+        const [subscriptionId, token, optedIn] = await Promise.all([
+          OneSignal.User.pushSubscription.getIdAsync(),
+          OneSignal.User.pushSubscription.getTokenAsync(),
+          OneSignal.User.pushSubscription.getOptedInAsync(),
+        ]);
+        console.info('BIGBULLS OneSignal registration state', {
+          linkedUser: Boolean(user?.id),
+          subscriptionReady: Boolean(subscriptionId),
+          tokenReady: Boolean(token),
+          optedIn,
+        });
+      } catch (error) {
+        console.error('BIGBULLS OneSignal setup failed:', error);
+      }
+    })();
+    return () => { active = false; };
+  }, [user?.id, isLoading]);
+
+  // Ask for Android permissions independently; notification registration
+  // above must not depend on the user accepting optional permission prompts.
+  useEffect(() => {
+    if (isLoading || !Capacitor.isNativePlatform()) return;
+    const requestOnce = async (key: string, explanation: string, request: () => Promise<unknown>) => {
+      if (localStorage.getItem(key) === 'done') return;
+      try {
+        if (window.confirm(explanation)) await request();
+      } catch (error) {
+        console.error('BIGBULLS permission request failed:', key, error);
+      } finally {
+        localStorage.setItem(key, 'done');
+      }
+    };
+    void (async () => {
       await requestOnce(
         'bb-permission-notifications-v1',
         'Allow BIGBULLS notifications to receive important account, deposit, withdrawal and trading alerts?',
         async () => {
-          await initializeBigbullsPush();
           const granted = await OneSignal.Notifications.hasPermission();
           if (!granted) await OneSignal.Notifications.requestPermission(true);
         },
@@ -156,29 +184,8 @@ export default function App() {
           if (status.location !== 'granted') await Geolocation.requestPermissions();
         },
       );
-
-      if (!active) return;
-      try {
-        await initializeBigbullsPush();
-        if (user?.id) await OneSignal.login(user.id);
-        else await OneSignal.logout();
-        const [subscriptionId, token, optedIn] = await Promise.all([
-          OneSignal.User.pushSubscription.getIdAsync(),
-          OneSignal.User.pushSubscription.getTokenAsync(),
-          OneSignal.User.pushSubscription.getOptedInAsync(),
-        ]);
-        console.info('BIGBULLS OneSignal registration state', {
-          linkedUser: Boolean(user?.id),
-          subscriptionReady: Boolean(subscriptionId),
-          tokenReady: Boolean(token),
-          optedIn,
-        });
-      } catch (error) {
-        console.error('BIGBULLS OneSignal setup failed:', error);
-      }
     })();
-    return () => { active = false; };
-  }, [user?.id, isLoading]);
+  }, [isLoading]);
 
   useEffect(() => { if (!isLoading && !user) loginWithRedirect(); }, [isLoading, user]);
 
