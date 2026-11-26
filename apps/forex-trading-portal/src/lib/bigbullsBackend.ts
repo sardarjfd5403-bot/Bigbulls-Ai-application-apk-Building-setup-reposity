@@ -70,17 +70,28 @@ export const bigbullsBackend = {
 
   async partnerDashboard() {
     const user=await requireUser();
-    const [application,wallet,ledger,referrals,commissions]=await Promise.all([
+    const [application,wallet,ledger,referrals,commissions,depositCommissions]=await Promise.all([
       supabase.from('partner_applications').select('id,partner_type,business_name,status,referral_code,admin_note,tier,created_at,reviewed_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
       supabase.from('partner_wallet_accounts').select('currency,available_balance,total_earned,total_paid,total_transferred,updated_at').eq('partner_user_id',user.id).maybeSingle(),
       supabase.from('partner_wallet_ledger').select('id,entry_type,direction,amount,note,created_at').eq('partner_user_id',user.id).order('created_at',{ascending:false}).limit(100),
       supabase.from('partner_referrals').select('id,referred_user_id,referral_code,created_at').eq('partner_user_id',user.id).order('created_at',{ascending:false}).limit(250),
-      supabase.from('partner_commission_ledger').select('id,verified_lots,commission_usd,status,admin_note,created_at,paid_at,symbol,masked_account,tier').eq('partner_user_id',user.id).order('created_at',{ascending:false}).limit(250)
+      supabase.from('partner_commission_ledger').select('id,verified_lots,commission_usd,status,admin_note,created_at,paid_at,symbol,masked_account,tier').eq('partner_user_id',user.id).order('created_at',{ascending:false}).limit(250),
+      supabase.from('partner_deposit_commissions').select('id,wallet_transaction_id,referred_user_id,deposit_amount_usd,commission_rate,commission_amount_usd,status,paid_at,created_at').eq('partner_user_id',user.id).order('created_at',{ascending:false}).limit(250)
     ]);
-    const failed=[application,wallet,ledger,referrals,commissions].find(x=>x.error);
+    const failed=[application,wallet,ledger,referrals,commissions,depositCommissions].find(x=>x.error);
     if(failed?.error)throw failed.error;
-    return {application:application.data,wallet:wallet.data,ledger:ledger.data||[],referrals:referrals.data||[],commissions:commissions.data||[]};
+    return {application:application.data,wallet:wallet.data,ledger:ledger.data||[],referrals:referrals.data||[],commissions:commissions.data||[],depositCommissions:depositCommissions.data||[]};
   },
+  subscribePartnerDashboard(userId:string,onChange:()=>void) {
+    return supabase.channel('bigbulls-partner-dashboard-'+userId)
+      .on('postgres_changes',{event:'*',schema:'public',table:'partner_wallet_accounts',filter:'partner_user_id=eq.'+userId},onChange)
+      .on('postgres_changes',{event:'*',schema:'public',table:'partner_wallet_ledger',filter:'partner_user_id=eq.'+userId},onChange)
+      .on('postgres_changes',{event:'*',schema:'public',table:'partner_deposit_commissions',filter:'partner_user_id=eq.'+userId},onChange)
+      .on('postgres_changes',{event:'*',schema:'public',table:'partner_commission_ledger',filter:'partner_user_id=eq.'+userId},onChange)
+      .on('postgres_changes',{event:'*',schema:'public',table:'partner_referrals',filter:'partner_user_id=eq.'+userId},onChange)
+      .subscribe();
+  },
+
   async applyPartner(input:{partner_type:string;business_name:string;website_or_social:string;audience_size:string;experience:string}) {
     const user=await requireUser();
     const {data,error}=await supabase.from('partner_applications').insert({...input,user_id:user.id,status:'pending'}).select('id,status,created_at').single();
@@ -318,6 +329,7 @@ export const bigbullsBackend = {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'partner_wallet_accounts', filter: 'partner_user_id=eq.' + userId }, onChange)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'partner_referrals', filter: 'partner_user_id=eq.' + userId }, onChange)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'partner_commission_ledger', filter: 'partner_user_id=eq.' + userId }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'partner_deposit_commissions', filter: 'partner_user_id=eq.' + userId }, onChange)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets', filter: 'user_id=eq.' + userId }, onChange)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'wallet_transactions', filter: 'user_id=eq.' + userId }, onChange)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'account_transfers', filter: 'user_id=eq.' + userId }, onChange)
