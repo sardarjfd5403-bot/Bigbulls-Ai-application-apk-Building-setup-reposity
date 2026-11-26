@@ -147,6 +147,7 @@ function usePortalState() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'partner_wallet_accounts', filter: 'partner_user_id=eq.' + user.id }, () => scheduleRefresh(user))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'partner_referrals', filter: 'partner_user_id=eq.' + user.id }, () => scheduleRefresh(user))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'partner_commission_ledger', filter: 'partner_user_id=eq.' + user.id }, () => scheduleRefresh(user))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'partner_deposit_commissions', filter: 'partner_user_id=eq.' + user.id }, () => scheduleRefresh(user))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets', filter: 'user_id=eq.' + user.id }, () => scheduleRefresh(user))
             .subscribe();
         }
