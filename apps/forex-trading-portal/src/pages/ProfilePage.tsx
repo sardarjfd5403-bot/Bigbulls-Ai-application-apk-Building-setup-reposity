@@ -35,7 +35,7 @@ export default function ProfilePage() {
       {tab === 'Security' && <Security />}
       {tab === 'Trading terminal' && <Prefs kind="terminal" />}
       {tab === 'Notifications' && <Prefs kind="notify" />}
-      <div className="mt-8 border-t pt-4 text-center text-xs text-muted-foreground">BIGBULLS App Version 1.5.5</div>
+      <div className="mt-8 border-t pt-4 text-center text-xs text-muted-foreground">BIGBULLS App Version v3.5.9</div>
     </div>
   );
 }
