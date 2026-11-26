@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
-import { OneSignal } from '@onesignal/capacitor-plugin';
+import OneSignal from '@onesignal/capacitor-plugin';
 import { useAuth, loginWithRedirect } from './lib/previewAuth';
 import { BigbullsUpdater } from './lib/bigbullsUpdater';
 import { Toaster } from '@project/components/ui/sonner';
