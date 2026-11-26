@@ -96,9 +96,12 @@ jobs:
                   raise SystemExit('Could not find Android buildTypes block')
               s = s.replace('    buildTypes {', block + '    buildTypes {', 1)
           if 'signingConfig signingConfigs.release' not in s:
-              s, count = re.subn(r'(buildTypes\\s*\\{\\s*release\\s*\\{)', r'\\1\\n            signingConfig signingConfigs.release', s, count=1)
-              if not count:
+              build_types_at = s.find('buildTypes')
+              release_at = s.find('release {', build_types_at)
+              if build_types_at < 0 or release_at < 0:
                   raise SystemExit('Could not find release buildType for signing')
+              insert_at = release_at + len('release {')
+              s = s[:insert_at] + '\n            signingConfig signingConfigs.release' + s[insert_at:]
           p.write_text(s)
           PY
       - name: Build signed release APK
