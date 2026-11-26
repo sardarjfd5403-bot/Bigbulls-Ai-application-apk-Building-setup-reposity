@@ -46,7 +46,7 @@ jobs:
           s = p.read_text()
           permission = '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />'
           if 'android.permission.REQUEST_INSTALL_PACKAGES' not in s:
-              s = s.replace('<application', permission + '\\n    <application', 1)
+              s = s.replace('<application', permission + '\n    <application', 1)
           p.write_text(s)
           PY
       - name: Set Android version from update manifest
@@ -57,8 +57,8 @@ jobs:
           cfg = json.loads(Path('app-update.json').read_text())
           gradle = Path('android/app/build.gradle')
           source = gradle.read_text()
-          source, code_count = re.subn(r'versionCode\\s+\\d+', f'versionCode {int(cfg["build"])}', source, count=1)
-          source, name_count = re.subn(r'''versionName\\s+['"][^'"]+['"]''', f'versionName "{cfg["version"]}"', source, count=1)
+          source, code_count = re.subn(r'versionCode\s+\d+', f'versionCode {int(cfg["build"])}', source, count=1)
+          source, name_count = re.subn(r'''versionName\s+['"][^'"]+['"]''', f'versionName "{cfg["version"]}"', source, count=1)
           if not code_count or not name_count:
               raise SystemExit('Could not set Android versionCode/versionName')
           gradle.write_text(source)
@@ -75,12 +75,12 @@ jobs:
           retention-days: 14
       - name: Publish installable APK release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: \${{ github.token }}
         run: |
           BUILD_NUMBER=$(python -c "import json; print(json.load(open('app-update.json'))['build'])")
           cp android/app/build/outputs/apk/debug/app-debug.apk BIGBULLS-Android.apk
-          gh release create "android-build-${BUILD_NUMBER}" BIGBULLS-Android.apk \\
-            --repo "${GITHUB_REPOSITORY}" \\
-            --target "${GITHUB_SHA}" \\
-            --title "BIGBULLS Android Build ${BUILD_NUMBER}" \\
-            --notes "BIGBULLS v$(python -c "import json; print(json.load(open('app-update.json'))['version'])") build ${BUILD_NUMBER}."
+          gh release create "android-build-\${BUILD_NUMBER}" BIGBULLS-Android.apk \
+            --repo "\${GITHUB_REPOSITORY}" \
+            --target "\${GITHUB_SHA}" \
+            --title "BIGBULLS Android Build \${BUILD_NUMBER}" \
+            --notes "BIGBULLS v$(python -c "import json; print(json.load(open('app-update.json'))['version'])") build \${BUILD_NUMBER}."
