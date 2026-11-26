@@ -6,7 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { HammerIcon } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Capacitor } from '@capacitor/core';
-import { OneSignal } from '@onesignal/capacitor-plugin';
+import OneSignal from '@onesignal/capacitor-plugin';
 
 const queryClient = new QueryClient();
 
