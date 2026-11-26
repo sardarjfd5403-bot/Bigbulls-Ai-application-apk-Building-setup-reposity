@@ -81,8 +81,11 @@ jobs:
           import re
           p = Path('android/app/build.gradle')
           s = p.read_text()
-          if 'signingConfigs {' not in s:
-              block = """    signingConfigs {
+          marker = 'signingConfigs {'
+          if marker not in s:
+              if '    buildTypes {' not in s:
+                  raise SystemExit('Could not find Android buildTypes block')
+              s = s.replace('    buildTypes {', marker + """
                   release {
                       storeFile file('bigbulls-release.jks')
                       storePassword System.getenv('KEYSTORE_PASSWORD')
@@ -91,10 +94,28 @@ jobs:
                   }
               }
 
-          """
-              if '    buildTypes {' not in s:
-                  raise SystemExit('Could not find Android buildTypes block')
-              s = s.replace('    buildTypes {', block + '    buildTypes {', 1)
+          """ + '    buildTypes {', 1)
+          else:
+              start = s.find(marker) + len(marker)
+              depth = 1
+              end = start
+              while end < len(s) and depth:
+                  if s[end] == '{':
+                      depth += 1
+                  elif s[end] == '}':
+                      depth -= 1
+                  end += 1
+              section = s[start:end-1]
+              if 'release {' not in section:
+                  release_config = """
+                  release {
+                      storeFile file('bigbulls-release.jks')
+                      storePassword System.getenv('KEYSTORE_PASSWORD')
+                      keyAlias System.getenv('KEY_ALIAS')
+                      keyPassword System.getenv('KEY_PASSWORD')
+                  }
+              """
+                  s = s[:end-1] + release_config + s[end-1:]
           if 'signingConfig signingConfigs.release' not in s:
               build_types_at = s.find('buildTypes')
               release_at = s.find('release {', build_types_at)
