@@ -11,7 +11,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
 import android.webkit.URLUtil;
-import androidx.core.content.ContextCompat;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -37,24 +36,30 @@ public class BigbullsUpdaterPlugin extends Plugin {
   @PluginMethod
   public void installApk(PluginCall call) {
     String url = call.getString("url");
-    if (url == null || !url.startsWith("https://") || !URLUtil.isHttpsUrl(url)) {
+    if (url == null || !URLUtil.isHttpsUrl(url)) {
       call.reject("A secure HTTPS APK URL is required"); return;
     }
     if (Build.VERSION.SDK_INT >= 26 && !getContext().getPackageManager().canRequestPackageInstalls()) {
       Intent settings = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
         Uri.parse("package:" + getContext().getPackageName()));
       getActivity().startActivity(settings);
-      JSObject result = new JSObject(); result.put("permissionRequired", true); call.resolve(result); return;
+      JSObject result = new JSObject(); result.put("permissionRequired", true);
+      call.resolve(result); return;
     }
     try {
       DownloadManager manager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+      if (manager == null) { call.reject("Android download service is unavailable"); return; }
+
       DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
       request.setTitle("BIGBULLS update");
       request.setDescription("Downloading the latest BIGBULLS app");
       request.setMimeType("application/vnd.android.package-archive");
       request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+      request.setAllowedOverMetered(true);
+      request.setAllowedOverRoaming(false);
       request.setDestinationInExternalFilesDir(getContext(), Environment.DIRECTORY_DOWNLOADS, "BIGBULLS-update.apk");
       long downloadId = manager.enqueue(request);
+
       if (receiver != null) {
         try { getContext().unregisterReceiver(receiver); } catch (Exception ignored) {}
       }
@@ -63,30 +68,46 @@ public class BigbullsUpdaterPlugin extends Plugin {
           if (!DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) return;
           long completedId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
           if (completedId != downloadId) return;
+
           DownloadManager.Query query = new DownloadManager.Query().setFilterById(downloadId);
           android.database.Cursor cursor = manager.query(query);
+          boolean successful = false;
           try {
-            if (cursor == null || !cursor.moveToFirst() ||
-                cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) != DownloadManager.STATUS_SUCCESSFUL) {
-              call.reject("APK download failed. Please try again."); return;
+            successful = cursor != null && cursor.moveToFirst() &&
+              cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL;
+          } catch (Exception ignored) {
+            successful = false;
+          } finally {
+            if (cursor != null) cursor.close();
+          }
+
+          if (successful) {
+            Uri apkUri = manager.getUriForDownloadedFile(downloadId);
+            if (apkUri != null) {
+              Intent install = new Intent(Intent.ACTION_VIEW);
+              install.setDataAndType(apkUri, "application/vnd.android.package-archive");
+              install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+              try { context.startActivity(install); } catch (Exception ignored) {}
             }
-          } finally { if (cursor != null) cursor.close(); }
-          Uri apkUri = manager.getUriForDownloadedFile(downloadId);
-          if (apkUri == null) { call.reject("Downloaded APK could not be opened"); return; }
-          Intent install = new Intent(Intent.ACTION_VIEW);
-          install.setDataAndType(apkUri, "application/vnd.android.package-archive");
-          install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-          try {
-            getContext().startActivity(install);
-            JSObject done = new JSObject(); done.put("permissionRequired", false); call.resolve(done);
-          } catch (Exception e) { call.reject("Android could not open the package installer", e); }
-          try { getContext().unregisterReceiver(this); } catch (Exception ignored) {}
+          }
+          try { context.unregisterReceiver(this); } catch (Exception ignored) {}
+          if (receiver == this) receiver = null;
         }
       };
+
       IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-      if (Build.VERSION.SDK_INT >= 33) getContext().registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED);
+      if (Build.VERSION.SDK_INT >= 33) getContext().registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
       else getContext().registerReceiver(receiver, filter);
-      call.setKeepAlive(true);
-    } catch (Exception e) { call.reject("Unable to start BIGBULLS update download", e); }
+
+      // Resolve as soon as Android accepts the download; don't leave the UI spinner
+      // waiting for the full APK transfer. DownloadManager shows its own progress notification.
+      JSObject result = new JSObject();
+      result.put("permissionRequired", false);
+      result.put("downloadStarted", true);
+      result.put("downloadId", downloadId);
+      call.resolve(result);
+    } catch (Exception e) {
+      call.reject("Unable to start BIGBULLS update download", e);
+    }
   }
 }
