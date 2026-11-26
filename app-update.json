@@ -1,7 +1,6 @@
 {
-  "version": "3.6.2",
-  "build": 232,
+  "version": "3.6.3",
+  "build": 233,
   "mandatory": false,
-  "notes": "IB 10% referred-deposit commissions with live shared dashboard and liquidity-pool settlement.",
   "apkUrl": "https://github.com/sardarjfd5403-bot/Bigbulls-Ai-application-apk-Building-setup-reposity/releases/latest/download/BIGBULLS-Android.apk"
 }
