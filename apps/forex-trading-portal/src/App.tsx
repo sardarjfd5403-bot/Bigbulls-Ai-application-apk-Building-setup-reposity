@@ -99,9 +99,9 @@ function InAppUpdateNotice() {
         <h2 id="bb-update-title" className="text-lg font-bold">New BIGBULLS update available</h2>
         <p className="mt-1 text-sm text-slate-600">Version v{update.version} · Build {update.build}</p>
         <p className="mt-3 text-sm text-slate-600">A newer version of BIGBULLS is available. Update now to get the latest version.</p>
-        <button onClick={startUpdate} disabled={busy} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? 'Please wait…' : 'Update Now'}</button>
+        <button type="button" onPointerUp={(event) => { event.preventDefault(); if (!busy) void startUpdate(); }} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (!busy) void startUpdate(); } }} disabled={busy} style={{ touchAction: 'manipulation', pointerEvents: 'auto', position: 'relative', zIndex: 2 }} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? 'Please wait…' : 'Update Now'}</button>
         {message && <p className="mt-3 text-center text-xs text-slate-600">{message}</p>}
-        {!update.mandatory && <button onClick={() => setDismissed(true)} disabled={busy} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">Later</button>}
+        {!update.mandatory && <button type="button" onPointerUp={(event) => { event.preventDefault(); if (!busy) setDismissed(true); }} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (!busy) setDismissed(true); } }} disabled={busy} style={{ touchAction: 'manipulation', pointerEvents: 'auto', position: 'relative', zIndex: 2 }} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">Later</button>}
       </div>
     </div>
   );
