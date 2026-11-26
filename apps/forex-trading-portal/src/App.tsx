@@ -26,7 +26,7 @@ import AppLock from './components/AppLock';
 
 const UPDATE_MANIFEST = 'https://raw.githubusercontent.com/sardarjfd5403-bot/Bigbulls-Ai-application-apk-Building-setup-reposity/main/app-update.json';
 
-type UpdateInfo = { version: string; build: number; notes?: string; apkUrl: string; mandatory?: boolean };
+type UpdateInfo = { version: string; build: number; apkUrl: string; mandatory?: boolean };
 function versionParts(v: string) { return v.replace(/^v/i, '').split('.').map(n => Number.parseInt(n, 10) || 0); }
 function isNewer(remote: string, local: string) {
   const a = versionParts(remote), b = versionParts(local);
@@ -98,11 +98,10 @@ function InAppUpdateNotice() {
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-xl font-black text-white">B</div>
         <h2 id="bb-update-title" className="text-lg font-bold">New BIGBULLS update available</h2>
         <p className="mt-1 text-sm text-slate-600">Version v{update.version} · Build {update.build}</p>
-        {update.notes && <p className="mt-3 text-sm text-slate-600">{update.notes}</p>}
+        <p className="mt-3 text-sm text-slate-600">A newer version of BIGBULLS is available. Update now to get the latest version.</p>
         <button onClick={startUpdate} disabled={busy} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? 'Please wait…' : 'Update Now'}</button>
         {message && <p className="mt-3 text-center text-xs text-slate-600">{message}</p>}
         {!update.mandatory && <button onClick={() => setDismissed(true)} disabled={busy} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">Later</button>}
-        <p className="mt-3 text-center text-xs text-slate-500">Your BIGBULLS account and trading data remain on the existing secure service.</p>
       </div>
     </div>
   );
