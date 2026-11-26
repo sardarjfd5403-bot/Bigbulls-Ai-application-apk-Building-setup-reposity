@@ -83,7 +83,7 @@ function InAppUpdateNotice() {
       if (result.permissionRequired) {
         setMessage('Android ki “Install unknown apps” permission allow karein, phir Update Now dobara dabayein.');
       } else {
-        setMessage('Download complete. Android installer mein update confirm karein.');
+        setMessage(result.downloadStarted ? 'Download started. Progress notification mein dekhein; download complete hote hi installer khul jayega.' : 'Android installer mein update confirm karein.');
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Update download failed. Please try again.');
