@@ -47,7 +47,7 @@ export default function AuthScreen() {
         {mode === 'login' && <button onClick={reset} disabled={busy} className="mt-4 w-full text-sm font-semibold text-primary">Forgot password?</button>}
         <div className="mt-6 border-t pt-5 text-center text-sm text-muted-foreground">{mode === 'login' ? "Don't have an account?" : 'Already registered?'} <button onClick={()=>{setMode(mode === 'login' ? 'signup' : 'login');setError('');setMessage('');}} className="font-bold text-primary">{mode === 'login' ? 'Create account' : 'Sign in'}</button></div>
       </div>
-      <p className="mt-5 text-center text-xs text-muted-foreground">Your account is authenticated directly by BIGBULLS Supabase.</p>
+      <p className="mt-5 text-center text-xs text-muted-foreground">Your account is protected by BIGBULLS security.</p>
     </div>
   </div>;
 }
