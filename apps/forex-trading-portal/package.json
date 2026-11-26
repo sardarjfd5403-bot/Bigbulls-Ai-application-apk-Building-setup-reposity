@@ -95,7 +95,7 @@
     "@aparajita/capacitor-biometric-auth": "^10.0.0",
     "@aparajita/capacitor-secure-storage": "^8.0.1",
     "@capacitor/app": "^8.0.0",
-    "@onesignal/capacitor-plugin": "^5.2.14"
+    "@onesignal/capacitor-plugin": "^1.2.3"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "0.72.1",
