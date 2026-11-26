@@ -78,6 +78,7 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 --decode > android/app/bigbulls-release.jks
           python - <<'PY'
           from pathlib import Path
+          import re
           p = Path('android/app/build.gradle')
           s = p.read_text()
           if 'signingConfigs {' not in s:
