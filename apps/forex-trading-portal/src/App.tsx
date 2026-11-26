@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
+import OneSignal from '@onesignal/capacitor-plugin';
+import { initializeBigbullsPush } from './lib/oneSignal';
 import { useAuth, loginWithRedirect } from './lib/previewAuth';
 import { BigbullsUpdater } from './lib/bigbullsUpdater';
 import { Toaster } from '@project/components/ui/sonner';
@@ -109,6 +111,43 @@ function InAppUpdateNotice() {
 
 export default function App() {
   const { user, isLoading } = useAuth();
+
+  // Initialize OneSignal only in the native Android/iOS app, then bind the
+  // signed-in Supabase user as OneSignal's external_id for targeted pushes.
+  useEffect(() => {
+    if (isLoading || !Capacitor.isNativePlatform()) return;
+    let active = true;
+    void (async () => {
+      try {
+        await initializeBigbullsPush();
+        const hasPermission = await OneSignal.Notifications.hasPermission();
+        if (!hasPermission) {
+          await OneSignal.Notifications.requestPermission(true);
+        }
+        if (!active) return;
+        if (user?.id) {
+          await OneSignal.login(user.id);
+        } else {
+          await OneSignal.logout();
+        }
+        const [subscriptionId, token, optedIn] = await Promise.all([
+          OneSignal.User.pushSubscription.getIdAsync(),
+          OneSignal.User.pushSubscription.getTokenAsync(),
+          OneSignal.User.pushSubscription.getOptedInAsync(),
+        ]);
+        console.info('BIGBULLS OneSignal registration state', {
+          linkedUser: Boolean(user?.id),
+          subscriptionReady: Boolean(subscriptionId),
+          tokenReady: Boolean(token),
+          optedIn,
+        });
+      } catch (error) {
+        console.error('BIGBULLS OneSignal setup failed:', error);
+      }
+    })();
+    return () => { active = false; };
+  }, [user?.id, isLoading]);
+
   useEffect(() => { if (!isLoading && !user) loginWithRedirect(); }, [isLoading, user]);
 
   if (isLoading) {
