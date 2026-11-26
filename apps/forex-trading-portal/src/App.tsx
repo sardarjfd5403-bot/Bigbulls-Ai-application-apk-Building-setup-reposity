@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
 import OneSignal from '@onesignal/capacitor-plugin';
+import { initializeBigbullsPush } from './lib/oneSignal';
 import { useAuth, loginWithRedirect } from './lib/previewAuth';
 import { BigbullsUpdater } from './lib/bigbullsUpdater';
 import { Toaster } from '@project/components/ui/sonner';
@@ -118,7 +119,7 @@ export default function App() {
     let active = true;
     void (async () => {
       try {
-        await OneSignal.initialize('b324fd24-9c74-4871-a2c4-c0c534e14abe');
+        await initializeBigbullsPush();
         const hasPermission = await OneSignal.Notifications.hasPermission();
         if (!hasPermission) {
           await OneSignal.Notifications.requestPermission(true);
