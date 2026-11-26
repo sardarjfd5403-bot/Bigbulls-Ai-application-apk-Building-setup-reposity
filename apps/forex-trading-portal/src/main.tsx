@@ -5,8 +5,23 @@ import App from "./App";
 import { ErrorBoundary } from 'react-error-boundary';
 import { HammerIcon } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Capacitor } from '@capacitor/core';
+import { OneSignal } from '@onesignal/capacitor-plugin';
 
 const queryClient = new QueryClient();
+
+// Register this Android installation with OneSignal. The permission prompt is shown
+// by Android only when the user has not already made a notification choice.
+if (Capacitor.isNativePlatform()) {
+  try {
+    OneSignal.initialize('b324fd24-9c74-4871-a2c4-c0c534e14abe');
+    void OneSignal.Notifications.requestPermission(true).catch(error => {
+      console.warn('BIGBULLS notification permission request failed:', error);
+    });
+  } catch (error) {
+    console.warn('BIGBULLS OneSignal initialization failed:', error);
+  }
+}
 
 function reloadApp() {
   if (window._ziteOnReload) {
