@@ -1,0 +1,7 @@
+{
+  "version": "3.6.0",
+  "build": 220,
+  "mandatory": false,
+  "notes": "Improved app update notifications and stability.",
+  "apkUrl": "https://github.com/sardarjfd5403-bot/Bigbulls-Ai-application-apk-Building-setup-reposity/releases/latest/download/BIGBULLS-Android.apk"
+}
