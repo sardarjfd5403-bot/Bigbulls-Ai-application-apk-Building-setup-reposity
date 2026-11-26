@@ -64,23 +64,57 @@ jobs:
           gradle.write_text(source)
           print(f'Android version set to {cfg["version"]} ({cfg["build"]})')
           PY
-      - name: Build installable debug APK
+      - name: Configure permanent Android release signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || (echo "Missing KEYSTORE_BASE64 secret" && exit 1)
+          test -n "$KEYSTORE_PASSWORD" || (echo "Missing KEYSTORE_PASSWORD secret" && exit 1)
+          test -n "$KEY_ALIAS" || (echo "Missing KEY_ALIAS secret" && exit 1)
+          test -n "$KEY_PASSWORD" || (echo "Missing KEY_PASSWORD secret" && exit 1)
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/bigbulls-release.jks
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('android/app/build.gradle')
+          s = p.read_text()
+          if 'signingConfigs {' not in s:
+              block = """    signingConfigs {
+                  release {
+                      storeFile file('bigbulls-release.jks')
+                      storePassword System.getenv('KEYSTORE_PASSWORD')
+                      keyAlias System.getenv('KEY_ALIAS')
+                      keyPassword System.getenv('KEY_PASSWORD')
+                  }
+              }
+
+          """
+              if '    buildTypes {' not in s:
+                  raise SystemExit('Could not find Android buildTypes block')
+              s = s.replace('    buildTypes {', block + '    buildTypes {', 1)
+          if 'signingConfig signingConfigs.release' not in s:
+              s = s.replace('        release {', '        release {\n            signingConfig signingConfigs.release', 1)
+          p.write_text(s)
+          PY
+      - name: Build signed release APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: BIGBULLS-Android-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: BIGBULLS-Android-Release-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
-      - name: Publish installable APK release
+      - name: Publish signed APK release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           BUILD_NUMBER=$(python -c "import json; print(json.load(open('app-update.json'))['build'])")
-          cp android/app/build/outputs/apk/debug/app-debug.apk BIGBULLS-Android.apk
+          cp android/app/build/outputs/apk/release/app-release.apk BIGBULLS-Android.apk
           gh release create "android-build-${BUILD_NUMBER}" BIGBULLS-Android.apk \
             --repo "${GITHUB_REPOSITORY}" \
             --target "${GITHUB_SHA}" \
             --title "BIGBULLS Android Build ${BUILD_NUMBER}" \
-            --notes "BIGBULLS v$(python -c "import json; print(json.load(open('app-update.json'))['version'])") build ${BUILD_NUMBER}."
+            --notes "Signed BIGBULLS v$(python -c "import json; print(json.load(open('app-update.json'))['version'])") build ${BUILD_NUMBER}."
