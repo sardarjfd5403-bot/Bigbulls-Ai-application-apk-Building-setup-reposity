@@ -1,7 +1,7 @@
 {
-  "version": "3.6.0",
-  "build": 223,
+  "version": "3.6.1",
+  "build": 225,
   "mandatory": false,
-  "notes": "In-app update checker and stability improvements.",
+  "notes": "In-app APK download and Android installer update flow.",
   "apkUrl": "https://github.com/sardarjfd5403-bot/Bigbulls-Ai-application-apk-Building-setup-reposity/releases/latest/download/BIGBULLS-Android.apk"
 }
