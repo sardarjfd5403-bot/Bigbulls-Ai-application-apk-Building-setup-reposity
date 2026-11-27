@@ -60,13 +60,14 @@ function useEngine(){
    status:['approved','completed','confirmed'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),
    time:Date.parse(x.created_at)
   }));
+  const accountLabel=(id:string|null|undefined)=>id?(accounts.find(a=>a.id===id)?.number?'Account #'+accounts.find(a=>a.id===id)?.number:'Trading account'):'Main Wallet';
   const accountTxns=(history.accountTransfers||[]).map<Txn>((x:any)=>({
-   id:x.id,accountId:x.from_account||x.to_account||'',type:'Transfer',method:'Account transfer',
+   id:x.id,accountId:x.from_account||x.to_account||'',type:'Transfer',method:accountLabel(x.from_account)+' → '+accountLabel(x.to_account),
    amount:Number(x.amount_usd||0),status:['approved','completed'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),time:Date.parse(x.created_at)
   }));
   const fundTxns=(history.fundTransfers||[]).map<Txn>((x:any)=>({
-   id:x.id,accountId:x.to_account_id||x.from_account_id||'',type:'Transfer',
-   method:(x.from_type==='wallet'?'Main Wallet':'Trading Account')+' → '+(x.to_type==='wallet'?'Main Wallet':'Trading Account'),
+   id:x.id,accountId:x.from_account_id||x.to_account_id||'',type:'Transfer',
+   method:(x.from_type==='wallet'?'Main Wallet':accountLabel(x.from_account_id))+' → '+(x.to_type==='wallet'?'Main Wallet':accountLabel(x.to_account_id)),
    amount:Number(x.amount||0),status:['completed','approved'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),time:Date.parse(x.created_at)
   }));
   const txns=[...walletTxns,...accountTxns,...fundTxns].filter(x=>Number.isFinite(x.time)).sort((a,b)=>b.time-a.time);
