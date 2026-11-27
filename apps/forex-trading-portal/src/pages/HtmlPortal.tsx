@@ -5,6 +5,8 @@ import { useTrading } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { bigbullsBackend } from '../lib/bigbullsBackend';
 import { fetchCandles } from '../lib/feed';
+import { Capacitor } from '@capacitor/core';
+import OneSignal from '@onesignal/capacitor-plugin';
 
 type PortalMessage = { source?: string; action?: string; payload?: any };
 export default function HtmlPortal() {
@@ -160,6 +162,19 @@ export default function HtmlPortal() {
             if(error)throw error;
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'mfa',ok:true,message:'Two-factor authentication disabled.'},window.location.origin);
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'MFA_DATA',enabled:false,factors:[]},window.location.origin);
+            break;
+          }
+          case 'NOTIFICATIONS_TOGGLE': {
+            if (!Capacitor.isNativePlatform()) throw new Error('Push notification preferences can be changed in the installed BIGBULLS app.');
+            const enabled=!!payload.enabled;
+            if(enabled){
+              const granted=await OneSignal.Notifications.hasPermission();
+              if(!granted)await OneSignal.Notifications.requestPermission(true);
+              const permission=await OneSignal.Notifications.hasPermission();
+              if(!permission)throw new Error('Android notification permission was not granted.');
+              await OneSignal.User.pushSubscription.optIn();
+            }else await OneSignal.User.pushSubscription.optOut();
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'NOTIFICATIONS_RESULT',enabled,message:enabled?'BIGBULLS notifications enabled.':'BIGBULLS notifications paused.'},window.location.origin);
             break;
           }
           case 'AUTH_PASSWORD_UPDATE': {
