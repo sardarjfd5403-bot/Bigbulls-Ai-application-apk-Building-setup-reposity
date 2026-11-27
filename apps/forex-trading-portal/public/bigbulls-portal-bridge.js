@@ -149,7 +149,7 @@
       var bioTrack2=bioRow2&&bioRow2.querySelector('.sw-track');if(bioTrack2)bioTrack2.classList.toggle('on',!!data.enabled);
       toast(data.message||'Biometric preference updated.');
     } else if (data.type === 'APP_LOCK_RESULT') {
-      toast(data.message||'App Lock updated.');closeProfileSheet();emit('APP_LOCK_INIT');
+      toast(data.message||'App Lock updated.');closeProfileSheet();emit('APP_LOCK_INIT');emit('BIOMETRIC_INIT');
     } else if (data.type === 'NOTIFICATIONS_RESULT') {
       appState.settings.notifications=!!data.enabled;
       var row=Array.from(document.querySelectorAll('.profile-row')).find(function(x){return (x.textContent||'').toLowerCase().includes('notifications');});
