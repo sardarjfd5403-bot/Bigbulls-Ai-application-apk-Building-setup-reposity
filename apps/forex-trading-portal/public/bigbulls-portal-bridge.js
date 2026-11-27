@@ -83,6 +83,7 @@
       renderTradesLists();
       renderPendingOrders();
       renderMarketWatch();
+      updateLiveChartCandle();
       renderPerformance();
       renderProfileTab();
       document.querySelectorAll('.profile-row').forEach(function (row) {
@@ -309,7 +310,23 @@
     setText('profile-email-txt',shown||'—');
     setText('profile-eye-label',appState.emailMasked?'Show':'Hide');
   };
-    window.generateChartCandles = function () {
+    function updateLiveChartCandle(){
+    var chart=byId('chart-view');if(!chart||chart.classList.contains('hidden')||!appState.candles||!appState.candles.length)return;
+    var inst=(appState.instruments||[]).find(function(x){return x.symbol===appState.selectedSymbol;});
+    if(!inst||!(Number(inst.bid)>0))return;
+    var seconds=({'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1D':86400,'1W':604800,'1M':2592000})[appState.timeframe||'1m']||60;
+    var now=Math.floor(Date.now()/1000),bucket=Math.floor(now/seconds)*seconds;
+    var price=Number(inst.bid),last=appState.candles[appState.candles.length-1];
+    var lastTime=Number(last.time)||0;
+    if(lastTime>=bucket){
+      last.high=Math.max(Number(last.high),price);last.low=Math.min(Number(last.low),price);last.close=price;
+    }else{
+      appState.candles.push({time:bucket,open:price,high:price,low:price,close:price});
+      if(appState.candles.length>500)appState.candles.shift();
+    }
+    drawMainChart();
+  }
+  window.generateChartCandles = function () {
     var symbol = appState.selectedSymbol, timeframe = appState.timeframe || '1m';
     var key = symbol + '|' + timeframe, now = Date.now();
     if (key === lastCandleKey && now - lastCandleAt < 30000) return;
