@@ -62,7 +62,7 @@ export default function HtmlPortal() {
           real: byMode.real.some(a=>a.backendId===account.id) ? activeId : byMode.real[0]?.id || '',
           demo: byMode.demo.some(a=>a.backendId===account.id) ? activeId : byMode.demo[0]?.id || ''
         },
-        activeAccountId: account.id, runningTrades: positions, closedTrades: closed,
+        activeAccountId: account.id, runningTrades: positions, pendingOrders: trading.state.pending.filter(p=>p.accountId===account.id).map(p=>({id:p.id,symbol:p.symbol,side:p.side.toUpperCase(),kind:p.kind,lots:p.volume,price:p.price,sl:p.sl||0,tp:p.tp||0})), closedTrades: closed,
         instruments, equity: trading.equity, floating: trading.floating,
         email: data.user?.email || '', perfData, perfDataByFilter,
         perfCurvePoints: history.slice().reverse().reduce((arr,p)=>{arr.push((arr[arr.length-1]||0)+p.profit);return arr;},[0])
@@ -223,6 +223,7 @@ export default function HtmlPortal() {
             await sendSnapshot(); break;
           }
           case 'CLOSE_POSITION': await trading.closePosition(String(payload.id)); await sendSnapshot(); break;
+          case 'CANCEL_PENDING': await trading.cancelPending(String(payload.id)); await sendSnapshot(); break;
           case 'MODIFY_POSITION': await trading.modifyPosition(String(payload.id), Number(payload.sl)||undefined, Number(payload.tp)||undefined); await sendSnapshot(); break;
           case 'NAVIGATE': navigate(String(payload.path || '/')); break;
           case 'OPEN_ACCOUNT': {
