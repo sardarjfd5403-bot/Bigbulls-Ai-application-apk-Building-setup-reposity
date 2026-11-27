@@ -105,7 +105,7 @@ export default function HtmlPortal() {
               destination = method.method_type === 'crypto' ? method.destination_details : [method.account_title, method.account_number, method.destination_details].filter(Boolean).join(' · ');
               if (isCrypto && txHash.length <= 10) throw new Error('Enter the blockchain transaction hash.');
               if (!isCrypto && !(payload.proof && typeof payload.proof.size === 'number' && typeof payload.proof.name === 'string')) throw new Error('Upload your bank/payment receipt.');
-              if (payload.proof instanceof File) proofPath = await bigbullsBackend.uploadPaymentProof(payload.proof);
+              if (payload.proof && typeof payload.proof.size === 'number' && typeof payload.proof.name === 'string') proofPath = await bigbullsBackend.uploadPaymentProof(payload.proof as File);
             } else {
               const wallets = await bigbullsBackend.cryptoWallets();
               const wallet = wallets.find((w: any) => w.id === payload.methodId);
