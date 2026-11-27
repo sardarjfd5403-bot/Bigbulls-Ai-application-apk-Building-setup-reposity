@@ -1,0 +1,4549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>BIGBULLS GLOBAL MARKET — Mobile Client Portal</title>
+  <style>
+    /* =====================================================================
+       DESIGN TOKENS — CRISP WHITE (#FFFFFF) & ROYAL BLUE (#0066FF)
+       ===================================================================== */
+    :root {
+      --bg: #f4f7fc;
+      --card: #ffffff;
+      --navy: #0c192c;
+      --sub: #5c6d82;
+      --muted: #8a99ad;
+      --blue: #0066ff;
+      --blue-dark: #004ec2;
+      --blue-soft: #eef5ff;
+      --blue-border: #cde0ff;
+      --green: #00a86b;
+      --green-soft: #e8f8f1;
+      --green-border: #b8ebd5;
+      --red: #e03131;
+      --red-soft: #fff0f0;
+      --red-border: #ffc9c9;
+      --amber: #d97706;
+      --border: #e6ecf5;
+      --radius: 22px;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      font-family: var(--font);
+      background: #e9eff8;
+      color: var(--navy);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+    }
+
+    button {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: inherit;
+    }
+
+    .tab-num {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* =====================================================================
+       MOBILE SHELL & STICKY TOP HEADER
+       ===================================================================== */
+    .phone-shell {
+      width: 100%;
+      max-width: 440px;
+      min-height: 100vh;
+      background: var(--bg);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(12, 25, 44, 0.14);
+      overflow-x: hidden;
+    }
+
+    .app-header {
+      background: var(--card);
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 6px 14px rgba(0, 102, 255, 0.24);
+    }
+
+    .brand-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--navy);
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-sub {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .hdr-eq-pill {
+      background: var(--blue-soft);
+      border: 1px solid var(--blue-border);
+      border-radius: 999px;
+      padding: 5px 9px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--navy);
+      white-space: nowrap;
+    }
+
+    .hdr-eq-pill .tag {
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+
+    .hdr-eq-pill .tag.demo {
+      background: var(--green);
+    }
+
+    .circle-icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--navy);
+      flex-shrink: 0;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    .circle-icon-btn:active {
+      transform: scale(0.93);
+      background: var(--blue-soft);
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 14px 14px 96px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* 22px Rounded Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(12, 25, 44, 0.04);
+    }
+
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.01em;
+    }
+
+    .card-sub {
+      font-size: 11.5px;
+      color: var(--sub);
+      font-weight: 500;
+    }
+
+    /* =====================================================================
+       1. ACCOUNTS TAB
+       ===================================================================== */
+    .acc-subnav-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 2px 0 4px;
+    }
+
+    .acc-subnav-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .acc-subpill {
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--sub);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .acc-subpill.active {
+      background: var(--blue);
+      color: #ffffff;
+      border-color: var(--blue);
+      box-shadow: 0 4px 12px rgba(0, 102, 255, 0.22);
+    }
+
+    .my-acc-hero-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .open-acc-btn {
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: 0 6px 16px rgba(0, 102, 255, 0.24);
+    }
+
+    .acc-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .mode-switch-wrap {
+      display: inline-flex;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .mode-pill-btn {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--sub);
+      transition: all 0.15s ease;
+    }
+
+    .mode-pill-btn.active-real {
+      background: var(--blue);
+      color: #ffffff;
+      box-shadow: 0 3px 10px rgba(0, 102, 255, 0.25);
+    }
+
+    .mode-pill-btn.active-demo {
+      background: var(--green);
+      color: #ffffff;
+      box-shadow: 0 3px 10px rgba(0, 168, 107, 0.25);
+    }
+
+    .acc-id-group {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .acc-id-badge {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--navy);
+      white-space: nowrap;
+    }
+
+    .acc-meta-badges {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip-real {
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .chip-real.demo {
+      background: var(--green);
+    }
+
+    .chip-neutral {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--navy);
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .chip-pro {
+      background: var(--blue-soft);
+      border: 1px solid var(--blue-border);
+      color: var(--blue);
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .spin-anim {
+      animation: spinOnce 0.55s ease;
+    }
+
+    @keyframes spinOnce {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Rounded pill badge on Balance and Equity label text */
+    .bal-eq-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 13px;
+      margin: 12px 0 10px;
+    }
+
+    .bal-eq-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .label-circle-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      border: 1px solid var(--blue-border);
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .clean-money-value {
+      font-size: 16.5px;
+      font-weight: 900;
+      color: var(--navy);
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .lev-float-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 2px 12px;
+      font-size: 12px;
+      color: var(--sub);
+      font-weight: 700;
+      flex-wrap: wrap;
+    }
+
+    .lev-float-pill {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--navy);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+
+    .trade-full-btn {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 18px rgba(0, 102, 255, 0.25);
+    }
+
+    .fund-pair-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn-deposit {
+      padding: 11px 14px;
+      border-radius: 15px;
+      background: var(--blue-soft);
+      border: 1px solid var(--blue-border);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-withdraw {
+      padding: 11px 14px;
+      border-radius: 15px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .pnl-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .pnl-pill.pos {
+      background: var(--green-soft);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+    }
+
+    .pnl-pill.neg {
+      background: var(--red-soft);
+      color: var(--red);
+      border: 1px solid var(--red-border);
+    }
+
+    .mini-toggle-btn {
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--sub);
+      white-space: nowrap;
+    }
+
+    .trade-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 11px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .trade-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .side-tag {
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 7px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+
+    .side-tag.buy {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .side-tag.sell {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    /* =====================================================================
+       2. TRADE TAB (MARKET WATCH + CHART VIEW)
+       ===================================================================== */
+    .mw-search-input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 15px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--navy);
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    .mw-search-input:focus {
+      border-color: var(--blue);
+      background: #ffffff;
+    }
+
+    .mw-cat-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 2px 0 10px;
+    }
+
+    .mw-cat-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .mw-cat-pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--sub);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .mw-cat-pill.active {
+      background: var(--blue);
+      color: #ffffff;
+      border-color: var(--blue);
+      box-shadow: 0 4px 10px rgba(0, 102, 255, 0.2);
+    }
+
+    .mw-fav-star {
+      font-size: 14px;
+      line-height: 1;
+      padding: 2px 4px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .mw-fav-star.active {
+      color: var(--blue);
+    }
+
+    .mw-row {
+      display: grid;
+      grid-template-columns: 1.45fr 1fr 1fr;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      border-radius: 12px;
+      transition: background 0.14s ease;
+    }
+
+    .mw-row:last-child {
+      border-bottom: none;
+    }
+
+    .mw-row:active {
+      background: var(--blue-soft);
+    }
+
+    .quote-box {
+      padding: 7px 6px;
+      border-radius: 11px;
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 900;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .quote-box.up {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: var(--green-border);
+    }
+
+    .quote-box.down {
+      background: var(--red-soft);
+      color: var(--red);
+      border-color: var(--red-border);
+    }
+
+    .chart-view {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 440px;
+      height: 100vh;
+      background: #ffffff;
+      z-index: 65;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chart-top-bar {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: #ffffff;
+    }
+
+    .tf-strip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: var(--bg);
+    }
+
+    .tf-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tf-chip {
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--sub);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .tf-chip.active {
+      background: var(--blue);
+      color: #ffffff;
+      border-color: var(--blue);
+    }
+
+    .chart-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+      background: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-wrap: wrap;
+    }
+
+    .chart-canvas-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 220px;
+      background: #ffffff;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    #main-chart-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .auto-axis-btn {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid var(--blue-border);
+      color: var(--blue);
+      font-size: 10.5px;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(12, 25, 44, 0.08);
+      z-index: 12;
+    }
+
+    .radial-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(12, 25, 44, 0.14);
+      z-index: 24;
+    }
+
+    .radial-menu-wrap {
+      position: absolute;
+      width: 204px;
+      height: 204px;
+      transform: translate(-50%, -50%);
+      z-index: 25;
+    }
+
+    .radial-ring {
+      position: absolute;
+      inset: 14px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1.5px solid var(--blue-border);
+      box-shadow: 0 12px 28px rgba(12, 25, 44, 0.2);
+    }
+
+    .radial-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 50px;
+      height: 50px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radial-item {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      box-shadow: 0 3px 10px rgba(12, 25, 44, 0.1);
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radial-item.active {
+      background: var(--blue);
+      color: #ffffff;
+      border-color: var(--blue);
+    }
+
+    .exec-dock {
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      padding: 10px 12px 14px;
+    }
+
+    .exec-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .seg-tabs {
+      display: inline-flex;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 2px;
+    }
+
+    .seg-tab {
+      padding: 5px 10px;
+      border-radius: 9px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--sub);
+    }
+
+    .seg-tab.active {
+      background: var(--blue);
+      color: #ffffff;
+    }
+
+    .stepper {
+      display: inline-flex;
+      align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 2px;
+    }
+
+    .stepper button {
+      width: 26px;
+      height: 24px;
+      border-radius: 8px;
+      background: #ffffff;
+      font-weight: 900;
+      font-size: 13px;
+      color: var(--navy);
+    }
+
+    .stepper span {
+      padding: 0 9px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .pending-panel {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+
+    .exec-btn-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .sell-big-btn {
+      background: var(--red);
+      color: #ffffff;
+      border-radius: 15px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .buy-big-btn {
+      background: var(--blue);
+      color: #ffffff;
+      border-radius: 15px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    /* =====================================================================
+       3. BB AI TAB
+       ===================================================================== */
+    .filter-strip {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+
+    .filter-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-pill {
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--sub);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .filter-pill.active {
+      background: var(--blue);
+      color: #ffffff;
+      border-color: var(--blue);
+    }
+
+    .ai-prompt-strip {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin: 10px 0 8px;
+      padding-bottom: 2px;
+    }
+
+    .ai-prompt-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .ai-prompt-chip {
+      padding: 6px 11px;      border-radius: 999px;
+      background: var(--blue-soft);
+      border: 1px solid var(--blue-border);
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .lot-chip-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .lot-choice {
+      flex: 1;
+      padding: 7px 0;
+      border-radius: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .lot-choice.active {
+      background: var(--blue-soft);
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .ai-log-box {
+      margin-top: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 9px 11px;
+      font-size: 11px;
+      color: var(--navy);
+      max-height: 118px;
+      overflow-y: auto;
+    }
+
+    .ai-log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.38;
+    }
+
+    .ai-log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .signals-hscroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+
+    .signals-hscroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .signal-card {
+      min-width: 248px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      flex-shrink: 0;
+    }
+
+    .news-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 13px;
+      margin-bottom: 9px;
+      cursor: pointer;
+    }
+
+    .news-card:last-child {
+      margin-bottom: 0;
+    }
+
+    /* =====================================================================
+       4. PERFORMANCE TAB & CUSTOM ACCOUNT SHEET
+       ===================================================================== */
+    .perf-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .perf-picker-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 13px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--navy);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .perf-opt-card {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+      text-align: left;
+    }
+
+    .perf-opt-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .perf-opt-card.selected {
+      background: var(--blue-soft);
+      border-color: var(--blue);
+      box-shadow: 0 6px 16px rgba(0, 102, 255, 0.12);
+    }
+
+    .perf-radio-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #ffffff;
+    }
+
+    .perf-opt-card.selected .perf-radio-dot {
+      border-color: var(--blue);
+    }
+
+    .perf-opt-card.selected .perf-radio-dot::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    .period-group {
+      display: inline-flex;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2px;
+    }
+
+    .period-btn {
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--sub);
+    }
+
+    .period-btn.active {
+      background: var(--blue);
+      color: #ffffff;
+    }
+
+    .win-bar-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--bg);
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .win-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue) 0%, var(--green) 100%);
+      border-radius: 999px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .kpi-tile {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 10px 12px;
+    }
+
+    .kpi-lbl {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--sub);
+    }
+
+    .kpi-val {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-top: 3px;
+    }
+
+    /* =====================================================================
+       5. PROFILE TAB, WORKFLOWS & IB PORTAL
+       ===================================================================== */
+    .bronze-card {
+      background: linear-gradient(135deg, #0c192c 0%, #16325c 60%, #0066ff 100%);
+      color: #ffffff;
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 12px 26px rgba(12, 25, 44, 0.2);
+    }
+
+    .bronze-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .profile-sec-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--sub);
+      margin-bottom: 6px;
+      letter-spacing: 0.01em;
+    }
+
+    .profile-row-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      background: var(--blue-soft);
+      border: 1px solid var(--blue-border);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .profile-row-left {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    .radio-ring {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #ffffff;
+    }
+
+    .radio-ring.checked {
+      border-color: var(--blue);
+    }
+
+    .radio-ring.checked::after {
+      content: '';
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    .chat-bubble {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 11px 13px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    .chat-bubble.user {
+      background: var(--blue-soft);
+      border-color: var(--blue-border);
+      margin-left: 28px;
+    }
+
+    .profile-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 4px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .profile-row:last-child {
+      border-bottom: none;
+    }
+
+    .full-subpage {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 440px;
+      height: 100vh;
+      background: var(--bg);
+      z-index: 70;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .ib-drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 25, 44, 0.45);
+      z-index: 85;
+      display: flex;
+    }
+
+    .ib-drawer {
+      width: 285px;
+      max-width: 82vw;
+      height: 100%;
+      background: #ffffff;
+      padding: 16px 14px;
+      overflow-y: auto;
+      box-shadow: 8px 0 30px rgba(12, 25, 44, 0.2);
+    }
+
+    .ib-nav-btn {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 13px;
+      text-align: left;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .ib-nav-btn.active {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    /* =====================================================================
+       SHEETS, MODALS & CONTROLS
+       ===================================================================== */
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 25, 44, 0.48);
+      z-index: 90;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .sheet-panel {
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 18px 16px 26px;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 -12px 36px rgba(12, 25, 44, 0.22);
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .method-tile {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 9px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      text-align: center;
+    }
+
+    .method-tile.selected {
+      background: var(--blue-soft);
+      border-color: var(--blue);
+    }
+
+    .method-png {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      object-fit: contain;
+    }
+
+    .method-name {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1.15;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 11px 13px;
+      border-radius: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy);
+      outline: none;
+    }
+
+    .field-input:focus {
+      border-color: var(--blue);
+      background: #ffffff;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 15px;
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 800;
+      box-shadow: 0 6px 16px rgba(0, 102, 255, 0.24);
+    }
+
+    .danger-btn {
+      width: 100%;
+      padding: 11px 16px;
+      border-radius: 15px;
+      background: var(--red-soft);
+      border: 1px solid var(--red-border);
+      color: var(--red);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .sw-track {
+      width: 44px;
+      height: 24px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      position: relative;
+      transition: background 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .sw-track.on {
+      background: var(--blue);
+    }
+
+    .sw-knob {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ffffff;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.18s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .sw-track.on .sw-knob {
+      transform: translateX(20px);
+    }
+
+    /* 5-Tab Bottom Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      padding: 7px 6px 11px;
+      z-index: 50;
+      box-shadow: 0 -10px 28px rgba(12, 25, 44, 0.08);
+    }
+
+    .nav-tab-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 3px 2px;
+      border-radius: 14px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+
+    .nav-tab-btn:active {
+      transform: scale(0.94);
+    }
+
+    .nav-icon-badge {
+      width: 34px;
+      height: 26px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid transparent;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .nav-tab-btn.active {
+      color: var(--blue);
+      font-weight: 800;
+    }
+
+    .nav-tab-btn.active .nav-icon-badge {
+      background: var(--blue-soft);
+      border-color: var(--blue-border);
+    }
+
+    .toast-banner {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translate(-50%, -20px);
+      background: var(--navy);
+      color: #ffffff;
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      z-index: 120;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      max-width: 92vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 10px 25px rgba(12, 25, 44, 0.25);
+    }
+
+    .toast-banner.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast-banner" role="status" aria-live="polite">Ready</div>
+
+  <div class="phone-shell">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand-box">
+        <div class="brand-mark">BB</div>
+        <div style="min-width:0;">
+          <div class="brand-title">BIGBULLS GLOBAL MARKET</div>
+          <div class="brand-sub">CLIENT PORTAL</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="hdr-eq-pill tab-num">
+          <span id="hdr-mode-tag" class="tag">REAL</span>
+          <span id="hdr-eq-val">$18,357.89</span>
+        </div>
+        <button type="button" class="circle-icon-btn" onclick="openFullSettingsOverlay()" aria-label="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================================================================
+         1. ACCOUNTS TAB
+         =================================================================== -->
+    <main id="tab-accounts" class="main-content">
+      <div class="acc-subnav-bar" role="tablist" aria-label="Account sections">
+        <button type="button" class="acc-subpill active" data-accsub="my-accounts" onclick="setAccountSubnav('my-accounts')">My accounts</button>
+        <button type="button" class="acc-subpill" data-accsub="deposit" onclick="setAccountSubnav('deposit')">Deposit</button>
+        <button type="button" class="acc-subpill" data-accsub="withdrawal" onclick="setAccountSubnav('withdrawal')">Withdrawal</button>
+        <button type="button" class="acc-subpill" data-accsub="transfer" onclick="setAccountSubnav('transfer')">Transfer</button>
+      </div>
+
+      <div class="my-acc-hero-row">
+        <div>
+          <div style="font-size:20px;font-weight:900;letter-spacing:-0.02em;color:var(--navy);">My accounts</div>
+          <div class="card-sub" style="margin-top:2px;">Manage your BIGBULLS trading accounts.</div>
+        </div>
+        <button type="button" class="open-acc-btn" onclick="openNewAccount()">
+          <span>+ Open new account</span>
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="acc-top-bar">
+          <div class="mode-switch-wrap">
+            <button id="btn-switch-real" type="button" class="mode-pill-btn active-real" onclick="setAccountMode('real')">Real</button>
+            <button id="btn-switch-demo" type="button" class="mode-pill-btn" onclick="setAccountMode('demo')">Demo</button>
+          </div>
+
+          <div class="acc-id-group">
+            <select id="acc-card-select" class="field-input tab-num" style="width:auto;padding:5px 9px;font-size:11.5px;border-radius:999px;" onchange="selectAccountById(this.value)" aria-label="Active account"></select>
+            <button id="btn-refresh-acc" type="button" class="circle-icon-btn" onclick="refreshAccountData()" aria-label="Refresh account">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="acc-meta-badges">
+          <div class="meta-chip-group">
+            <span id="acc-type-chip" class="chip-real">Real</span>
+            <span class="chip-neutral">BIGBULLS</span>
+            <span id="acc-tier-chip" class="chip-pro">Pro</span>
+          </div>
+          <button type="button" class="mini-toggle-btn tab-num" onclick="copyAccountId()">Copy ID</button>
+        </div>
+
+        <!-- Rounded pill badge on Balance and Equity label text -->
+        <div class="bal-eq-grid">
+          <div class="bal-eq-cell">
+            <span class="label-circle-badge">Balance</span>
+            <div id="acc-balance-val" class="clean-money-value tab-num">$18,357.89</div>
+          </div>
+          <div class="bal-eq-cell">
+            <span class="label-circle-badge">Equity</span>
+            <div id="acc-equity-val" class="clean-money-value tab-num">$18,357.89</div>
+          </div>
+        </div>
+
+        <div class="lev-float-row tab-num">
+          <div>Leverage <span id="acc-lev-pill" class="lev-float-pill">1:500</span></div>
+          <div>Floating <span id="acc-floating-pill" class="lev-float-pill">$0.00</span></div>
+        </div>
+
+        <button type="button" class="trade-full-btn" onclick="switchTab('trade')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+            <polyline points="16 7 22 7 22 13"></polyline>
+          </svg>
+          <span>Trade</span>
+        </button>
+
+        <div class="fund-pair-grid">
+          <button type="button" class="btn-deposit" onclick="openFundModal('deposit')">
+            <span>&darr; Deposit</span>
+          </button>
+          <button type="button" class="btn-withdraw" onclick="openFundModal('withdraw')">
+            <span>&uarr; Withdraw</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="acc-transfer-card" class="card hidden">
+        <div class="card-title-row">
+          <div>
+            <div class="card-title">Internal Transfer</div>
+            <div class="card-sub">Move funds between Real and Demo accounts</div>
+          </div>
+          <span class="label-circle-badge">INSTANT</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="transfer-amt-input" type="number" min="1" step="any" class="field-input tab-num" placeholder="Amount (USD)" value="250" />
+          <button type="button" class="primary-btn" style="width:auto;padding:11px 16px;white-space:nowrap;" onclick="executeInternalTransfer()">Transfer</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <div>
+            <div class="card-title">Running trades &amp; trade history</div>
+            <div class="card-sub">Tap a running trade to modify SL/TP or close</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span id="floating-pnl-badge" class="pnl-pill pos tab-num">$0.00</span>
+            <button id="btn-toggle-trades" type="button" class="mini-toggle-btn" onclick="toggleTradesVisibility()">Hide</button>
+          </div>
+        </div>
+
+        <div id="trades-body">
+          <div id="running-trades-list"></div>
+          <div style="font-size:11px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:0.05em;margin:12px 0 7px;">
+            Trade History
+          </div>
+          <div id="history-trades-list"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===================================================================
+         2. TRADE TAB (MARKET WATCH)
+         =================================================================== -->
+    <main id="tab-trade" class="main-content hidden">
+      <div class="card">
+        <div class="card-title-row">
+          <div>
+            <div class="card-title">Market Watch</div>
+            <div class="card-sub">Tap any instrument to open interactive chart</div>
+          </div>
+          <span class="label-circle-badge">LIVE</span>
+        </div>
+
+        <input id="mw-search" type="text" class="mw-search-input" placeholder="Search symbol (XAUUSD, BTCUSD, EURUSD...)" oninput="renderMarketWatch()" />
+
+        <div id="mw-cat-strip" class="mw-cat-strip" role="tablist" aria-label="Market Watch categories">
+          <button type="button" class="mw-cat-pill active" data-mwcat="All" onclick="setMwCategory('All')">All</button>
+          <button type="button" class="mw-cat-pill" data-mwcat="Favorites" onclick="setMwCategory('Favorites')">Fav Pairs</button>
+          <button type="button" class="mw-cat-pill" data-mwcat="Forex" onclick="setMwCategory('Forex')">Forex</button>
+          <button type="button" class="mw-cat-pill" data-mwcat="Metals" onclick="setMwCategory('Metals')">Metals</button>
+          <button type="button" class="mw-cat-pill" data-mwcat="Crypto" onclick="setMwCategory('Crypto')">Crypto</button>
+          <button type="button" class="mw-cat-pill" data-mwcat="Indices" onclick="setMwCategory('Indices')">Indices</button>
+          <button type="button" class="mw-cat-pill" data-mwcat="Commodities" onclick="setMwCategory('Commodities')">Commodities</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.45fr 1fr 1fr;gap:8px;padding:0 8px 6px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;">
+          <span>Symbol</span>
+          <span style="text-align:right;">Bid</span>
+          <span style="text-align:right;">Ask</span>
+        </div>
+        <div id="mw-list"></div>
+      </div>
+    </main>
+
+    <!-- ===================================================================
+         INTERACTIVE CHART & ORDER EXECUTION VIEW
+         =================================================================== -->
+    <div id="chart-view" class="chart-view hidden" role="dialog" aria-label="Interactive Chart">
+      <div class="chart-top-bar">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          <button type="button" class="circle-icon-btn" onclick="closeChartView()" aria-label="Back to Market Watch">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <div style="min-width:0;">
+            <div id="cv-sym-title" style="font-size:14px;font-weight:900;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">XAUUSD</div>
+            <div id="cv-sym-sub" style="font-size:10.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Gold vs US Dollar</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+          <span id="cv-spread-badge" class="label-circle-badge tab-num">Spd 14</span>
+          <button type="button" class="mini-toggle-btn" onclick="openChartIndicatorsSheet()">MA</button>
+          <button type="button" class="circle-icon-btn" onclick="openChartSettingsSheet()" aria-label="Chart settings">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="cv-tf-strip" class="tf-strip" role="tablist" aria-label="Chart timeframes">
+        <button type="button" class="tf-chip" data-tf="1m" onclick="setChartTimeframe('1m')">1m</button>
+        <button type="button" class="tf-chip" data-tf="5m" onclick="setChartTimeframe('5m')">5m</button>
+        <button type="button" class="tf-chip active" data-tf="15m" onclick="setChartTimeframe('15m')">15m</button>
+        <button type="button" class="tf-chip" data-tf="30m" onclick="setChartTimeframe('30m')">30m</button>
+        <button type="button" class="tf-chip" data-tf="1h" onclick="setChartTimeframe('1h')">1h</button>
+        <button type="button" class="tf-chip" data-tf="4h" onclick="setChartTimeframe('4h')">4h</button>
+        <button type="button" class="tf-chip" data-tf="1D" onclick="setChartTimeframe('1D')">1D</button>
+        <button type="button" class="tf-chip" data-tf="1W" onclick="setChartTimeframe('1W')">1W</button>
+        <button type="button" class="tf-chip" data-tf="1M" onclick="setChartTimeframe('1M')">1M</button>
+      </div>
+
+      <!-- Real / Demo Selector + Account Dropdown + Equity & Live P&L -->
+      <div class="chart-status-row tab-num">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <div class="mode-switch-wrap" style="padding:2px;">
+            <button id="cv-btn-real" type="button" class="mode-pill-btn active-real" style="padding:4px 9px;font-size:10.5px;" onclick="setChartAccountMode('real')">Real</button>
+            <button id="cv-btn-demo" type="button" class="mode-pill-btn" style="padding:4px 9px;font-size:10.5px;" onclick="setChartAccountMode('demo')">Demo</button>
+          </div>
+          <select id="cv-acc-select" class="field-input tab-num" style="width:auto;padding:4px 8px;font-size:10.5px;border-radius:10px;" onchange="selectChartAccountById(this.value)" aria-label="Select trading account"></select>
+          <span class="hdr-eq-pill" style="padding:3px 8px;font-size:10.5px;">
+            <span id="cv-mode-tag" class="tag">REAL</span>
+            <span id="cv-eq-val">$18,357.89</span>
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="color:var(--sub);font-size:10.5px;">Live P&amp;L</span>
+          <span id="cv-live-pnl" class="pnl-pill pos" style="padding:3px 8px;font-size:10.5px;">$0.00</span>
+        </div>
+      </div>
+
+      <div id="chart-canvas-wrap" class="chart-canvas-wrap">
+        <canvas id="main-chart-canvas"></canvas>
+        <button type="button" class="auto-axis-btn" onclick="autoResetChartAxis()">AUTO</button>
+        <div id="radial-backdrop" class="radial-backdrop hidden" onclick="closeRadialWheel()"></div>
+        <div id="radial-menu" class="radial-menu-wrap hidden">
+          <div class="radial-ring"></div>
+          <div id="radial-nodes"></div>
+          <button type="button" class="radial-center" onclick="closeRadialWheel()">TF</button>
+        </div>
+      </div>
+
+      <div class="exec-dock">
+        <div class="exec-row-top">
+          <div class="seg-tabs">
+            <button type="button" class="seg-tab active" data-omode="MARKET" onclick="setOrderMode('MARKET')">Market</button>
+            <button type="button" class="seg-tab" data-omode="LIMIT" onclick="setOrderMode('LIMIT')">Limit</button>
+            <button type="button" class="seg-tab" data-omode="STOP" onclick="setOrderMode('STOP')">Stop</button>
+          </div>
+
+          <div class="stepper tab-num">
+            <button type="button" onclick="changeLot(-0.01)" aria-label="Decrease lot">-</button>
+            <span id="exec-lot-val">0.10</span>
+            <button type="button" onclick="changeLot(0.01)" aria-label="Increase lot">+</button>
+          </div>
+        </div>
+
+        <div id="pending-order-box" class="pending-panel hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span style="font-size:11px;font-weight:800;color:var(--sub);">Pending Price</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="mini-toggle-btn" onclick="stepPendingPrice(-1)">-</button>
+              <input id="pending-price-input" type="number" step="any" class="field-input tab-num" style="width:118px;padding:6px 8px;font-size:12px;text-align:center;" oninput="onPendingPriceChange(this.value)" />
+              <button type="button" class="mini-toggle-btn" onclick="stepPendingPrice(1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="exec-btn-pair tab-num">
+          <button type="button" class="sell-big-btn" onclick="placeChartOrder('SELL')">
+            <div id="sell-btn-lbl" style="font-size:11px;font-weight:900;letter-spacing:0.03em;">SELL</div>
+            <div id="sell-btn-px" style="font-size:14px;font-weight:900;margin-top:2px;">3671.77</div>
+          </button>
+          <button type="button" class="buy-big-btn" onclick="placeChartOrder('BUY')">
+            <div id="buy-btn-lbl" style="font-size:11px;font-weight:900;letter-spacing:0.03em;">BUY</div>
+            <div id="buy-btn-px" style="font-size:14px;font-weight:900;margin-top:2px;">3671.91</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         3. BB AI TAB (INTERACTIVE AI ASSISTANT + SIGNALS + NEWS)
+         =================================================================== -->
+    <main id="tab-ai" class="main-content hidden">
+      <div class="filter-strip">
+        <button type="button" class="filter-pill active" data-aifilter="All" onclick="setAiFilter('All')">All</button>
+        <button type="button" class="filter-pill" data-aifilter="AI Signals" onclick="setAiFilter('AI Signals')">AI Signals</button>
+        <button type="button" class="filter-pill" data-aifilter="Auto Trade" onclick="setAiFilter('Auto Trade')">Auto Trade</button>
+        <button type="button" class="filter-pill" data-aifilter="AI News" onclick="setAiFilter('AI News')">AI News</button>
+      </div>
+
+      <div id="ai-autotrade-card" class="card">
+        <div class="card-title-row">
+          <div>
+            <div class="card-title">BB AI Trading Assistant</div>
+            <div class="card-sub">Quick prompts, live responses &amp; auto-execution</div>
+          </div>
+          <button id="ai-auto-switch" type="button" class="sw-track" onclick="toggleAiAutoTrade()" aria-label="Toggle Auto Trade">
+            <span class="sw-knob"></span>
+          </button>
+        </div>
+
+        <div class="ai-prompt-strip">
+          <button type="button" class="ai-prompt-chip" onclick="askBbAiPrompt('XAUUSD Bias')">XAUUSD Bias</button>
+          <button type="button" class="ai-prompt-chip" onclick="askBbAiPrompt('Risk Check')">Risk Check</button>
+          <button type="button" class="ai-prompt-chip" onclick="askBbAiPrompt('BTCUSD Setup')">BTCUSD Setup</button>
+          <button type="button" class="ai-prompt-chip" onclick="askBbAiPrompt('Session Volatility')">Session Volatility</button>
+        </div>
+
+        <div style="display:flex;gap:7px;align-items:center;">
+          <input id="ai-custom-input" type="text" class="field-input" placeholder="Ask BB AI about a pair, SL/TP, or risk..." />
+          <button type="button" class="primary-btn" style="width:auto;padding:11px 14px;white-space:nowrap;" onclick="submitCustomAiPrompt()">Ask</button>
+        </div>
+
+        <div style="font-size:11px;font-weight:800;color:var(--sub);margin-top:10px;">Auto Lot Selector</div>
+        <div class="lot-chip-row">
+          <button type="button" class="lot-choice" data-ailot="0.01" onclick="setAiLot(0.01)">0.01</button>
+          <button type="button" class="lot-choice active" data-ailot="0.05" onclick="setAiLot(0.05)">0.05</button>
+          <button type="button" class="lot-choice" data-ailot="0.10" onclick="setAiLot(0.10)">0.10</button>
+          <button type="button" class="lot-choice" data-ailot="0.25" onclick="setAiLot(0.25)">0.25</button>
+        </div>
+
+        <div id="ai-log-box" class="ai-log-box tab-num">
+          <div class="ai-log-entry"><strong>[BB AI]</strong> Assistant online. Tap a quick prompt or ask any trading question.</div>
+        </div>
+      </div>
+
+      <div id="ai-signals-section">
+        <div class="card-title-row" style="padding:0 4px;margin-bottom:8px;">
+          <div class="card-title">AI Signals</div>
+          <span class="card-sub">Swipe for more</span>
+        </div>
+        <div id="ai-signals-list" class="signals-hscroll"></div>
+      </div>
+
+      <div id="ai-events-section" class="card">
+        <div class="card-title-row">
+          <div class="card-title">Upcoming Economic Events</div>
+          <span class="label-circle-badge">MACRO</span>
+        </div>
+        <div id="ai-events-list"></div>
+      </div>
+
+      <div id="ai-news-section" class="card">
+        <div class="card-title-row">
+          <div class="card-title">AI Market News</div>
+          <span class="card-sub">Tap card for detail sheet</span>
+        </div>
+        <div id="ai-news-list"></div>
+      </div>
+    </main>
+
+    <!-- ===================================================================
+         4. PERFORMANCE TAB
+         =================================================================== -->
+    <main id="tab-performance" class="main-content hidden">
+      <div class="card">
+        <div class="perf-controls">
+          <button id="perf-acc-picker-btn" type="button" class="perf-picker-btn tab-num" onclick="openPerfAccountModal()">
+            <span id="perf-acc-selected-label">All accounts</span>
+            <span style="color:var(--blue);font-size:10px;">&#9660;</span>
+          </button>
+
+          <div class="period-group">
+            <button type="button" class="period-btn" data-period="7D" onclick="setPerfPeriod('7D')">7D</button>
+            <button type="button" class="period-btn active" data-period="30D" onclick="setPerfPeriod('30D')">30D</button>
+            <button type="button" class="period-btn" data-period="ALL" onclick="setPerfPeriod('ALL')">All Time</button>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;background:var(--blue-soft);border:1px solid var(--blue-border);border-radius:18px;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+          <div>
+            <div class="card-sub" style="color:var(--blue);font-weight:800;">Net Profit</div>
+            <div id="perf-net-profit" class="clean-money-value tab-num" style="font-size:21px;color:var(--green);margin-top:3px;">+$2,480.40</div>
+          </div>
+          <div style="text-align:right;">
+            <span class="label-circle-badge">Profit Factor</span>
+            <div id="perf-profit-factor" class="clean-money-value tab-num" style="margin-top:4px;">2.14</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:800;">
+            <span>Win Rate</span>
+            <span id="perf-win-rate" class="tab-num" style="color:var(--blue);">68.4%</span>          </div>
+          <div class="win-bar-track">
+            <div id="perf-win-bar" class="win-bar-fill" style="width:68.4%;"></div>
+          </div>
+        </div>
+
+        <div class="kpi-grid tab-num">
+          <div class="kpi-tile">
+            <div class="kpi-lbl">Closed Trades</div>
+            <div id="kpi-closed" class="kpi-val">76</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-lbl">Volume Traded</div>
+            <div id="kpi-volume" class="kpi-val">18.45 Lots</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-lbl">Total Profit</div>
+            <div id="kpi-tprofit" class="kpi-val" style="color:var(--green);">+$4,655.90</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-lbl">Total Loss</div>
+            <div id="kpi-tloss" class="kpi-val" style="color:var(--red);">-$2,175.50</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-lbl">Best Trade</div>
+            <div id="kpi-best" class="kpi-val" style="color:var(--green);">+$640.00</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-lbl">Avg Per Trade</div>
+            <div id="kpi-avg" class="kpi-val">+$32.64</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <div class="card-title">Cumulative Profit</div>
+          <span id="cum-hover-readout" class="label-circle-badge tab-num">Tap / Drag</span>
+        </div>
+        <canvas id="cum-profit-canvas" style="width:100%;height:175px;display:block;touch-action:none;"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <div class="card-title">Profit by Instrument</div>
+          <span class="card-sub">Net USD</span>
+        </div>
+        <canvas id="inst-profit-canvas" style="width:100%;height:175px;display:block;"></canvas>
+      </div>
+    </main>
+
+    <!-- ===================================================================
+         5. PROFILE TAB & WORKFLOWS
+         =================================================================== -->
+    <main id="tab-profile" class="main-content hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 2px 0;">
+        <div style="font-size:22px;font-weight:900;letter-spacing:-0.02em;color:var(--navy);">Profile</div>
+        <button type="button" class="circle-icon-btn" onclick="openFullSettingsOverlay()" aria-label="Profile Settings">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="bronze-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="bronze-tag">Bronze</span>
+          <span class="tab-num" style="font-size:11px;opacity:0.9;">24 days left to upgrade</span>
+        </div>
+        <div style="font-size:15px;font-weight:800;margin-top:10px;">Aarav Sharma</div>
+        <div class="tab-num" style="font-size:11.5px;opacity:0.88;margin-top:3px;">Earn 10 BB Coin &bull; 0/10</div>
+      </div>
+
+      <!-- Account Section -->
+      <div class="card">
+        <div class="profile-sec-label">Account</div>
+        <div class="profile-row" onclick="toggleEmailMask()">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">@</span>
+            <div>
+              <div class="card-sub">Login</div>
+              <div id="profile-email-txt" class="tab-num" style="font-size:13px;font-weight:800;margin-top:1px;">a***@bigbulls.example</div>
+            </div>
+          </div>
+          <span id="profile-eye-label" class="label-circle-badge">Show</span>
+        </div>
+
+        <div class="profile-row" onclick="showToast('Account verification is complete')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#10003;</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;">Verification progress</div>
+            </div>
+          </div>
+          <span class="label-circle-badge" style="background:var(--green-soft);border-color:var(--green-border);color:var(--green);">Fully verified &rsaquo;</span>
+        </div>
+      </div>
+
+      <!-- Benefits Section -->
+      <div class="card">
+        <div class="profile-sec-label">Benefits</div>
+        <div class="profile-row" onclick="showToast('Swap-free benefit active')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#9789;</span>
+            <div style="font-size:13px;font-weight:800;">Swap-free</div>
+          </div>
+          <span style="color:var(--muted);font-weight:900;">&rsaquo;</span>
+        </div>
+
+        <div class="profile-row" onclick="showToast('Flexible HMR Extended active')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#9881;</span>
+            <div style="font-size:13px;font-weight:800;">Flexible HMR</div>
+          </div>
+          <span class="label-circle-badge">Extended &rsaquo;</span>
+        </div>
+
+        <div id="profile-benefits-extra" class="hidden">
+          <div class="profile-row" onclick="showToast('BBX Rebates active ($1.50 / lot)')">
+            <div class="profile-row-left">
+              <span class="profile-row-icon">%</span>
+              <div style="font-size:13px;font-weight:800;">BBX Rebates</div>
+            </div>
+            <span class="label-circle-badge tab-num">$1.50/lot</span>
+          </div>
+        </div>
+
+        <div style="padding-top:10px;">
+          <button id="btn-benefits-showmore" type="button" class="mini-toggle-btn" style="width:100%;padding:8px;" onclick="toggleBenefitsShowMore()">Show more &#9662;</button>
+        </div>
+      </div>
+
+      <!-- Funding Wallet & Crypto Wallet -->
+      <div class="card">
+        <div class="profile-sec-label">Funding wallet</div>
+        <div class="profile-row" onclick="openWalletSheet('Funding wallet')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">$</span>
+            <div>
+              <div class="card-sub">Balance</div>
+              <div id="funding-wallet-bal" class="tab-num" style="font-size:14px;font-weight:900;margin-top:1px;">0.00 USD</div>
+            </div>
+          </div>
+          <span style="color:var(--navy);font-weight:900;font-size:16px;">&rsaquo;</span>
+        </div>
+
+        <div class="profile-sec-label" style="margin-top:14px;">Crypto wallet</div>
+        <div class="profile-row" onclick="openWalletSheet('Crypto wallet')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">T</span>
+            <div>
+              <div class="card-sub">Balance</div>
+              <div id="crypto-wallet-bal" class="tab-num" style="font-size:14px;font-weight:900;margin-top:1px;">0.00 USD</div>
+            </div>
+          </div>
+          <span style="color:var(--navy);font-weight:900;font-size:16px;">&rsaquo;</span>
+        </div>
+      </div>
+
+      <!-- Referral Program / IB Portal -->
+      <div class="card">
+        <div class="profile-sec-label">Referral program</div>
+        <div class="profile-row" onclick="openReferralSheet()">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#9733;</span>
+            <div style="font-size:12.5px;color:var(--sub);font-weight:700;">
+              <div>Balance</div>
+              <div style="margin-top:4px;">Total profit</div>
+              <div style="margin-top:4px;">Referrals</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="tab-num" style="text-align:right;font-size:12.5px;font-weight:900;color:var(--navy);">
+              <div id="ref-bal-txt">0.00 USD</div>
+              <div id="ref-profit-txt" style="margin-top:4px;">1,004.55 USD</div>
+              <div id="ref-count-txt" style="margin-top:4px;">31</div>
+            </div>
+            <span style="color:var(--navy);font-weight:900;font-size:16px;">&rsaquo;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Copy Trading -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+          <span class="profile-sec-label" style="margin-bottom:0;font-size:14px;color:var(--navy);">Copy Trading</span>
+          <span class="card-sub">For investors</span>
+        </div>
+        <div class="profile-row" onclick="openSubpage('copy')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#9635;</span>
+            <div>
+              <div class="card-sub">Investment wallet</div>
+              <div class="tab-num" style="font-size:14px;font-weight:900;margin-top:1px;">0.00 USD</div>
+            </div>
+          </div>
+          <span style="color:var(--navy);font-weight:900;font-size:16px;">&rsaquo;</span>
+        </div>
+      </div>
+
+      <!-- Support -->
+      <div class="card">
+        <div class="profile-sec-label" style="font-size:14px;color:var(--navy);">Support</div>
+
+        <div class="profile-row" onclick="openSubpage('support_hub')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#9825;</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;">Support hub</div>
+              <div class="card-sub">Find answers to your questions</div>
+            </div>
+          </div>
+          <span style="color:var(--muted);font-weight:900;">&rsaquo;</span>
+        </div>
+
+        <div class="profile-row" onclick="openTicketPrecheck()">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#9993;</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;">Open a ticket</div>
+              <div class="card-sub">Fill the request form and we'll get back to ...</div>
+            </div>
+          </div>
+          <span style="color:var(--muted);font-weight:900;">&rsaquo;</span>
+        </div>
+
+        <div class="profile-row" onclick="openLiveChatAssistant()">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#9998;</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;">LiveChat</div>
+              <div class="card-sub">Feel free to contact our customer support</div>
+            </div>
+          </div>
+          <span style="color:var(--muted);font-weight:900;">&rsaquo;</span>
+        </div>
+
+        <div class="profile-row" onclick="openSubpage('suggest')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#9728;</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;">Suggest a feature</div>
+              <div class="card-sub">Help us become better</div>
+            </div>
+          </div>
+          <span style="color:var(--muted);font-weight:900;">&rsaquo;</span>
+        </div>
+
+        <div class="profile-row" onclick="openSubpage('legal')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#10004;</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;">Legal Documents</div>
+              <div class="card-sub">BIGBULLS Global Market</div>
+            </div>
+          </div>
+          <span style="color:var(--muted);font-weight:900;">&rsaquo;</span>
+        </div>
+
+        <div class="profile-row" onclick="showToast('Thank you for rating BIGBULLS Global Market')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">&#128077;</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;">Rate the app</div>
+              <div class="card-sub">Please rate us in Google Play</div>
+            </div>
+          </div>
+          <span style="color:var(--muted);font-weight:900;">&rsaquo;</span>
+        </div>
+
+        <div class="profile-row" onclick="openSubpage('about')">
+          <div class="profile-row-left">
+            <span class="profile-row-icon">i</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;">About the app</div>
+            </div>
+          </div>
+          <span style="color:var(--muted);font-weight:900;">&rsaquo;</span>
+        </div>
+      </div>
+
+      <button type="button" class="danger-btn" onclick="showToast('Logged out safely')">
+        Log out
+      </button>
+    </main>
+
+    <!-- ===================================================================
+         FULL-SCREEN IB PARTNER PERSONAL AREA OVERLAY
+         =================================================================== -->
+    <div id="ib-portal-view" class="full-subpage hidden">
+      <div class="app-header" style="position:relative;">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+          <button type="button" class="circle-icon-btn" onclick="closeIbPortal()" aria-label="Back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          <button type="button" class="circle-icon-btn" onclick="toggleIbDrawer(true)" aria-label="Menu">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">BIGBULLS Global</div>
+        </div>
+
+        <div class="header-actions">
+          <button type="button" class="hdr-eq-pill tab-num" onclick="showToast('Partner balance: 0.00 USD')">
+            <span>0.00 USD</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="ib-content-body" class="main-content"></div>
+
+      <div id="ib-drawer-backdrop" class="ib-drawer-backdrop hidden" onclick="toggleIbDrawer(false)">
+        <div class="ib-drawer" onclick="event.stopPropagation()">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div>
+              <div style="font-size:14px;font-weight:900;color:var(--blue);">BIGBULLS</div>
+              <div style="font-size:11px;font-weight:800;color:var(--navy);">Partners</div>
+            </div>
+            <button type="button" class="circle-icon-btn" onclick="toggleIbDrawer(false)">&times;</button>
+          </div>
+          <button type="button" class="ib-nav-btn active" data-ibnav="dashboard" onclick="setIbSection('dashboard')">Dashboard</button>
+          <button type="button" class="ib-nav-btn" data-ibnav="rep_clients" onclick="setIbSection('rep_clients')">Clients</button>
+          <button type="button" class="ib-nav-btn" data-ibnav="rep_tx" onclick="setIbSection('rep_tx')">Client transactions</button>
+          <button type="button" class="ib-nav-btn" data-ibnav="rebates" onclick="setIbSection('rebates')">Rebates</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         FULL-SCREEN SUBPAGES (TICKET PRE-CHECK, LIVECHAT, SETTINGS, ETC.)
+         =================================================================== -->
+    <div id="subpage-view" class="full-subpage hidden">
+      <div class="app-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button type="button" class="circle-icon-btn" onclick="closeSubpage()" aria-label="Close">
+            <span style="font-size:16px;font-weight:900;">&times;</span>
+          </button>
+          <div id="subpage-title" style="font-size:15px;font-weight:900;">Subpage</div>
+        </div>
+        <span class="label-circle-badge">BIGBULLS</span>
+      </div>
+      <div id="subpage-body" class="main-content"></div>
+    </div>
+
+    <!-- ===================================================================
+         BOTTOM SHEETS & MODALS
+         =================================================================== -->
+    <div id="profile-sheet-modal" class="sheet-backdrop hidden" onclick="closeProfileSheet()">
+      <div id="profile-sheet-panel" class="sheet-panel" onclick="event.stopPropagation()"></div>
+    </div>
+
+    <div id="perf-acc-modal" class="sheet-backdrop hidden" onclick="closePerfAccountModal()">
+      <div class="sheet-panel" onclick="event.stopPropagation()">
+        <div class="card-title-row">
+          <div>
+            <div class="card-title">Select Account</div>
+            <div class="card-sub">Filter performance metrics</div>
+          </div>
+          <button type="button" class="circle-icon-btn" onclick="closePerfAccountModal()">&times;</button>
+        </div>
+        <div id="perf-acc-options-list"></div>
+      </div>
+    </div>
+
+    <div id="chart-tool-modal" class="sheet-backdrop hidden" onclick="closeChartToolModal()">
+      <div id="chart-tool-panel" class="sheet-panel" onclick="event.stopPropagation()"></div>
+    </div>
+
+    <div id="trade-edit-modal" class="sheet-backdrop hidden" onclick="closeTradeEditModal()">
+      <div class="sheet-panel" onclick="event.stopPropagation()">
+        <div class="card-title-row">
+          <div>
+            <div id="te-title" class="card-title tab-num">XAUUSD (BUY 0.10)</div>
+            <div id="te-sub" class="card-sub tab-num">Modify Stop Loss / Take Profit or close</div>
+          </div>
+          <button type="button" class="circle-icon-btn" onclick="closeTradeEditModal()">&times;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div>
+            <div class="card-sub" style="font-weight:800;margin-bottom:4px;">Stop Loss</div>
+            <input id="te-sl-input" type="number" step="any" class="field-input tab-num" placeholder="0.00" />
+          </div>
+          <div>
+            <div class="card-sub" style="font-weight:800;margin-bottom:4px;">Take Profit</div>
+            <input id="te-tp-input" type="number" step="any" class="field-input tab-num" placeholder="0.00" />
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button type="button" class="primary-btn" onclick="saveTradeSlTp()">Update SL / TP</button>
+          <button type="button" class="danger-btn" onclick="closeRunningTradeNow()">Close Position</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="fund-modal" class="sheet-backdrop hidden" onclick="closeFundModal()">
+      <div class="sheet-panel" onclick="event.stopPropagation()">
+        <div class="card-title-row">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img id="fund-selected-png" src="" alt="Payment method" class="method-png" />
+            <div>
+              <div id="fund-modal-title" class="card-title">Deposit Funds</div>
+              <div id="fund-method-subtitle" class="card-sub">Method: USDT TRC20</div>
+            </div>
+          </div>
+          <button type="button" class="circle-icon-btn" onclick="closeFundModal()">&times;</button>
+        </div>
+
+        <div id="payment-methods-grid" class="method-grid"></div>
+
+        <div style="margin-bottom:12px;">
+          <div class="card-sub" style="font-weight:800;margin-bottom:5px;">Amount (USD)</div>
+          <input id="fund-amount-input" type="number" min="1" step="any" class="field-input tab-num" placeholder="Enter amount" value="500" />
+        </div>
+
+        <button id="fund-submit-btn" type="button" class="primary-btn" onclick="submitFundRequest()">Confirm Deposit</button>
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         5-TAB BOTTOM BAR (RELIABLE CLICK HANDLERS + AI SPARKLE ICON)
+         =================================================================== -->
+    <nav id="bottom-nav-bar" class="bottom-nav" aria-label="Bottom Navigation">
+      <button type="button" class="nav-tab-btn active" data-tab="accounts" onclick="switchTab('accounts')">
+        <span class="nav-icon-badge">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2"></rect>
+            <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2"></rect>
+            <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2"></rect>
+            <rect x="14" y="14" width="6.5" height="6.5" rx="1.2"></rect>
+          </svg>
+        </span>
+        <span>Accounts</span>
+      </button>
+
+      <button type="button" class="nav-tab-btn" data-tab="trade" onclick="switchTab('trade')">
+        <span class="nav-icon-badge">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="3.5" x2="8" y2="20.5"></line>
+            <rect x="5.5" y="7.5" width="5" height="8.5" rx="1" fill="#ffffff"></rect>
+            <line x1="16" y1="3.5" x2="16" y2="20.5"></line>
+            <rect x="13.5" y="9" width="5" height="7.5" rx="1" fill="#ffffff"></rect>
+          </svg>
+        </span>
+        <span>Trade</span>
+      </button>
+
+      <button type="button" class="nav-tab-btn" data-tab="ai" onclick="switchTab('ai')">
+        <span class="nav-icon-badge">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3.5c.7 3.8 2.7 5.8 6.5 6.5-3.8.7-5.8 2.7-6.5 6.5-.7-3.8-2.7-5.8-6.5-6.5 3.8-.7 5.8-2.7 6.5-6.5z"></path>
+            <path d="M18.5 15.5c.3 1.4 1.1 2.2 2.5 2.5-1.4.3-2.2 1.1-2.5 2.5-.3-1.4-1.1-2.2-2.5-2.5 1.4-.3 2.2-1.1 2.5-2.5z"></path>
+          </svg>
+        </span>
+        <span>BB AI</span>
+      </button>
+
+      <button type="button" class="nav-tab-btn" data-tab="performance" onclick="switchTab('performance')">
+        <span class="nav-icon-badge">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="13" width="4" height="7" rx="1"></rect>
+            <rect x="10" y="9" width="4" height="11" rx="1"></rect>
+            <rect x="16" y="4.5" width="4" height="15.5" rx="1"></rect>
+          </svg>
+        </span>
+        <span>Performance</span>
+      </button>
+
+      <button type="button" class="nav-tab-btn" data-tab="profile" onclick="switchTab('profile')">
+        <span class="nav-icon-badge">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="8.5"></circle>
+            <circle cx="12" cy="9.5" r="2.6"></circle>
+            <path d="M6.8 18.2c1.2-2.2 3.1-3.3 5.2-3.3s4 1.1 5.2 3.3"></path>
+          </svg>
+        </span>
+        <span>Profile</span>
+      </button>
+    </nav>
+  </div>
+
+  <script>
+    /* =====================================================================
+       ES5 STATE & SAFE LIFECYCLE GUARDS
+       ===================================================================== */
+    var appState = {
+      activeTab: 'accounts',
+      accountSubnav: 'my-accounts',
+      accountMode: 'real',
+      selectedAccountId: {
+        real: '#567562',
+        demo: '#892104'
+      },
+      accounts: {
+        real: [
+          { id: '#567562', label: 'Pro', balance: 18357.89, leverage: '1:500' },
+          { id: '#571908', label: 'Standard', balance: 6420.50, leverage: '1:1000' }
+        ],
+        demo: [
+          { id: '#892104', label: 'Paper Pro', balance: 25000.00, leverage: '1:500' },
+          { id: '#894412', label: 'Paper Standard', balance: 10000.00, leverage: '1:200' }
+        ]
+      },
+      tradesVisible: true,
+      runningTrades: [],
+      closedTrades: [
+        { id: 'TR-888', symbol: 'BTCUSD', side: 'BUY', lots: 0.10, pnl: 245.50, time: 'Today, 11:20' },
+        { id: 'TR-884', symbol: 'GBPUSD', side: 'SELL', lots: 0.30, pnl: -64.00, time: 'Yesterday' }
+      ],
+      editingTradeId: null,
+
+      /* Market Watch & Chart */
+      mwCategory: 'All',
+      favoriteSymbols: ['XAUUSD', 'BTCUSD', 'EURUSD'],
+      instruments: [
+        { symbol: 'XAUUSD', name: 'Gold vs US Dollar', category: 'Metals', bid: 3671.77, ask: 3671.91, digits: 2, spread: '14', dir: 'up' },
+        { symbol: 'XAGUSD', name: 'Silver vs US Dollar', category: 'Metals', bid: 41.82, ask: 41.86, digits: 2, spread: '4', dir: 'up' },
+        { symbol: 'BTCUSD', name: 'Bitcoin vs US Dollar', category: 'Crypto', bid: 61578.74, ask: 61583.22, digits: 2, spread: '448', dir: 'up' },
+        { symbol: 'ETHUSD', name: 'Ethereum vs US Dollar', category: 'Crypto', bid: 3184.50, ask: 3186.10, digits: 2, spread: '160', dir: 'down' },
+        { symbol: 'EURUSD', name: 'Euro vs US Dollar', category: 'Forex', bid: 1.09590, ask: 1.09596, digits: 5, spread: '0.6', dir: 'down' },
+        { symbol: 'GBPUSD', name: 'Great Britain Pound vs USD', category: 'Forex', bid: 1.31270, ask: 1.31277, digits: 5, spread: '0.7', dir: 'up' },
+        { symbol: 'USDJPY', name: 'US Dollar vs Japanese Yen', category: 'Forex', bid: 159.558, ask: 159.565, digits: 3, spread: '0.7', dir: 'up' },
+        { symbol: 'US30', name: 'Dow Jones Industrial Avg', category: 'Indices', bid: 42890.5, ask: 42893.0, digits: 1, spread: '25', dir: 'up' },
+        { symbol: 'NAS100', name: 'US Tech 100 Index', category: 'Indices', bid: 20415.2, ask: 20417.5, digits: 1, spread: '23', dir: 'up' },
+        { symbol: 'USOIL', name: 'WTI Crude Oil Spot', category: 'Commodities', bid: 74.68, ask: 74.72, digits: 2, spread: '4', dir: 'down' },
+        { symbol: 'NATGAS', name: 'Natural Gas Henry Hub', category: 'Commodities', bid: 3.145, ask: 3.152, digits: 3, spread: '7', dir: 'up' }
+      ],
+      selectedSymbol: 'XAUUSD',
+      timeframe: '15m',
+      candles: [],
+      visibleCandles: 30,
+      panOffset: 0,
+      priceZoom: 1.0,
+      pricePan: 0,
+      showEma9: true,
+      showSma21: true,
+      showAskLine: true,
+      showGrid: true,
+      orderMode: 'MARKET',
+      lotSize: 0.10,
+      pendingPrice: 3670.00,
+
+      /* BB AI */
+      aiFilter: 'All',
+      aiAutoTrade: false,
+      aiLot: 0.05,
+      aiMessages: [
+        { role: 'BB AI', text: 'Assistant online. Tap a quick prompt or ask any trading question.' }
+      ],
+      aiSignals: [
+        { id: 'SIG-1', symbol: 'XAUUSD', dir: 'BUY', entry: '3671.80', tp: '3694.00', sl: '3658.00', conf: '89%', series: [3658, 3661, 3660, 3665, 3669, 3668, 3671.8] },
+        { id: 'SIG-2', symbol: 'BTCUSD', dir: 'BUY', entry: '61580.0', tp: '62400.0', sl: '60900.0', conf: '84%', series: [61100, 61250, 61180, 61400, 61510, 61490, 61580] },
+        { id: 'SIG-3', symbol: 'EURUSD', dir: 'SELL', entry: '1.0959', tp: '1.0910', sl: '1.0995', conf: '81%', series: [1.0985, 1.0980, 1.0975, 1.0970, 1.0964, 1.0962, 1.0959] }
+      ],
+      aiEvents: [
+        { time: '18:30 PKT', pair: 'USD', title: 'US Core PCE Price Index (MoM)', impact: 'HIGH' },
+        { time: '20:00 PKT', pair: 'XAU', title: 'FOMC Member Speech & Liquidity', impact: 'MED' }
+      ],
+      aiNews: [
+        { title: 'Gold Holds Bullish Structure Above $3,670', tag: 'AI Sentiment: Bullish', body: 'Institutional buyers continue to defend gold dips above $3,660 ahead of US macro releases.' },
+        { title: 'Bitcoin Spot Liquidity Builds Near $61,600', tag: 'AI Sentiment: Neutral-Bullish', body: 'Orderbook depth shows steady bids near $61,200 as volatility tightens.' }
+      ],
+
+      /* Performance */
+      perfAccountFilter: 'all',
+      perfPeriod: '30D',
+      perfCurvePoints: [120, 340, 290, 620, 890, 1180, 1520, 1940, 2480],
+      perfHoverIndex: null,
+      perfData: {
+        '7D': { net: 642.50, pf: 2.38, win: 71.4, closed: 21, vol: '5.40 Lots', profit: 1108.00, loss: 465.50, best: 310.00, avg: 30.60 },
+        '30D': { net: 2480.40, pf: 2.14, win: 68.4, closed: 76, vol: '18.45 Lots', profit: 4655.90, loss: 2175.50, best: 640.00, avg: 32.64 },
+        'ALL': { net: 8920.15, pf: 2.29, win: 70.1, closed: 248, vol: '64.10 Lots', profit: 15830.40, loss: 6910.25, best: 1120.00, avg: 35.97 }
+      },
+
+      /* Profile, IB & Settings */
+      emailMasked: true,
+      benefitsExpanded: false,
+      ticketContactedBefore: null,
+      chatMessages: [
+        { from: 'bot', text: 'Welcome back! What would you like help with today?' },
+        { from: 'bot', text: 'Welcome to BIGBULLS Global Market! Great to have you here! How can I support you today?' }
+      ],
+      ibSection: 'dashboard',
+      ibClients: [
+        { id: 'be1f691a', badge: 'U', reward: '25.22 USD', signup: '10 Oct 2023', lastTrade: '14 Aug 2025', status: 'Unavailable', balance: '0-10 USD', equity: '0-10 USD', deposits: '1000-5000 USD' },
+        { id: '93575215', badge: 'I', reward: '0.00 USD', signup: '18 Nov 2023', lastTrade: '02 Sep 2025', status: 'Active', balance: '10-50 USD', equity: '10-50 USD', deposits: '100-500 USD' },
+        { id: 'f2719e95', badge: 'I', reward: '0.00 USD', signup: '05 Jan 2024', lastTrade: '21 Aug 2025', status: 'Active', balance: '0-10 USD', equity: '0-10 USD', deposits: '500-1000 USD' }
+      ],
+      settings: {
+        notifications: true,
+        language: 'English',
+        appearance: 'White & Royal Blue',
+        securityType: 'Push notifications',
+        twoFactorEnabled: true,
+        pinCode: '4829',
+        skipPinInterval: '10 minutes',
+        biometrics: false,
+        disableScreenshots: false,
+        flipHideBalances: false
+      },
+
+      /* Deposit / Withdrawal */
+      fundMode: 'deposit',
+      selectedMethod: 'USDT TRC20',
+      paymentEmblems: {},
+      toastTimer: null,
+      tickTimer: null,
+      isTickRunning: false
+    };
+
+    var paymentMethodsList = [
+      'Apple Pay',
+      'Bank Transfer',
+      'Google Pay',
+      'Mastercard',
+      'PayPal',
+      'Skrill',
+      'USDT BEP20',
+      'USDT TRC20',
+      'Visa'
+    ];
+
+    /* =====================================================================
+       SHARED HELPERS
+       ===================================================================== */
+    function fmtMoney(num) {
+      var val = typeof num === 'number' && !isNaN(num) ? num : 0;
+      var sign = val < 0 ? '-' : '';
+      var abs = Math.abs(val);
+      return sign + '$' + abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function showToast(msg) {
+      var el = document.getElementById('toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.add('show');
+      if (appState.toastTimer) clearTimeout(appState.toastTimer);
+      appState.toastTimer = setTimeout(function () {
+        el.classList.remove('show');
+      }, 2100);
+    }
+
+    function setText(id, val) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = val;
+    }
+
+    function roundRectPath(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    /* =====================================================================
+       OFFSCREEN CANVAS PNG PAYMENT EMBLEMS
+       ===================================================================== */
+    function buildPaymentPngEmblems() {
+      for (var i = 0; i < paymentMethodsList.length; i++) {
+        var name = paymentMethodsList[i];
+        appState.paymentEmblems[name] = createMethodPngDataUrl(name);
+      }
+    }
+
+    function createMethodPngDataUrl(methodName) {
+      try {
+        var c = document.createElement('canvas');
+        c.width = 96;
+        c.height = 96;
+        var ctx = c.getContext('2d');
+        if (!ctx) return '';
+        ctx.clearRect(0, 0, 96, 96);
+
+        if (methodName === 'USDT TRC20' || methodName === 'USDT BEP20') {
+          ctx.fillStyle = '#00a86b';
+          ctx.beginPath();
+          for (var k = 0; k < 6; k++) {
+            var ang = (Math.PI / 3) * k - Math.PI / 6;
+            var px = 48 + 42 * Math.cos(ang);
+            var py = 48 + 42 * Math.sin(ang);
+            if (k === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(24, 24, 48, 11);
+          ctx.fillRect(42.5, 35, 11, 37);
+          return c.toDataURL('image/png');
+        }
+
+        var palette = {
+          'Apple Pay': { bg: '#0f172a', fg: '#ffffff', text: 'PAY' },
+          'Bank Transfer': { bg: '#0066ff', fg: '#ffffff', text: 'BANK' },
+          'Google Pay': { bg: '#1d4ed8', fg: '#ffffff', text: 'G PAY' },
+          'Mastercard': { bg: '#fff1f2', fg: '#e11d48', text: 'MC' },
+          'PayPal': { bg: '#eff6ff', fg: '#0066ff', text: 'PP' },
+          'Skrill': { bg: '#311042', fg: '#ffffff', text: 'SKR' },
+          'Visa': { bg: '#003087', fg: '#ffffff', text: 'VISA' }
+        };
+        var cfg = palette[methodName] || { bg: '#0066ff', fg: '#ffffff', text: 'BB' };
+        ctx.fillStyle = cfg.bg;
+        roundRectPath(ctx, 8, 8, 80, 80, 22);
+        ctx.fill();
+
+        if (methodName === 'Mastercard') {
+          ctx.fillStyle = 'rgba(225, 29, 72, 0.85)';
+          ctx.beginPath();
+          ctx.arc(38, 48, 18, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(245, 158, 11, 0.85)';
+          ctx.beginPath();
+          ctx.arc(58, 48, 18, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillStyle = cfg.fg;
+          ctx.font = '900 20px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(cfg.text, 48, 49);
+        }
+        return c.toDataURL('image/png');
+      } catch (err) {
+        return '';
+      }
+    }
+
+    /* =====================================================================
+       5-TAB NAVIGATION & ACCOUNT SYNC
+       ===================================================================== */
+    function switchTab(tabName) {
+      if (!tabName) return;
+      appState.activeTab = tabName;
+
+      var tabs = ['accounts', 'trade', 'ai', 'performance', 'profile'];
+      for (var i = 0; i < tabs.length; i++) {
+        var t = tabs[i];
+        var el = document.getElementById('tab-' + t);
+        if (el) {
+          if (t === tabName) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        }
+      }
+
+      var btns = document.querySelectorAll('#bottom-nav-bar .nav-tab-btn');
+      for (var j = 0; j < btns.length; j++) {
+        var bTab = btns[j].getAttribute('data-tab');
+        if (bTab === tabName) btns[j].classList.add('active');
+        else btns[j].classList.remove('active');
+      }
+
+      if (tabName === 'accounts') {
+        syncAccountHeaderAndCard();
+        renderTradesLists();
+      } else if (tabName === 'trade') {
+        renderMarketWatch();
+      } else if (tabName === 'ai') {
+        renderBbAiTab();
+      } else if (tabName === 'performance') {
+        renderPerformance();
+        setTimeout(drawPerformanceCharts, 0);
+      } else if (tabName === 'profile') {
+        renderProfileTab();
+      }
+    }
+
+    function setAccountSubnav(subKey) {
+      appState.accountSubnav = subKey;
+      var pills = document.querySelectorAll('.acc-subpill');
+      for (var i = 0; i < pills.length; i++) {
+        pills[i].classList.toggle('active', pills[i].getAttribute('data-accsub') === subKey);
+      }
+      var trCard = document.getElementById('acc-transfer-card');
+      if (trCard) trCard.classList.toggle('hidden', subKey !== 'transfer');
+
+      if (subKey === 'deposit') openFundModal('deposit');
+      else if (subKey === 'withdrawal') openFundModal('withdraw');
+    }
+
+    function openNewAccount() {
+      var mode = appState.accountMode;
+      var nextNum = Math.floor(600000 + Math.random() * 390000);
+      var newId = '#' + nextNum;
+      appState.accounts[mode].unshift({
+        id: newId,
+        label: mode === 'real' ? 'Pro' : 'Paper Pro',
+        balance: mode === 'real' ? 1000.00 : 25000.00,
+        leverage: '1:500'
+      });
+      appState.selectedAccountId[mode] = newId;
+      syncAccountHeaderAndCard();
+      showToast('Opened new ' + mode.toUpperCase() + ' account ' + newId);
+    }
+
+    function getActiveAccount(mode) {
+      var m = mode || appState.accountMode;
+      var list = appState.accounts[m] || [];
+      var selId = appState.selectedAccountId[m];
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id === selId) return list[i];
+      }
+      return list[0] || { id: '#567562', label: 'Pro', balance: 0, leverage: '1:500' };
+    }
+
+    function selectAccountById(accId) {
+      var mode = appState.accountMode;
+      appState.selectedAccountId[mode] = accId;
+      syncAccountHeaderAndCard();
+      showToast('Active account: ' + accId);
+    }
+
+    function populateAccountSelectors() {
+      var mode = appState.accountMode;
+      var list = appState.accounts[mode] || [];
+      var active = getActiveAccount(mode);
+      var optsHtml = '';
+      for (var i = 0; i < list.length; i++) {
+        var acc = list[i];
+        var sel = acc.id === active.id ? ' selected' : '';
+        optsHtml += '<option value="' + acc.id + '"' + sel + '>' + acc.id + ' (' + acc.label + ')</option>';
+      }
+      var cardSel = document.getElementById('acc-card-select');
+      if (cardSel) cardSel.innerHTML = optsHtml;
+
+      var cvSel = document.getElementById('cv-acc-select');
+      if (cvSel) cvSel.innerHTML = optsHtml;
+    }
+
+    function setChartAccountMode(mode) {
+      appState.accountMode = mode;
+      syncAccountHeaderAndCard();
+      showToast('Chart switched to ' + mode.toUpperCase() + ' (' + getActiveAccount(mode).id + ')');
+    }
+
+    function selectChartAccountById(accId) {
+      var mode = appState.accountMode;
+      appState.selectedAccountId[mode] = accId;
+      syncAccountHeaderAndCard();
+      showToast('Chart account: ' + accId);
+    }
+
+    function copyAccountId() {
+      var idStr = getActiveAccount().id;
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = idStr;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (e) {}
+      showToast('Copied ' + idStr);
+    }
+
+    function executeInternalTransfer() {
+      var inp = document.getElementById('transfer-amt-input');
+      var amt = inp ? parseFloat(inp.value) : 0;
+      if (isNaN(amt) || amt <= 0) {
+        showToast('Enter a valid transfer amount');
+        return;
+      }
+      var fromMode = appState.accountMode;
+      var toMode = fromMode === 'real' ? 'demo' : 'real';
+      var fromAcc = getActiveAccount(fromMode);
+      var toAcc = getActiveAccount(toMode);
+      fromAcc.balance = Math.max(0, fromAcc.balance - amt);
+      toAcc.balance += amt;
+      syncAccountHeaderAndCard();
+      showToast('Transferred ' + fmtMoney(amt) + ' to ' + toMode.toUpperCase() + ' ' + toAcc.id);
+    }
+
+    function getFloatingPnl() {
+      var sum = 0;
+      for (var i = 0; i < appState.runningTrades.length; i++) {
+        sum += appState.runningTrades[i].pnl;
+      }
+      return sum;
+    }
+
+    function syncAccountHeaderAndCard() {
+      var mode = appState.accountMode;
+      var acc = getActiveAccount(mode);
+      var floatPnl = getFloatingPnl();
+      var equity = acc.balance + floatPnl;
+
+      populateAccountSelectors();
+
+      var hdrTag = document.getElementById('hdr-mode-tag');
+      if (hdrTag) {
+        hdrTag.textContent = mode === 'real' ? 'REAL' : 'DEMO';
+        hdrTag.className = mode === 'demo' ? 'tag demo' : 'tag';
+      }
+      setText('hdr-eq-val', fmtMoney(equity));
+
+      var btnReal = document.getElementById('btn-switch-real');
+      var btnDemo = document.getElementById('btn-switch-demo');
+      if (btnReal) btnReal.className = 'mode-pill-btn' + (mode === 'real' ? ' active-real' : '');
+      if (btnDemo) btnDemo.className = 'mode-pill-btn' + (mode === 'demo' ? ' active-demo' : '');
+
+      var cvBtnReal = document.getElementById('cv-btn-real');
+      var cvBtnDemo = document.getElementById('cv-btn-demo');
+      if (cvBtnReal) cvBtnReal.className = 'mode-pill-btn' + (mode === 'real' ? ' active-real' : '');
+      if (cvBtnDemo) cvBtnDemo.className = 'mode-pill-btn' + (mode === 'demo' ? ' active-demo' : '');
+
+      var typeChip = document.getElementById('acc-type-chip');
+      if (typeChip) {
+        typeChip.textContent = mode === 'real' ? 'Real' : 'Demo';
+        typeChip.className = 'chip-real' + (mode === 'demo' ? ' demo' : '');
+      }
+      setText('acc-tier-chip', acc.label);
+      setText('acc-lev-pill', acc.leverage);
+
+      setText('acc-balance-val', fmtMoney(acc.balance));
+      setText('acc-equity-val', fmtMoney(equity));
+
+      var floatFormatted = (floatPnl > 0 ? '+' : '') + fmtMoney(floatPnl);
+      setText('acc-floating-pill', floatFormatted);
+
+      var pnlBadge = document.getElementById('floating-pnl-badge');
+      if (pnlBadge) {
+        pnlBadge.textContent = floatFormatted;
+        pnlBadge.className = 'pnl-pill tab-num ' + (floatPnl >= 0 ? 'pos' : 'neg');
+      }
+
+      var cvTag = document.getElementById('cv-mode-tag');
+      if (cvTag) {
+        cvTag.textContent = mode === 'real' ? 'REAL' : 'DEMO';
+        cvTag.className = mode === 'demo' ? 'tag demo' : 'tag';
+      }
+      setText('cv-eq-val', fmtMoney(equity));
+
+      var cvPnl = document.getElementById('cv-live-pnl');
+      if (cvPnl) {
+        cvPnl.textContent = floatFormatted;
+        cvPnl.className = 'pnl-pill tab-num ' + (floatPnl >= 0 ? 'pos' : 'neg');
+        cvPnl.style.padding = '3px 8px';
+        cvPnl.style.fontSize = '10.5px';
+      }
+    }
+
+    function setAccountMode(mode) {
+      appState.accountMode = mode;
+      syncAccountHeaderAndCard();
+      showToast('Switched to ' + mode.toUpperCase() + ' account');
+    }
+
+    function refreshAccountData() {
+      var btn = document.getElementById('btn-refresh-acc');
+      if (btn) {
+        btn.classList.remove('spin-anim');
+        void btn.offsetWidth;
+        btn.classList.add('spin-anim');
+      }
+      syncAccountHeaderAndCard();
+      renderTradesLists();
+      showToast('Account refreshed');
+    }
+
+    /* =====================================================================
+       RUNNING TRADES, SL/TP MODIFICATION & CLOSE
+       ===================================================================== */
+    function toggleTradesVisibility() {
+      appState.tradesVisible = !appState.tradesVisible;
+      var body = document.getElementById('trades-body');
+      var btn = document.getElementById('btn-toggle-trades');
+      if (body) body.classList.toggle('hidden', !appState.tradesVisible);
+      if (btn) btn.textContent = appState.tradesVisible ? 'Hide' : 'Show';
+    }
+
+    function renderTradesLists() {
+      var runEl = document.getElementById('running-trades-list');
+      var histEl = document.getElementById('history-trades-list');
+      if (!runEl || !histEl) return;
+
+      if (appState.runningTrades.length === 0) {
+        runEl.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0;">No running trades</div>';
+      } else {
+        var rHtml = '';
+        for (var i = 0; i < appState.runningTrades.length; i++) {
+          var tr = appState.runningTrades[i];
+          var pos = tr.pnl >= 0;
+          rHtml += '' +
+            '<div class="trade-item" onclick="openTradeEditModal(\'' + tr.id + '\')">' +
+              '<div>' +
+                '<div style="display:flex;align-items:center;gap:6px;">' +
+                  '<span style="font-size:13px;font-weight:900;">' + tr.symbol + '</span>' +
+                  '<span class="side-tag ' + tr.side.toLowerCase() + '">' + tr.side + ' ' + tr.lots.toFixed(2) + '</span>' +                '</div>' +
+                '<div class="tab-num" style="font-size:11px;color:var(--sub);margin-top:3px;">' +
+                  'Open ' + tr.openPrice + ' &bull; SL ' + tr.sl + ' &bull; TP ' + tr.tp +
+                '</div>' +
+              '</div>' +
+              '<div class="tab-num" style="font-size:13px;font-weight:900;color:' + (pos ? 'var(--green)' : 'var(--red)') + ';">' +
+                (pos ? '+' : '') + fmtMoney(tr.pnl) +
+              '</div>' +
+            '</div>';
+        }
+        runEl.innerHTML = rHtml;
+      }
+
+      var hHtml = '';
+      for (var j = 0; j < appState.closedTrades.length; j++) {
+        var cl = appState.closedTrades[j];
+        var cPos = cl.pnl >= 0;
+        hHtml += '' +
+          '<div class="trade-item" style="cursor:default;">' +
+            '<div>' +
+              '<div style="font-size:12.5px;font-weight:800;">' + cl.symbol + ' <span style="color:var(--sub);font-weight:600;">(' + cl.side + ' ' + cl.lots.toFixed(2) + ')</span></div>' +
+              '<div style="font-size:10.5px;color:var(--muted);margin-top:2px;">' + cl.time + '</div>' +
+            '</div>' +
+            '<div class="tab-num" style="font-size:12.5px;font-weight:800;color:' + (cPos ? 'var(--green)' : 'var(--red)') + ';">' +
+              (cPos ? '+' : '') + fmtMoney(cl.pnl) +
+            '</div>' +
+          '</div>';
+      }
+      histEl.innerHTML = hHtml;
+    }
+
+    function openTradeEditModal(tradeId) {
+      var found = null;
+      for (var i = 0; i < appState.runningTrades.length; i++) {
+        if (appState.runningTrades[i].id === tradeId) {
+          found = appState.runningTrades[i];
+          break;
+        }
+      }
+      if (!found) return;
+      appState.editingTradeId = tradeId;
+      setText('te-title', found.symbol + ' (' + found.side + ' ' + found.lots.toFixed(2) + ')');
+      setText('te-sub', 'Open @ ' + found.openPrice + ' • P&L ' + fmtMoney(found.pnl));
+      var slInp = document.getElementById('te-sl-input');
+      var tpInp = document.getElementById('te-tp-input');
+      if (slInp) slInp.value = found.sl;
+      if (tpInp) tpInp.value = found.tp;
+      var modal = document.getElementById('trade-edit-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeTradeEditModal() {
+      appState.editingTradeId = null;
+      var modal = document.getElementById('trade-edit-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveTradeSlTp() {
+      var id = appState.editingTradeId;
+      var slVal = parseFloat(document.getElementById('te-sl-input').value);
+      var tpVal = parseFloat(document.getElementById('te-tp-input').value);
+      for (var i = 0; i < appState.runningTrades.length; i++) {
+        if (appState.runningTrades[i].id === id) {
+          if (!isNaN(slVal)) appState.runningTrades[i].sl = slVal;
+          if (!isNaN(tpVal)) appState.runningTrades[i].tp = tpVal;
+          break;
+        }
+      }
+      renderTradesLists();
+      closeTradeEditModal();
+      showToast('SL / TP saved');
+    }
+
+    function closeRunningTradeNow() {
+      var id = appState.editingTradeId;
+      var activeAcc = getActiveAccount();
+      for (var i = 0; i < appState.runningTrades.length; i++) {
+        if (appState.runningTrades[i].id === id) {
+          var closedItem = appState.runningTrades[i];
+          activeAcc.balance += closedItem.pnl;
+          appState.closedTrades.unshift({
+            id: closedItem.id,
+            symbol: closedItem.symbol,
+            side: closedItem.side,
+            lots: closedItem.lots,
+            pnl: closedItem.pnl,
+            time: 'Just now'
+          });
+          appState.runningTrades.splice(i, 1);
+          break;
+        }
+      }
+      syncAccountHeaderAndCard();
+      renderTradesLists();
+      drawMainChart();
+      closeTradeEditModal();
+      showToast('Trade closed on ' + activeAcc.id);
+    }
+
+    /* =====================================================================
+       MARKET WATCH & INTERACTIVE CHART
+       ===================================================================== */
+    function getInstrumentBySymbol(sym) {
+      for (var i = 0; i < appState.instruments.length; i++) {
+        if (appState.instruments[i].symbol === sym) return appState.instruments[i];
+      }
+      return appState.instruments[0];
+    }
+
+    function setMwCategory(cat) {
+      appState.mwCategory = cat;
+      var pills = document.querySelectorAll('#mw-cat-strip .mw-cat-pill');
+      for (var i = 0; i < pills.length; i++) {
+        pills[i].classList.toggle('active', pills[i].getAttribute('data-mwcat') === cat);
+      }
+      renderMarketWatch();
+    }
+
+    function isFavoriteSymbol(sym) {
+      return appState.favoriteSymbols.indexOf(sym) !== -1;
+    }
+
+    function toggleFavoriteSymbol(ev, sym) {
+      if (ev && ev.stopPropagation) ev.stopPropagation();
+      var idx = appState.favoriteSymbols.indexOf(sym);
+      if (idx === -1) {
+        appState.favoriteSymbols.push(sym);
+        showToast(sym + ' added to Fav Pairs');
+      } else {
+        appState.favoriteSymbols.splice(idx, 1);
+        showToast(sym + ' removed from Fav Pairs');
+      }
+      renderMarketWatch();
+    }
+
+    function renderMarketWatch() {
+      var listEl = document.getElementById('mw-list');
+      var searchEl = document.getElementById('mw-search');
+      if (!listEl) return;
+      var q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+      var cat = appState.mwCategory || 'All';
+      var html = '';
+      for (var i = 0; i < appState.instruments.length; i++) {
+        var it = appState.instruments[i];
+        if (cat === 'Favorites' && !isFavoriteSymbol(it.symbol)) continue;
+        if (cat !== 'All' && cat !== 'Favorites' && it.category !== cat) continue;
+        if (q && it.symbol.toLowerCase().indexOf(q) === -1 && it.name.toLowerCase().indexOf(q) === -1 && it.category.toLowerCase().indexOf(q) === -1) continue;
+        var cls = it.dir === 'up' ? 'up' : 'down';
+        var favActive = isFavoriteSymbol(it.symbol);
+        html += '' +
+          '<div class="mw-row" onclick="openChartForSymbol(\'' + it.symbol + '\')">' +
+            '<div style="display:flex;align-items:center;gap:5px;min-width:0;">' +
+              '<button type="button" class="mw-fav-star' + (favActive ? ' active' : '') + '" onclick="toggleFavoriteSymbol(event, \'' + it.symbol + '\')" aria-label="Favorite ' + it.symbol + '">' + (favActive ? '&#9733;' : '&#9734;') + '</button>' +
+              '<div style="min-width:0;">' +
+                '<div style="font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + it.symbol + ' <span style="font-size:10px;color:var(--sub);">' + it.category + '</span></div>' +
+                '<div style="font-size:10.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + it.name + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div id="mw-bid-' + it.symbol + '" class="quote-box tab-num ' + cls + '">' + it.bid.toFixed(it.digits) + '</div>' +
+            '<div id="mw-ask-' + it.symbol + '" class="quote-box tab-num ' + cls + '">' + it.ask.toFixed(it.digits) + '</div>' +
+          '</div>';
+      }
+      if (!html) {
+        html = '<div style="font-size:12px;color:var(--muted);padding:14px 8px;text-align:center;">No instruments in ' + cat + '</div>';
+      }
+      listEl.innerHTML = html;
+    }
+
+    function openChartForSymbol(sym) {
+      appState.selectedSymbol = sym;
+      appState.panOffset = 0;
+      appState.priceZoom = 1.0;
+      appState.pricePan = 0;
+      generateChartCandles();
+
+      var inst = getInstrumentBySymbol(sym);
+      setText('cv-sym-title', inst.symbol);
+      setText('cv-sym-sub', inst.name);
+      setText('cv-spread-badge', 'Spd ' + inst.spread);
+
+      appState.pendingPrice = Number((inst.bid - Math.pow(10, -inst.digits) * 20).toFixed(inst.digits));
+      var pInp = document.getElementById('pending-price-input');
+      if (pInp) pInp.value = appState.pendingPrice;
+
+      updateExecutionButtons();
+      syncAccountHeaderAndCard();
+      var cv = document.getElementById('chart-view');
+      if (cv) cv.classList.remove('hidden');
+      setTimeout(drawMainChart, 0);
+    }
+
+    function closeChartView() {
+      closeRadialWheel();
+      var cv = document.getElementById('chart-view');
+      if (cv) cv.classList.add('hidden');
+    }
+
+    function setChartTimeframe(tf) {
+      appState.timeframe = tf;
+      appState.panOffset = 0;
+      var chips = document.querySelectorAll('#cv-tf-strip .tf-chip');
+      for (var i = 0; i < chips.length; i++) {
+        chips[i].classList.toggle('active', chips[i].getAttribute('data-tf') === tf);
+      }
+      generateChartCandles();
+      drawMainChart();
+    }
+
+    function generateChartCandles() {
+      // Production chart candles are supplied by the authenticated Twelve Data host bridge.
+      appState.candles = [];
+    }
+
+    function computeMaArray(candles, period, isEma) {
+      var out = [];
+      var mult = 2 / (period + 1);
+      var prev = null;
+      for (var i = 0; i < candles.length; i++) {
+        if (!isEma) {
+          if (i < period - 1) out.push(null);
+          else {
+            var s = 0;
+            for (var j = 0; j < period; j++) s += candles[i - j].close;
+            out.push(s / period);
+          }
+        } else {
+          if (prev === null) prev = candles[i].close;
+          else prev = (candles[i].close - prev) * mult + prev;
+          out.push(prev);
+        }
+      }
+      return out;
+    }
+
+    function drawMainChart() {
+      var cv = document.getElementById('chart-view');
+      if (!cv || cv.classList.contains('hidden')) return;
+      var wrap = document.getElementById('chart-canvas-wrap');
+      var canvas = document.getElementById('main-chart-canvas');
+      if (!wrap || !canvas || appState.candles.length === 0) return;
+
+      var inst = getInstrumentBySymbol(appState.selectedSymbol);
+      var rect = wrap.getBoundingClientRect();
+      var w = rect.width || 360;
+      var h = rect.height || 260;
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      var axisW = 64;
+      var padT = 18;
+      var padB = 26;
+      var plotW = Math.max(80, w - axisW);
+      var plotH = Math.max(80, h - padT - padB);
+
+      var total = appState.candles.length;
+      var vis = Math.max(10, Math.min(total, Math.round(appState.visibleCandles)));
+      var maxPan = Math.max(0, total - vis);
+      appState.panOffset = Math.max(0, Math.min(maxPan, appState.panOffset));
+
+      var endIdx = total - Math.round(appState.panOffset);
+      var startIdx = Math.max(0, endIdx - vis);
+      var slice = appState.candles.slice(startIdx, endIdx);
+      if (slice.length === 0) return;
+
+      var ema9 = computeMaArray(appState.candles, 9, true).slice(startIdx, endIdx);
+      var sma21 = computeMaArray(appState.candles, 21, false).slice(startIdx, endIdx);
+
+      var minV = Infinity;
+      var maxV = -Infinity;
+      for (var i = 0; i < slice.length; i++) {
+        if (slice[i].low < minV) minV = slice[i].low;
+        if (slice[i].high > maxV) maxV = slice[i].high;
+      }
+
+      var spanBase = Math.max(maxV - minV, Math.pow(10, -inst.digits) * 6);
+      var mid = (maxV + minV) / 2 + appState.pricePan;
+      var span = (spanBase * 1.2) / appState.priceZoom;
+      var pMin = mid - span / 2;
+      var pMax = mid + span / 2;
+
+      function yFromPrice(p) {
+        return padT + ((pMax - p) / (pMax - pMin)) * plotH;
+      }
+
+      ctx.font = '600 10px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (var g = 0; g <= 4; g++) {
+        var gy = padT + (plotH / 4) * g;
+        var gp = pMax - (span / 4) * g;
+        if (appState.showGrid) {
+          ctx.strokeStyle = '#f1f5f9';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, gy);
+          ctx.lineTo(plotW, gy);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#64748b';
+        ctx.fillText(gp.toFixed(inst.digits), plotW + 6, gy);
+      }
+
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.moveTo(plotW, 0);
+      ctx.lineTo(plotW, h);
+      ctx.stroke();
+
+      var stepX = (plotW - 10) / slice.length;
+      var bodyW = Math.max(2.5, Math.min(13, stepX * 0.62));
+      for (var c = 0; c < slice.length; c++) {
+        var cd = slice[c];
+        var cx = 5 + c * stepX + stepX / 2;
+        var bull = cd.close >= cd.open;
+        var col = bull ? '#00a86b' : '#e03131';
+
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx, yFromPrice(cd.high));
+        ctx.lineTo(cx, yFromPrice(cd.low));
+        ctx.stroke();
+
+        var yO = yFromPrice(cd.open);
+        var yC = yFromPrice(cd.close);
+        ctx.fillStyle = col;
+        ctx.fillRect(cx - bodyW / 2, Math.min(yO, yC), bodyW, Math.max(2, Math.abs(yC - yO)));
+      }
+
+      function plotLine(arr, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        var started = false;
+        for (var k = 0; k < arr.length; k++) {
+          if (arr[k] === null) continue;
+          var lx = 5 + k * stepX + stepX / 2;
+          var ly = yFromPrice(arr[k]);
+          if (!started) { ctx.moveTo(lx, ly); started = true; }
+          else ctx.lineTo(lx, ly);
+        }
+        ctx.stroke();
+      }
+      if (appState.showEma9) plotLine(ema9, '#0066ff');
+      if (appState.showSma21) plotLine(sma21, '#d97706');
+
+      for (var r = 0; r < appState.runningTrades.length; r++) {
+        var tr = appState.runningTrades[r];
+        if (tr.symbol !== inst.symbol) continue;
+        var ty = Math.max(10, Math.min(h - 10, yFromPrice(tr.openPrice)));
+        var isBuy = tr.side === 'BUY';
+        ctx.save();
+        ctx.strokeStyle = isBuy ? '#0066ff' : '#e03131';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.moveTo(0, ty);
+        ctx.lineTo(plotW, ty);
+        ctx.stroke();
+        ctx.restore();
+
+        var pnlTxt = tr.side + ' ' + tr.lots.toFixed(2) + ' (' + (tr.pnl >= 0 ? '+' : '') + tr.pnl.toFixed(2) + ')';
+        ctx.fillStyle = isBuy ? '#eef5ff' : '#fff0f0';
+        ctx.fillRect(8, ty - 9, 134, 18);
+        ctx.fillStyle = isBuy ? '#0066ff' : '#e03131';
+        ctx.font = '800 10px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(pnlTxt, 13, ty);
+      }
+
+      if (appState.showAskLine) {
+        var ay = Math.max(8, Math.min(h - 8, yFromPrice(inst.ask)));
+        ctx.save();
+        ctx.strokeStyle = 'rgba(224, 49, 49, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(0, ay);
+        ctx.lineTo(plotW, ay);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      var by = Math.max(10, Math.min(h - 10, yFromPrice(inst.bid)));
+      ctx.save();
+      ctx.strokeStyle = '#0066ff';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 2]);
+      ctx.beginPath();
+      ctx.moveTo(0, by);
+      ctx.lineTo(plotW, by);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = '#0066ff';
+      ctx.fillRect(plotW + 3, by - 9, axisW - 6, 18);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '800 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(inst.bid.toFixed(inst.digits), plotW + axisW / 2, by);
+    }
+
+    function autoResetChartAxis() {
+      appState.visibleCandles = 30;
+      appState.panOffset = 0;
+      appState.priceZoom = 1.0;
+      appState.pricePan = 0;
+      drawMainChart();
+    }
+
+    function initChartInteractions() {
+      var wrap = document.getElementById('chart-canvas-wrap');
+      if (!wrap) return;
+      var g = { mode: null, startX: 0, startY: 0, startPan: 0, startZoom: 1, pinchDist: 0, startVis: 30, moved: false, tapAt: 0 };
+
+      function dist(t1, t2) {
+        var dx = t1.clientX - t2.clientX;
+        var dy = t1.clientY - t2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      wrap.addEventListener('touchstart', function (e) {
+        if (e.target.closest('.radial-menu-wrap')) return;
+        var rect = wrap.getBoundingClientRect();
+        if (e.touches.length === 2) {
+          g.mode = 'pinch';
+          g.moved = true;
+          g.pinchDist = dist(e.touches[0], e.touches[1]);
+          g.startVis = appState.visibleCandles;
+          closeRadialWheel();
+        } else if (e.touches.length === 1) {
+          var t = e.touches[0];
+          var relX = t.clientX - rect.left;
+          g.startX = t.clientX;
+          g.startY = t.clientY;
+          g.startPan = appState.panOffset;
+          g.startZoom = appState.priceZoom;
+          g.moved = false;
+          g.tapAt = Date.now();
+          g.mode = relX >= rect.width - 64 ? 'priceZoom' : 'pan';
+        }
+      }, { passive: true });
+
+      wrap.addEventListener('touchmove', function (e) {
+        if (!g.mode) return;
+        var rect = wrap.getBoundingClientRect();
+        if (g.mode === 'pinch' && e.touches.length === 2) {
+          var d = dist(e.touches[0], e.touches[1]);
+          if (d > 10) {
+            appState.visibleCandles = Math.max(10, Math.min(75, g.startVis * (g.pinchDist / d)));
+            drawMainChart();
+          }
+          return;
+        }
+        if (e.touches.length === 1) {
+          var t = e.touches[0];
+          var dx = t.clientX - g.startX;
+          var dy = t.clientY - g.startY;
+          if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+            g.moved = true;
+            closeRadialWheel();
+          }
+          if (g.mode === 'priceZoom') {
+            appState.priceZoom = Math.max(0.4, Math.min(3.2, g.startZoom * (1 - dy / 150)));
+            drawMainChart();
+          } else if (g.mode === 'pan') {
+            var pxPer = Math.max(4, (rect.width - 64) / appState.visibleCandles);
+            appState.panOffset = g.startPan + dx / pxPer;
+            drawMainChart();
+          }
+        }
+      }, { passive: true });
+
+      wrap.addEventListener('touchend', function (e) {
+        if (e.touches.length === 0) {
+          if (!g.moved && (Date.now() - g.tapAt) < 300) {
+            openRadialWheel(g.startX, g.startY);
+          }
+          g.mode = null;
+        }
+      });
+
+      wrap.addEventListener('click', function (e) {
+        if (e.target.closest('.radial-menu-wrap') || e.target.closest('.radial-backdrop') || e.target.closest('.auto-axis-btn')) return;
+        if (Date.now() - g.tapAt < 400) return;
+        openRadialWheel(e.clientX, e.clientY);
+      });
+    }
+
+    function openRadialWheel(clientX, clientY) {
+      var wrap = document.getElementById('chart-canvas-wrap');
+      var wheel = document.getElementById('radial-menu');
+      var back = document.getElementById('radial-backdrop');
+      var nodesBox = document.getElementById('radial-nodes');
+      if (!wrap || !wheel || !back || !nodesBox) return;
+
+      var rect = wrap.getBoundingClientRect();
+      var x = Math.max(108, Math.min(rect.width - 108, clientX - rect.left));
+      var y = Math.max(108, Math.min(rect.height - 108, clientY - rect.top));
+      wheel.style.left = x + 'px';
+      wheel.style.top = y + 'px';
+
+      var tfs = ['1m', '5m', '15m', '1h', '4h', '1D'];
+      var html = '';
+      for (var i = 0; i < tfs.length; i++) {
+        var ang = -Math.PI / 2 + i * (Math.PI * 2 / tfs.length);
+        var nx = 102 + 72 * Math.cos(ang);
+        var ny = 102 + 72 * Math.sin(ang);
+        var act = appState.timeframe === tfs[i] ? ' active' : '';
+        html += '<button type="button" class="radial-item' + act + '" style="left:' + nx + 'px;top:' + ny + 'px;" onclick="pickRadialTf(\'' + tfs[i] + '\')">' + tfs[i] + '</button>';
+      }
+      nodesBox.innerHTML = html;
+      back.classList.remove('hidden');
+      wheel.classList.remove('hidden');
+    }
+
+    function closeRadialWheel() {
+      var wheel = document.getElementById('radial-menu');
+      var back = document.getElementById('radial-backdrop');
+      if (wheel) wheel.classList.add('hidden');
+      if (back) back.classList.add('hidden');
+    }
+
+    function pickRadialTf(tf) {
+      closeRadialWheel();
+      setChartTimeframe(tf);
+    }
+
+    function openChartIndicatorsSheet() {
+      var panel = document.getElementById('chart-tool-panel');
+      var modal = document.getElementById('chart-tool-modal');
+      if (!panel || !modal) return;
+      panel.innerHTML = '' +
+        '<div class="card-title-row"><div class="card-title">Indicators</div><button type="button" class="circle-icon-btn" onclick="closeChartToolModal()">&times;</button></div>' +
+        '<div class="profile-row" onclick="toggleIndFlag(\'showEma9\', this)"><div><div style="font-size:13px;font-weight:800;color:var(--blue);">EMA (9)</div><div class="card-sub">Exponential Moving Average</div></div><span class="label-circle-badge">' + (appState.showEma9 ? 'ON' : 'OFF') + '</span></div>' +
+        '<div class="profile-row" onclick="toggleIndFlag(\'showSma21\', this)"><div><div style="font-size:13px;font-weight:800;color:var(--amber);">SMA (21)</div><div class="card-sub">Simple Moving Average</div></div><span class="label-circle-badge">' + (appState.showSma21 ? 'ON' : 'OFF') + '</span></div>';
+      modal.classList.remove('hidden');
+    }
+
+    function openChartSettingsSheet() {
+      var panel = document.getElementById('chart-tool-panel');
+      var modal = document.getElementById('chart-tool-modal');
+      if (!panel || !modal) return;
+      panel.innerHTML = '' +
+        '<div class="card-title-row"><div class="card-title">Chart Toggles</div><button type="button" class="circle-icon-btn" onclick="closeChartToolModal()">&times;</button></div>' +
+        '<div class="profile-row" onclick="toggleIndFlag(\'showAskLine\', this)"><div><div style="font-size:13px;font-weight:800;">Ask Line</div><div class="card-sub">Show live Ask price line</div></div><span class="label-circle-badge">' + (appState.showAskLine ? 'ON' : 'OFF') + '</span></div>' +
+        '<div class="profile-row" onclick="toggleIndFlag(\'showGrid\', this)"><div><div style="font-size:13px;font-weight:800;">Grid Lines</div><div class="card-sub">Show horizontal grid</div></div><span class="label-circle-badge">' + (appState.showGrid ? 'ON' : 'OFF') + '</span></div>';
+      modal.classList.remove('hidden');
+    }
+
+    function toggleIndFlag(key, rowEl) {
+      appState[key] = !appState[key];
+      var b = rowEl ? rowEl.querySelector('.label-circle-badge') : null;
+      if (b) b.textContent = appState[key] ? 'ON' : 'OFF';
+      drawMainChart();
+    }
+
+    function closeChartToolModal() {
+      var modal = document.getElementById('chart-tool-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setOrderMode(m) {
+      appState.orderMode = m;
+      var tabs = document.querySelectorAll('.seg-tab');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-omode') === m);
+      }
+      var box = document.getElementById('pending-order-box');
+      if (box) box.classList.toggle('hidden', m === 'MARKET');
+      updateExecutionButtons();
+    }
+
+    function changeLot(delta) {
+      appState.lotSize = Math.max(0.01, Math.min(20, Math.round((appState.lotSize + delta) * 100) / 100));
+      setText('exec-lot-val', appState.lotSize.toFixed(2));
+    }
+
+    function stepPendingPrice(dir) {
+      var inst = getInstrumentBySymbol(appState.selectedSymbol);
+      var step = Math.pow(10, -inst.digits) * 10;
+      appState.pendingPrice = Number((appState.pendingPrice + dir * step).toFixed(inst.digits));
+      var inp = document.getElementById('pending-price-input');
+      if (inp) inp.value = appState.pendingPrice;
+    }
+
+    function onPendingPriceChange(v) {
+      var n = parseFloat(v);
+      if (!isNaN(n)) appState.pendingPrice = n;
+    }
+
+    function updateExecutionButtons() {
+      var inst = getInstrumentBySymbol(appState.selectedSymbol);
+      var sellLabel = 'SELL';
+      var buyLabel = 'BUY';
+      if (appState.orderMode === 'LIMIT') {
+        sellLabel = 'SELL LIMIT';
+        buyLabel = 'BUY LIMIT';
+      } else if (appState.orderMode === 'STOP') {
+        sellLabel = 'SELL STOP';
+        buyLabel = 'BUY STOP';
+      }
+      setText('sell-btn-lbl', sellLabel);
+      setText('buy-btn-lbl', buyLabel);
+      setText('sell-btn-px', inst.bid.toFixed(inst.digits));
+      setText('buy-btn-px', inst.ask.toFixed(inst.digits));
+    }
+
+    function placeChartOrder(side) {
+      var inst = getInstrumentBySymbol(appState.selectedSymbol);
+      var acc = getActiveAccount();
+      var isPending = appState.orderMode === 'LIMIT' || appState.orderMode === 'STOP';
+      var px = !isPending ? (side === 'BUY' ? inst.ask : inst.bid) : appState.pendingPrice;
+      var orderTag = !isPending ? side : (side + ' ' + appState.orderMode);
+
+      if (appState.orderMode === 'MARKET') {
+        appState.runningTrades.unshift({
+          id: 'TR-' + Math.floor(910 + Math.random() * 89),
+          symbol: inst.symbol,
+          side: side,
+          lots: appState.lotSize,
+          openPrice: Number(px.toFixed(inst.digits)),
+          sl: 0,
+          tp: 0,
+          pnl: 14.20
+        });
+        syncAccountHeaderAndCard();
+        renderTradesLists();
+        drawMainChart();
+      }
+      showToast(orderTag + ' ' + appState.lotSize.toFixed(2) + ' ' + inst.symbol + ' on ' + acc.id);
+    }
+
+    /* =====================================================================
+       3. BB AI ASSISTANT (PROMPTS, LIVE RESPONSES & SIGNALS)
+       ===================================================================== */
+    function setAiFilter(f) {
+      appState.aiFilter = f;
+      var pills = document.querySelectorAll('.filter-pill');
+      for (var i = 0; i < pills.length; i++) {
+        pills[i].classList.toggle('active', pills[i].getAttribute('data-aifilter') === f);
+      }
+      renderBbAiTab();
+    }
+
+    function toggleAiAutoTrade() {
+      appState.aiAutoTrade = !appState.aiAutoTrade;
+      var sw = document.getElementById('ai-auto-switch');
+      if (sw) sw.classList.toggle('on', appState.aiAutoTrade);
+      pushAiMessage('BB AI', 'Auto-Trade ' + (appState.aiAutoTrade ? 'ENABLED' : 'PAUSED') + ' at ' + appState.aiLot.toFixed(2) + ' lots.');
+    }
+
+    function setAiLot(lot) {
+      appState.aiLot = lot;
+      var btns = document.querySelectorAll('.lot-choice');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('active', parseFloat(btns[i].getAttribute('data-ailot')) === lot);
+      }
+      pushAiMessage('BB AI', 'Auto lot size updated to ' + lot.toFixed(2) + '.');
+    }
+
+    function generateBbAiReply(promptText) {
+      var p = (promptText || '').toLowerCase();
+      if (p.indexOf('xau') !== -1 || p.indexOf('gold') !== -1) {
+        return 'XAUUSD (3671.77 / 3671.91): Bullish above 3660 support; watch 3694 liquidity target with strict SL.';
+      }
+      if (p.indexOf('btc') !== -1) {
+        return 'BTCUSD (61578.74 / 61583.22): Momentum constructive above 61200; avoid over-leveraging during spikes.';
+      }
+      if (p.indexOf('risk') !== -1) {
+        var acc = getActiveAccount();
+        return 'Account ' + acc.id + ' (' + acc.label + '): Keep per-trade risk around 1%-2% of ' + fmtMoney(acc.balance) + '.';
+      }
+      if (p.indexOf('vol') !== -1 || p.indexOf('session') !== -1) {
+        return 'London/NY overlap carries peak liquidity in XAUUSD, EURUSD, and US indices—expect wider spreads on news.';
+      }
+      return 'Analysis for "' + promptText + '": Trend structure favors disciplined entries with defined SL/TP and ' + appState.aiLot.toFixed(2) + ' lot sizing.';
+    }
+
+    function askBbAiPrompt(promptText) {
+      pushAiMessage('You', promptText);
+      pushAiMessage('BB AI', generateBbAiReply(promptText));
+    }
+
+    function submitCustomAiPrompt() {
+      var inp = document.getElementById('ai-custom-input');
+      if (!inp) return;
+      var q = inp.value.trim();
+      if (!q) return;
+      inp.value = '';
+      askBbAiPrompt(q);
+    }
+
+    function pushAiMessage(role, text) {
+      appState.aiMessages.unshift({ role: role, text: text });
+      if (appState.aiMessages.length > 14) appState.aiMessages.length = 14;
+      renderAiMessages();
+    }
+
+    function renderAiMessages() {
+      var box = document.getElementById('ai-log-box');
+      if (!box) return;
+      var html = '';
+      for (var i = 0; i < appState.aiMessages.length; i++) {
+        var m = appState.aiMessages[i];
+        html += '<div class="ai-log-entry"><strong style="color:' + (m.role === 'BB AI' ? 'var(--blue)' : 'var(--navy)') + ';">[' + m.role + ']</strong> ' + m.text + '</div>';
+      }
+      box.innerHTML = html;
+    }
+
+    function executeAiSignal(idx) {
+      var sig = appState.aiSignals[idx];
+      if (!sig) return;
+      appState.runningTrades.unshift({
+        id: 'AI-' + Math.floor(100 + Math.random() * 899),
+        symbol: sig.symbol,
+        side: sig.dir,
+        lots: appState.aiLot,
+        openPrice: parseFloat(sig.entry),
+        sl: parseFloat(sig.sl),
+        tp: parseFloat(sig.tp),
+        pnl: 19.50
+      });
+      syncAccountHeaderAndCard();
+      renderTradesLists();
+      pushAiMessage('BB AI', 'Executed ' + sig.dir + ' ' + appState.aiLot.toFixed(2) + ' ' + sig.symbol + ' @ ' + sig.entry);
+      showToast('Executed ' + sig.dir + ' ' + sig.symbol);
+    }
+
+    function renderBbAiTab() {
+      var f = appState.aiFilter;
+      var autoCard = document.getElementById('ai-autotrade-card');
+      var sigSec = document.getElementById('ai-signals-section');
+      var evSec = document.getElementById('ai-events-section');
+      var newsSec = document.getElementById('ai-news-section');
+
+      if (autoCard) autoCard.classList.toggle('hidden', !(f === 'All' || f === 'Auto Trade'));
+      if (sigSec) sigSec.classList.toggle('hidden', !(f === 'All' || f === 'AI Signals'));
+      if (evSec) evSec.classList.toggle('hidden', !(f === 'All' || f === 'AI News'));
+      if (newsSec) newsSec.classList.toggle('hidden', !(f === 'All' || f === 'AI News'));
+
+      renderAiMessages();
+
+      var sigList = document.getElementById('ai-signals-list');
+      if (sigList) {
+        var sHtml = '';
+        for (var i = 0; i < appState.aiSignals.length; i++) {
+          var s = appState.aiSignals[i];
+          var isBuy = s.dir === 'BUY';
+          sHtml += '' +
+            '<div class="signal-card">' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<span style="font-size:14px;font-weight:900;">' + s.symbol + '</span>' +
+                '<span class="side-tag ' + (isBuy ? 'buy' : 'sell') + '">' + s.dir + ' &bull; ' + s.conf + '</span>' +
+              '</div>' +
+              '<canvas id="sig-mini-' + i + '" width="218" height="58" style="width:100%;height:58px;display:block;margin:8px 0;"></canvas>' +
+              '<div class="tab-num" style="font-size:11px;color:var(--sub);margin-bottom:10px;">Entry ' + s.entry + ' &bull; TP ' + s.tp + ' &bull; SL ' + s.sl + '</div>' +
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+                '<button type="button" class="mini-toggle-btn" style="padding:8px;" onclick="openChartForSymbol(\'' + s.symbol + '\')">Chart</button>' +
+                '<button type="button" class="primary-btn" style="padding:8px;font-size:12px;" onclick="executeAiSignal(' + i + ')">Execute</button>' +
+              '</div>' +
+            '</div>';
+        }
+        sigList.innerHTML = sHtml;
+        for (var m = 0; m < appState.aiSignals.length; m++) {
+          drawMiniSignalCanvas('sig-mini-' + m, appState.aiSignals[m].series, appState.aiSignals[m].dir === 'BUY');
+        }
+      }
+
+      var evList = document.getElementById('ai-events-list');
+      if (evList) {
+        var eHtml = '';
+        for (var e = 0; e < appState.aiEvents.length; e++) {
+          var ev = appState.aiEvents[e];
+          eHtml += '' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">' +
+              '<div>' +
+                '<div style="font-size:12.5px;font-weight:800;">' + ev.title + '</div>' +
+                '<div class="tab-num" style="font-size:11px;color:var(--sub);">' + ev.time + ' &bull; ' + ev.pair + '</div>' +
+              '</div>' +
+              '<span class="label-circle-badge">' + ev.impact + '</span>' +
+            '</div>';
+        }
+        evList.innerHTML = eHtml;
+      }
+
+      var newsList = document.getElementById('ai-news-list');
+      if (newsList) {
+        var nHtml = '';
+        for (var n = 0; n < appState.aiNews.length; n++) {
+          var nw = appState.aiNews[n];
+          nHtml += '' +
+            '<div class="news-card" onclick="openNewsDetail(' + n + ')">' +
+              '<div style="font-size:10.5px;font-weight:800;color:var(--blue);">' + nw.tag + '</div>' +
+              '<div style="font-size:13px;font-weight:800;margin-top:3px;">' + nw.title + '</div>' +
+            '</div>';
+        }
+        newsList.innerHTML = nHtml;
+      }
+    }
+
+    function drawMiniSignalCanvas(canvasId, series, isBull) {
+      var c = document.getElementById(canvasId);
+      if (!c) return;
+      var ctx = c.getContext('2d');
+      if (!ctx) return;
+      var w = c.width;
+      var h = c.height;
+      ctx.clearRect(0, 0, w, h);
+      var minV = Math.min.apply(null, series);
+      var maxV = Math.max.apply(null, series);
+      var span = Math.max(maxV - minV, 0.0001);
+      ctx.strokeStyle = isBull ? '#0066ff' : '#e03131';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (var i = 0; i < series.length; i++) {
+        var x = 6 + (i / (series.length - 1)) * (w - 12);
+        var y = h - 8 - ((series[i] - minV) / span) * (h - 16);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    function openNewsDetail(idx) {
+      var nw = appState.aiNews[idx];
+      if (!nw) return;
+      var panel = document.getElementById('chart-tool-panel');
+      var modal = document.getElementById('chart-tool-modal');
+      if (!panel || !modal) return;
+      panel.innerHTML = '' +
+        '<div class="card-title-row"><div class="card-title">' + nw.title + '</div><button type="button" class="circle-icon-btn" onclick="closeChartToolModal()">&times;</button></div>' +
+        '<div class="label-circle-badge" style="margin-bottom:10px;">' + nw.tag + '</div>' +
+        '<p style="font-size:13px;line-height:1.5;color:var(--sub);">' + nw.body + '</p>';
+      modal.classList.remove('hidden');
+    }
+
+    /* =====================================================================
+       4. PERFORMANCE TAB & CUSTOM BOTTOM-SHEET ACCOUNT SELECTOR
+       ===================================================================== */
+    function openPerfAccountModal() {
+      var modal = document.getElementById('perf-acc-modal');
+      var listEl = document.getElementById('perf-acc-options-list');
+      if (!modal || !listEl) return;
+
+      var options = [
+        { key: 'all', title: 'All accounts', sub: 'Combined Real & Demo closed trades', badge: 'ALL' },
+        { key: 'real', title: 'Real #567562', sub: 'Live trading account', badge: 'REAL' },
+        { key: 'demo', title: 'Demo #892104', sub: 'Practice trading account', badge: 'DEMO' }
+      ];
+
+      var html = '';
+      for (var i = 0; i < options.length; i++) {
+        var opt = options[i];
+        var isSel = appState.perfAccountFilter === opt.key;
+        html += '' +
+          '<button type="button" class="perf-opt-card' + (isSel ? ' selected' : '') + '" onclick="selectPerfAccountFilter(\'' + opt.key + '\')">' +
+            '<div>' +
+              '<div style="display:flex;align-items:center;gap:7px;">' +
+                '<span class="tab-num" style="font-size:13.5px;font-weight:900;color:var(--navy);">' + opt.title + '</span>' +
+                '<span class="label-circle-badge">' + opt.badge + '</span>' +
+              '</div>' +
+              '<div class="card-sub" style="margin-top:3px;">' + opt.sub + '</div>' +
+            '</div>' +
+            '<span class="perf-radio-dot"></span>' +
+          '</button>';
+      }
+      listEl.innerHTML = html;
+      modal.classList.remove('hidden');
+    }
+
+    function closePerfAccountModal() {
+      var modal = document.getElementById('perf-acc-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function selectPerfAccountFilter(key) {
+      appState.perfAccountFilter = key;
+      closePerfAccountModal();
+      renderPerformance();
+      setTimeout(drawPerformanceCharts, 0);
+    }
+
+    function setPerfPeriod(p) {
+      appState.perfPeriod = p;
+      var btns = document.querySelectorAll('.period-btn');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('active', btns[i].getAttribute('data-period') === p);
+      }
+      renderPerformance();
+      setTimeout(drawPerformanceCharts, 0);
+    }
+
+    function renderPerformance() {
+      var f = appState.perfAccountFilter;
+      var mult = f === 'real' ? 0.72 : (f === 'demo' ? 0.28 : 1);
+      var lbl = f === 'real' ? 'Real #567562' : (f === 'demo' ? 'Demo #892104' : 'All accounts');
+      setText('perf-acc-selected-label', lbl);
+
+      var base = appState.perfData[appState.perfPeriod] || appState.perfData['30D'];
+      var net = base.net * mult;
+      var profit = base.profit * mult;
+      var loss = base.loss * mult;
+      var best = base.best * mult;
+      var closed = Math.max(4, Math.round(base.closed * mult));
+      var avg = net / closed;
+
+      setText('perf-net-profit', '+' + fmtMoney(net));
+      setText('perf-profit-factor', base.pf.toFixed(2));
+      setText('perf-win-rate', base.win.toFixed(1) + '%');
+      var bar = document.getElementById('perf-win-bar');
+      if (bar) bar.style.width = base.win + '%';
+
+      setText('kpi-closed', String(closed));
+      setText('kpi-volume', base.vol);
+      setText('kpi-tprofit', '+' + fmtMoney(profit));
+      setText('kpi-tloss', '-' + fmtMoney(loss));
+      setText('kpi-best', '+' + fmtMoney(best));
+      setText('kpi-avg', (avg >= 0 ? '+' : '') + fmtMoney(avg));
+    }
+
+    function initInteractiveProfitChart() {
+      var c1 = document.getElementById('cum-profit-canvas');
+      if (!c1) return;
+      function updateFromClientX(clientX) {
+        var r = c1.getBoundingClientRect();
+        var rel = Math.max(0, Math.min(1, (clientX - r.left - 14) / Math.max(1, r.width - 28)));
+        var idx = Math.round(rel * (appState.perfCurvePoints.length - 1));
+        appState.perfHoverIndex = idx;
+        var val = appState.perfCurvePoints[idx];
+        setText('cum-hover-readout', '+$' + val.toFixed(2));
+        drawPerformanceCharts();
+      }
+      c1.addEventListener('mousemove', function (e) { updateFromClientX(e.clientX); });
+      c1.addEventListener('touchmove', function (e) {
+        if (e.touches.length > 0) updateFromClientX(e.touches[0].clientX);
+      }, { passive: true });
+      c1.addEventListener('mouseleave', function () {
+        appState.perfHoverIndex = null;
+        setText('cum-hover-readout', 'Tap / Drag');
+        drawPerformanceCharts();
+      });
+    }
+
+    function drawPerformanceCharts() {
+      var c1 = document.getElementById('cum-profit-canvas');
+      if (c1) {
+        var r1 = c1.getBoundingClientRect();
+        var w1 = r1.width || 360;
+        var h1 = r1.height || 175;
+        var dpr = Math.min(2, window.devicePixelRatio || 1);
+        c1.width = Math.round(w1 * dpr);
+        c1.height = Math.round(h1 * dpr);
+        var ctx1 = c1.getContext('2d');
+        if (ctx1) {
+          ctx1.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx1.clearRect(0, 0, w1, h1);
+          var pts = appState.perfCurvePoints;
+          var maxP = 2700;
+
+          ctx1.beginPath();
+          for (var i = 0; i < pts.length; i++) {
+            var x = 14 + (i / (pts.length - 1)) * (w1 - 28);
+            var y = h1 - 18 - (pts[i] / maxP) * (h1 - 36);
+            if (i === 0) ctx1.moveTo(x, y);
+            else ctx1.lineTo(x, y);
+          }
+          ctx1.strokeStyle = '#0066ff';
+          ctx1.lineWidth = 2.5;
+          ctx1.stroke();
+
+          ctx1.lineTo(w1 - 14, h1 - 18);
+          ctx1.lineTo(14, h1 - 18);
+          ctx1.closePath();
+          ctx1.fillStyle = 'rgba(0, 102, 255, 0.12)';
+          ctx1.fill();
+
+          if (appState.perfHoverIndex !== null && pts[appState.perfHoverIndex] !== undefined) {
+            var hx = 14 + (appState.perfHoverIndex / (pts.length - 1)) * (w1 - 28);
+            var hy = h1 - 18 - (pts[appState.perfHoverIndex] / maxP) * (h1 - 36);            ctx1.fillStyle = '#0066ff';
+            ctx1.beginPath();
+            ctx1.arc(hx, hy, 5, 0, Math.PI * 2);
+            ctx1.fill();
+          }
+        }
+      }
+
+      var c2 = document.getElementById('inst-profit-canvas');
+      if (c2) {
+        var r2 = c2.getBoundingClientRect();
+        var w2 = r2.width || 360;
+        var h2 = r2.height || 175;
+        var dpr2 = Math.min(2, window.devicePixelRatio || 1);
+        c2.width = Math.round(w2 * dpr2);
+        c2.height = Math.round(h2 * dpr2);
+        var ctx2 = c2.getContext('2d');
+        if (ctx2) {
+          ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+          ctx2.clearRect(0, 0, w2, h2);
+          var bars = [
+            { sym: 'XAU', val: 1240 },
+            { sym: 'BTC', val: 680 },
+            { sym: 'EUR', val: 360 },
+            { sym: 'GBP', val: 200 }
+          ];
+          var maxB = 1400;
+          var bw = (w2 - 48) / bars.length - 12;
+          for (var b = 0; b < bars.length; b++) {
+            var bx = 24 + b * (bw + 12);
+            var bh = (bars[b].val / maxB) * (h2 - 44);
+            var by = h2 - 24 - bh;
+            ctx2.fillStyle = '#0066ff';
+            roundRectPath(ctx2, bx, by, bw, bh, 6);
+            ctx2.fill();
+
+            ctx2.fillStyle = '#0c192c';
+            ctx2.font = '800 10.5px sans-serif';
+            ctx2.textAlign = 'center';
+            ctx2.fillText(bars[b].sym, bx + bw / 2, h2 - 8);
+          }
+        }
+      }
+    }
+
+    /* =====================================================================
+       5. PROFILE TAB, WORKFLOWS, IB PORTAL & SETTINGS (PASSWORD & 2FA)
+       ===================================================================== */
+    function renderProfileTab() {
+      setText('profile-email-txt', appState.emailMasked ? 'a***@bigbulls.example' : 'aarav.sharma@bigbulls.example');
+      setText('profile-eye-label', appState.emailMasked ? 'Show' : 'Hide');
+    }
+
+    function toggleEmailMask() {
+      appState.emailMasked = !appState.emailMasked;
+      renderProfileTab();
+    }
+
+    function toggleBenefitsShowMore() {
+      appState.benefitsExpanded = !appState.benefitsExpanded;
+      var extra = document.getElementById('profile-benefits-extra');
+      var btn = document.getElementById('btn-benefits-showmore');
+      if (extra) extra.classList.toggle('hidden', !appState.benefitsExpanded);
+      if (btn) btn.innerHTML = appState.benefitsExpanded ? 'Show less &#9652;' : 'Show more &#9662;';
+    }
+
+    function openProfileSheet(html) {
+      var panel = document.getElementById('profile-sheet-panel');
+      var modal = document.getElementById('profile-sheet-modal');
+      if (!panel || !modal) return;
+      panel.innerHTML = html;
+      modal.classList.remove('hidden');
+    }
+
+    function closeProfileSheet() {
+      var modal = document.getElementById('profile-sheet-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openWalletSheet(walletName) {
+      openProfileSheet('' +
+        '<div class="card-title-row">' +
+          '<div><div class="card-title">' + walletName + '</div><div class="card-sub tab-num">Balance: 0.00 USD</div></div>' +
+          '<button type="button" class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button>' +
+        '</div>' +
+        '<div class="profile-row" onclick="closeProfileSheet();openFundModal(\'deposit\')"><div style="font-size:13px;font-weight:800;">Deposit</div><span>&rsaquo;</span></div>' +
+        '<div class="profile-row" onclick="closeProfileSheet();openFundModal(\'withdraw\')"><div style="font-size:13px;font-weight:800;">Withdrawal</div><span>&rsaquo;</span></div>' +
+        '<div class="profile-row" onclick="closeProfileSheet();switchTab(\'accounts\');setAccountSubnav(\'transfer\')"><div style="font-size:13px;font-weight:800;">Transfer</div><span>&rsaquo;</span></div>' +
+        '<div class="profile-row" onclick="closeProfileSheet();switchTab(\'accounts\')"><div style="font-size:13px;font-weight:800;">Transaction history</div><span>&rsaquo;</span></div>'
+      );
+    }
+
+    function openReferralSheet() {
+      openProfileSheet('' +
+        '<div class="card-title-row">' +
+          '<div><div class="card-title">Referral program</div><div class="card-sub tab-num">Total profit: 1,004.55 USD &bull; 31 referrals</div></div>' +
+          '<button type="button" class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button>' +
+        '</div>' +
+        '<div class="profile-row" onclick="closeProfileSheet();copyReferralLink()"><div style="font-size:13px;font-weight:800;">Share the link</div><span>&rsaquo;</span></div>' +
+        '<div class="profile-row" onclick="closeProfileSheet();openFundModal(\'withdraw\')"><div style="font-size:13px;font-weight:800;">Withdrawal</div><span>&rsaquo;</span></div>' +
+        '<div class="profile-row" onclick="closeProfileSheet();switchTab(\'accounts\');setAccountSubnav(\'transfer\')"><div style="font-size:13px;font-weight:800;">Transfer</div><span>&rsaquo;</span></div>' +
+        '<div class="profile-row" onclick="closeProfileSheet();openIbPortal()"><div style="font-size:13px;font-weight:800;color:var(--blue);">Go to Partner Personal Area</div><span style="color:var(--blue);font-weight:900;">&rsaquo;</span></div>'
+      );
+    }
+
+    function copyReferralLink() {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = 'https://bigbulls.example/partner/BB567562';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (e) {}
+      showToast('Referral link copied');
+    }
+
+    function openTicketPrecheck() {
+      appState.ticketContactedBefore = null;
+      var view = document.getElementById('subpage-view');
+      var body = document.getElementById('subpage-body');
+      if (!view || !body) return;
+      setText('subpage-title', 'Open a ticket');
+      body.innerHTML = '' +
+        '<div class="card" style="background:var(--blue-soft);border-color:var(--blue-border);">' +
+          '<div style="font-size:12px;font-weight:700;color:var(--navy);line-height:1.45;">' +
+            'Submitting more than one ticket for the same issue may delay our response.' +
+          '</div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<div style="font-size:15px;font-weight:900;color:var(--navy);line-height:1.35;margin-bottom:14px;">' +
+            'Have you contacted us about this matter previously?' +
+          '</div>' +
+          '<div class="profile-row" onclick="pickTicketRadio(\'yes\')">' +
+            '<span style="font-size:13px;font-weight:700;">Yes, I\'ve reached out before</span>' +
+            '<span id="tk-radio-yes" class="radio-ring"></span>' +
+          '</div>' +
+          '<div class="profile-row" onclick="pickTicketRadio(\'no\')">' +
+            '<span style="font-size:13px;font-weight:700;">No, it is a new ticket</span>' +
+            '<span id="tk-radio-no" class="radio-ring"></span>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">' +
+            '<button type="button" class="primary-btn" onclick="continueTicketForm()">Continue</button>' +
+            '<button type="button" class="btn-withdraw" style="width:100%;" onclick="closeSubpage()">Back</button>' +
+          '</div>' +
+        '</div>';
+      view.classList.remove('hidden');
+    }
+
+    function pickTicketRadio(val) {
+      appState.ticketContactedBefore = val;
+      var yEl = document.getElementById('tk-radio-yes');
+      var nEl = document.getElementById('tk-radio-no');
+      if (yEl) yEl.classList.toggle('checked', val === 'yes');
+      if (nEl) nEl.classList.toggle('checked', val === 'no');
+    }
+
+    function continueTicketForm() {
+      if (!appState.ticketContactedBefore) {
+        showToast('Please select Yes or No to continue');
+        return;
+      }
+      var body = document.getElementById('subpage-body');
+      if (!body) return;
+      body.innerHTML = '' +
+        '<div class="card">' +
+          '<div class="card-title" style="margin-bottom:8px;">Ticket Details</div>' +
+          '<input id="tk-subject" type="text" class="field-input" placeholder="Topic / Subject" />' +
+          '<textarea id="tk-desc" rows="4" class="field-input" placeholder="Describe your issue..." style="margin-top:8px;resize:none;"></textarea>' +
+          '<button type="button" class="primary-btn" style="margin-top:12px;" onclick="submitPrecheckedTicket()">Submit Ticket</button>' +
+        '</div>';
+    }
+
+    function submitPrecheckedTicket() {
+      showToast('Ticket submitted to BIGBULLS support');
+      closeSubpage();
+    }
+
+    function openLiveChatAssistant() {
+      var view = document.getElementById('subpage-view');
+      var body = document.getElementById('subpage-body');
+      if (!view || !body) return;
+      setText('subpage-title', 'BIGBULLS Assistant');
+      body.innerHTML = '' +
+        '<div class="card" style="display:flex;flex-direction:column;min-height:68vh;justify-content:space-between;">' +
+          '<div>' +
+            '<div style="text-align:center;font-size:11px;font-weight:800;color:var(--sub);margin-bottom:10px;">Today &bull; Chat started</div>' +
+            '<div id="livechat-msgs"></div>' +
+          '</div>' +
+          '<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:10px;">' +
+            '<div style="display:flex;gap:8px;align-items:center;">' +
+              '<input id="livechat-input" type="text" maxlength="400" class="field-input" placeholder="Type your message" oninput="updateLiveChatCounter()" />' +
+              '<button type="button" class="primary-btn" style="width:auto;padding:11px 15px;" onclick="sendLiveChatMessage()">Send</button>' +
+            '</div>' +
+            '<div id="livechat-counter" class="tab-num" style="text-align:right;font-size:10.5px;color:var(--muted);margin-top:5px;">0/400</div>' +
+          '</div>' +
+        '</div>';
+      view.classList.remove('hidden');
+      renderLiveChatMessages();
+    }
+
+    function renderLiveChatMessages() {
+      var box = document.getElementById('livechat-msgs');
+      if (!box) return;
+      var html = '';
+      for (var i = 0; i < appState.chatMessages.length; i++) {
+        var m = appState.chatMessages[i];
+        html += '<div class="chat-bubble ' + (m.from === 'user' ? 'user' : '') + '">' +
+          '<div style="font-size:10px;font-weight:800;color:var(--blue);margin-bottom:3px;">' + (m.from === 'user' ? 'You' : 'BIGBULLS Bot') + '</div>' +
+          '<div>' + m.text + '</div>' +
+        '</div>';
+      }
+      box.innerHTML = html;
+    }
+
+    function updateLiveChatCounter() {
+      var inp = document.getElementById('livechat-input');
+      if (!inp) return;
+      setText('livechat-counter', inp.value.length + '/400');
+    }
+
+    function sendLiveChatMessage() {
+      var inp = document.getElementById('livechat-input');
+      if (!inp) return;
+      var txt = inp.value.trim();
+      if (!txt) return;
+      appState.chatMessages.push({ from: 'user', text: txt });
+      appState.chatMessages.push({ from: 'bot', text: 'Thanks for reaching BIGBULLS Support. Our specialist received "' + txt + '".' });
+      inp.value = '';
+      updateLiveChatCounter();
+      renderLiveChatMessages();
+    }
+
+    function openIbPortal() {
+      var v = document.getElementById('ib-portal-view');
+      if (v) v.classList.remove('hidden');
+      renderIbContent();
+    }
+
+    function closeIbPortal() {
+      toggleIbDrawer(false);
+      var v = document.getElementById('ib-portal-view');
+      if (v) v.classList.add('hidden');
+    }
+
+    function toggleIbDrawer(show) {
+      var bd = document.getElementById('ib-drawer-backdrop');
+      if (bd) bd.classList.toggle('hidden', !show);
+    }
+
+    function setIbSection(sec) {
+      appState.ibSection = sec;
+      var btns = document.querySelectorAll('.ib-nav-btn');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('active', btns[i].getAttribute('data-ibnav') === sec);
+      }
+      toggleIbDrawer(false);
+      renderIbContent();
+    }
+
+    function renderIbContent() {
+      var body = document.getElementById('ib-content-body');
+      if (!body) return;
+      var rowsHtml = '';
+      for (var i = 0; i < appState.ibClients.length; i++) {
+        var cl = appState.ibClients[i];
+        rowsHtml += '<div class="trade-item" style="cursor:default;"><div><div style="font-size:13px;font-weight:800;">Client ' + cl.id + ' (' + cl.status + ')</div><div class="card-sub tab-num">Deposits: ' + cl.deposits + '</div></div><span class="label-circle-badge tab-num">' + cl.reward + '</span></div>';
+      }
+      body.innerHTML = '' +
+        '<div class="card"><div class="card-sub">Partner Balance</div><div class="clean-money-value tab-num" style="font-size:21px;margin-top:4px;">0.00 USD</div><div class="card-sub tab-num" style="margin-top:4px;">Total profit: 1,004.55 USD &bull; 31 Referrals</div></div>' +
+        '<div class="card"><div class="card-title" style="margin-bottom:8px;">Partner (' + appState.ibSection.toUpperCase() + ')</div>' + rowsHtml + '</div>';
+    }
+
+    function openFullSettingsOverlay() {
+      openSubpage('settings');
+    }
+
+    function openSubpage(kind) {
+      var view = document.getElementById('subpage-view');
+      var body = document.getElementById('subpage-body');
+      if (!view || !body) return;
+
+      if (kind === 'settings') {
+        setText('subpage-title', 'Settings');
+        body.innerHTML = '' +
+          '<div class="card">' +
+            '<div class="profile-sec-label">Preferences</div>' +
+            '<div class="profile-row" onclick="toggleSettingsSwitch(\'notifications\', this)">' +
+              '<div style="font-size:13px;font-weight:800;">Notifications</div>' +
+              '<span class="sw-track' + (appState.settings.notifications ? ' on' : '') + '"><span class="sw-knob"></span></span>' +
+            '</div>' +
+            '<div class="profile-row" onclick="cycleSettingsLanguage(this)">' +
+              '<div style="font-size:13px;font-weight:800;">Language</div>' +
+              '<span class="label-circle-badge">' + appState.settings.language + ' &rsaquo;</span>' +
+            '</div>' +
+            '<div class="profile-row" onclick="showToast(\'Appearance: White & Royal Blue\')">' +
+              '<div style="font-size:13px;font-weight:800;">Appearance</div>' +
+              '<span class="label-circle-badge">' + appState.settings.appearance + ' &rsaquo;</span>' +
+            '</div>' +
+            '<div class="profile-row" style="flex-direction:column;align-items:stretch;cursor:default;">' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<div><div style="font-size:13px;font-weight:800;">Password &amp; 2FA</div><div class="card-sub">Reset password &amp; two-factor auth</div></div>' +
+                '<button type="button" class="label-circle-badge" onclick="toggleTwoFactorBtn(this)">2FA: ' + (appState.settings.twoFactorEnabled ? 'ON' : 'OFF') + '</button>' +
+              '</div>' +
+              '<input id="new-pass-inp" type="password" class="field-input" placeholder="Enter new password" style="margin-top:10px;" />' +
+              '<button type="button" class="primary-btn" style="margin-top:8px;" onclick="saveNewPassword()">Reset Password</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="card">' +
+            '<div class="profile-sec-label">Security</div>' +
+            '<div class="profile-row" onclick="openSetPinSheet()">' +
+              '<div style="font-size:13px;font-weight:800;">Set new PIN</div>' +
+              '<span style="color:var(--muted);font-weight:900;">&rsaquo;</span>' +
+            '</div>' +
+            '<div class="profile-row" onclick="cycleSkipPinInterval(this)">' +
+              '<div style="font-size:13px;font-weight:800;">Skip PIN interval</div>' +
+              '<span class="card-sub tab-num" style="font-weight:700;">' + appState.settings.skipPinInterval + ' &rsaquo;</span>' +
+            '</div>' +
+            '<div class="profile-row" onclick="toggleSettingsSwitch(\'biometrics\', this)">' +
+              '<div style="font-size:13px;font-weight:800;">Sign-in with biometrics</div>' +
+              '<span class="sw-track' + (appState.settings.biometrics ? ' on' : '') + '"><span class="sw-knob"></span></span>' +
+            '</div>' +
+          '</div>';
+      } else if (kind === 'copy') {
+        setText('subpage-title', 'Copy Trading');
+        body.innerHTML = '<div class="card"><div class="card-title">Investment wallet: 0.00 USD</div><div class="card-sub" style="margin-top:4px;">Verified strategy providers ready for copy allocation.</div><button type="button" class="primary-btn" style="margin-top:12px;" onclick="showToast(\'Copy Trading strategy selected\')">Start Copying</button></div>';
+      } else if (kind === 'support_hub') {
+        setText('subpage-title', 'Support hub');
+        body.innerHTML = '<div class="card"><div class="card-title">Help Center &amp; FAQs</div><div class="card-sub" style="margin-top:6px;">Deposits, withdrawals, verification, and chart trading guides.</div></div>';
+      } else if (kind === 'suggest') {
+        setText('subpage-title', 'Suggest a feature');
+        body.innerHTML = '<div class="card"><div class="card-title" style="margin-bottom:8px;">Feature Suggestion</div><input type="text" class="field-input" placeholder="Share your idea with BIGBULLS" /><button type="button" class="primary-btn" style="margin-top:10px;" onclick="showToast(\'Feature suggestion received\')">Send Suggestion</button></div>';
+      } else if (kind === 'legal') {
+        setText('subpage-title', 'Legal Documents');
+        body.innerHTML = '<div class="card"><div class="card-title">BIGBULLS Global Market</div><div class="card-sub" style="margin-top:6px;">Client Agreement, Risk Disclosure Notice, and Privacy Policy.</div></div>';
+      } else {
+        setText('subpage-title', 'About the app');
+        body.innerHTML = '<div class="card"><div class="card-title">BIGBULLS GLOBAL MARKET</div><div class="card-sub tab-num" style="margin-top:6px;">Client Portal Build 2.6.0 &bull; White &amp; Royal Blue Theme</div></div>';
+      }
+
+      view.classList.remove('hidden');
+    }
+
+    function closeSubpage() {
+      var view = document.getElementById('subpage-view');
+      if (view) view.classList.add('hidden');
+    }
+
+    function toggleSettingsSwitch(key, rowEl) {
+      appState.settings[key] = !appState.settings[key];
+      var tr = rowEl ? rowEl.querySelector('.sw-track') : null;
+      if (tr) tr.classList.toggle('on', appState.settings[key]);
+      showToast(key + ': ' + (appState.settings[key] ? 'ON' : 'OFF'));
+    }
+
+    function toggleTwoFactorBtn(btnEl) {
+      appState.settings.twoFactorEnabled = !appState.settings.twoFactorEnabled;
+      if (btnEl) btnEl.textContent = '2FA: ' + (appState.settings.twoFactorEnabled ? 'ON' : 'OFF');
+      showToast('2FA ' + (appState.settings.twoFactorEnabled ? 'Enabled' : 'Disabled'));
+    }
+
+    function saveNewPassword() {
+      var inp = document.getElementById('new-pass-inp');
+      if (!inp || !inp.value.trim()) {
+        showToast('Enter a new password');
+        return;
+      }
+      inp.value = '';
+      showToast('Password updated');
+    }
+
+    function cycleSettingsLanguage(rowEl) {
+      var langs = ['English', 'Urdu', 'Hindi', 'Arabic'];
+      var next = langs[(langs.indexOf(appState.settings.language) + 1) % langs.length];
+      appState.settings.language = next;
+      var b = rowEl ? rowEl.querySelector('.label-circle-badge') : null;
+      if (b) b.innerHTML = next + ' &rsaquo;';
+      showToast('Language: ' + next);
+    }
+
+    function cycleSkipPinInterval(rowEl) {
+      var vals = ['1 minute', '5 minutes', '10 minutes', 'Never'];
+      var next = vals[(vals.indexOf(appState.settings.skipPinInterval) + 1) % vals.length];
+      appState.settings.skipPinInterval = next;
+      var s = rowEl ? rowEl.querySelector('.card-sub') : null;
+      if (s) s.innerHTML = next + ' &rsaquo;';
+      showToast('Skip PIN interval: ' + next);
+    }
+
+    function openSetPinSheet() {
+      openProfileSheet('' +
+        '<div class="card-title-row"><div class="card-title">Set new PIN</div><button type="button" class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div>' +
+        '<input id="new-pin-input" type="password" maxlength="6" class="field-input tab-num" placeholder="Enter 4-6 digit PIN" />' +
+        '<button type="button" class="primary-btn" style="margin-top:12px;" onclick="saveNewPin()">Save PIN</button>'
+      );
+    }
+
+    function saveNewPin() {
+      var inp = document.getElementById('new-pin-input');
+      if (!inp || inp.value.trim().length < 4) {
+        showToast('Enter at least 4 digits');
+        return;
+      }
+      appState.settings.pinCode = inp.value.trim();
+      closeProfileSheet();
+      showToast('Security PIN updated');
+    }
+
+    /* =====================================================================
+       6. DEPOSIT & WITHDRAWAL MODAL WITH CANVAS PNG EMBLEMS
+       ===================================================================== */
+    function openFundModal(mode) {
+      appState.fundMode = mode;
+      setText('fund-modal-title', mode === 'deposit' ? 'Deposit Funds' : 'Withdraw Funds');
+      setText('fund-submit-btn', mode === 'deposit' ? 'Confirm Deposit' : 'Confirm Withdrawal');
+      renderPaymentMethodGrid();
+      updateSelectedMethodHeader();
+      var modal = document.getElementById('fund-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeFundModal() {
+      var modal = document.getElementById('fund-modal');
+      if (modal) modal.classList.add('hidden');
+      if (appState.accountSubnav === 'deposit' || appState.accountSubnav === 'withdrawal') {
+        setAccountSubnav('my-accounts');
+      }
+    }
+
+    function renderPaymentMethodGrid() {
+      var grid = document.getElementById('payment-methods-grid');
+      if (!grid) return;
+      var html = '';
+      for (var i = 0; i < paymentMethodsList.length; i++) {
+        var m = paymentMethodsList[i];
+        var sel = appState.selectedMethod === m ? ' selected' : '';
+        var pngUrl = appState.paymentEmblems[m] || '';
+        html += '' +
+          '<button type="button" class="method-tile' + sel + '" onclick="selectPaymentMethod(\'' + m + '\')">' +
+            '<img src="' + pngUrl + '" alt="' + m + '" class="method-png" />' +
+            '<span class="method-name">' + m + '</span>' +
+          '</button>';
+      }
+      grid.innerHTML = html;
+    }
+
+    function selectPaymentMethod(m) {
+      appState.selectedMethod = m;
+      renderPaymentMethodGrid();
+      updateSelectedMethodHeader();
+    }
+
+    function updateSelectedMethodHeader() {
+      var img = document.getElementById('fund-selected-png');
+      if (img) img.src = appState.paymentEmblems[appState.selectedMethod] || '';
+      setText('fund-method-subtitle', 'Method: ' + appState.selectedMethod);
+    }
+
+    function submitFundRequest() {
+      var inp = document.getElementById('fund-amount-input');
+      var amt = inp ? parseFloat(inp.value) : 0;
+      if (isNaN(amt) || amt <= 0) {
+        showToast('Enter a valid amount');
+        return;
+      }
+      var acc = getActiveAccount(appState.accountMode);
+      if (appState.fundMode === 'deposit') {
+        acc.balance += amt;
+        showToast('Deposited ' + fmtMoney(amt) + ' to ' + acc.id + ' (' + appState.selectedMethod + ')');
+      } else {
+        acc.balance = Math.max(0, acc.balance - amt);
+        showToast('Withdrew ' + fmtMoney(amt) + ' from ' + acc.id + ' (' + appState.selectedMethod + ')');
+      }
+      syncAccountHeaderAndCard();
+      closeFundModal();
+    }
+
+    /* =====================================================================
+       SAFE LIGHTWEIGHT TICK LOOP (1200ms WITH RE-ENTRANCY GUARD)
+       ===================================================================== */
+    function runTickStep() {
+      if (appState.isTickRunning) return;
+      appState.isTickRunning = true;
+      try {
+        for (var i = 0; i < appState.instruments.length; i++) {
+          var inst = appState.instruments[i];
+          var step = Math.pow(10, -inst.digits) * (Math.floor(Math.random() * 2) + 1);
+          var up = Math.random() >= 0.48;
+          var gap = inst.ask - inst.bid;
+          inst.bid = up ? inst.bid + step : Math.max(step, inst.bid - step);
+          inst.ask = inst.bid + gap;
+          inst.dir = up ? 'up' : 'down';
+
+          if (appState.activeTab === 'trade') {
+            var bidEl = document.getElementById('mw-bid-' + inst.symbol);
+            var askEl = document.getElementById('mw-ask-' + inst.symbol);
+            if (bidEl && askEl) {
+              bidEl.textContent = inst.bid.toFixed(inst.digits);
+              askEl.textContent = inst.ask.toFixed(inst.digits);
+              bidEl.className = 'quote-box tab-num ' + inst.dir;
+              askEl.className = 'quote-box tab-num ' + inst.dir;
+            }
+          }
+        }
+
+        for (var r = 0; r < appState.runningTrades.length; r++) {
+          var tr = appState.runningTrades[r];
+          tr.pnl = Number((tr.pnl + (Math.random() - 0.48) * 2.5).toFixed(2));
+        }
+
+        var curInst = getInstrumentBySymbol(appState.selectedSymbol);
+        if (appState.candles.length > 0) {
+          var last = appState.candles[appState.candles.length - 1];
+          last.close = curInst.bid;
+          if (curInst.bid > last.high) last.high = curInst.bid;
+          if (curInst.bid < last.low) last.low = curInst.bid;
+        }
+
+        syncAccountHeaderAndCard();
+        if (appState.activeTab === 'accounts') renderTradesLists();
+
+        var cv = document.getElementById('chart-view');
+        if (cv && !cv.classList.contains('hidden')) {
+          updateExecutionButtons();
+          drawMainChart();
+        }
+      } catch (e) {
+        // Guarded against runtime errors
+      } finally {
+        appState.isTickRunning = false;
+      }
+    }
+
+    function startSafeTickLoop() {
+      if (appState.tickTimer) clearInterval(appState.tickTimer);
+      appState.tickTimer = null;
+    }
+
+    window.addEventListener('resize', function () {
+      var cv = document.getElementById('chart-view');
+      if (cv && !cv.classList.contains('hidden')) drawMainChart();
+      if (appState.activeTab === 'performance') drawPerformanceCharts();
+    });
+
+    function initApp() {
+      buildPaymentPngEmblems();
+      generateChartCandles();
+      syncAccountHeaderAndCard();
+      renderTradesLists();
+      renderMarketWatch();
+      renderBbAiTab();
+      renderPerformance();
+      renderProfileTab();
+      initChartInteractions();
+      initInteractiveProfitChart();
+      startSafeTickLoop();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+  <script src="/bigbulls-portal-bridge.js"></script>
+</body>
+</html>
