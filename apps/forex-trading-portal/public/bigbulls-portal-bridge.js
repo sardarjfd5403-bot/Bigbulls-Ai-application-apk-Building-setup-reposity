@@ -111,6 +111,7 @@
       pushAiMessage('BB AI','Live technical snapshot for '+r.symbol+' ('+r.timeframe+'): '+r.bias+'. Price '+r.price+', EMA 9 '+r.ema9+', EMA 21 '+r.ema21+', RSI(14) '+r.rsi+'. Recent support '+r.support+' and resistance '+r.resistance+'. Based on '+r.candles+' historical candles; this is technical analysis, not a guaranteed trade signal.');
     } else if (data.type === 'CANDLES') {
       if (data.symbol === appState.selectedSymbol && data.timeframe === (appState.timeframe || '1m')) {
+        appState.candlesLoading=false;appState.candlesLoadingKey='';
         appState.candles = (data.candles || []).map(function (c) {
           return { open: Number(c.o), high: Number(c.h), low: Number(c.l), close: Number(c.c), time: c.t };
         });
