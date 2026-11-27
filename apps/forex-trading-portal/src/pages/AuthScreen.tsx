@@ -10,18 +10,48 @@ export default function AuthScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [canResend, setCanResend] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true); setError(''); setMessage('');
     try {
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if (error) throw error;
+        if (error) {
+          if (/email not confirmed/i.test(error.message)) {
+            setCanResend(true);
+            throw new Error('Please confirm your email from the BIGBULLS verification email before signing in.');
+          }
+          throw error;
+        }
       } else {
-        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { data: { full_name: fullName.trim(), name: fullName.trim() } } });
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            emailRedirectTo: 'https://bigbullsglobalmarket.is-an.ai/auth.html?mode=login&verified=1',
+            data: { full_name: fullName.trim(), name: fullName.trim() },
+          },
+        });
         if (error) throw error;
-        if (!data.session) setMessage('Account created. Please verify your email, then sign in.');
+        setCanResend(true);
+        setMessage('Registration received. BIGBULLS has requested an email confirmation. Open your inbox, press Confirm Email, then return here and sign in.');
+        if (data.session) await supabase.auth.signOut();
       }
     } catch (e) { setError(e instanceof Error ? e.message : 'Authentication failed.'); }
+    finally { setBusy(false); }
+  };
+  const resendConfirmation = async () => {
+    if (!email.trim()) { setError('Enter your email address first.'); return; }
+    setBusy(true); setError(''); setMessage('');
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+        options: { emailRedirectTo: 'https://bigbullsglobalmarket.is-an.ai/auth.html?mode=login&verified=1' },
+      });
+      if (error) throw error;
+      setMessage('A fresh BIGBULLS confirmation email has been requested. Check your inbox and spam folder.');
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not resend confirmation email.'); }
     finally { setBusy(false); }
   };
   const reset = async () => {
@@ -42,10 +72,11 @@ export default function AuthScreen() {
           <label className="block text-sm font-semibold">Password<input required minLength={8} type="password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-1 h-11 w-full rounded-lg border bg-background px-3" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} /></label>
           {error && <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
           {message && <p className="rounded-lg bg-accent p-3 text-sm">{message}</p>}
+          {canResend && <button type="button" onClick={resendConfirmation} disabled={busy} className="w-full text-sm font-semibold text-primary disabled:opacity-50">{busy ? 'Please wait…' : 'Resend confirmation email'}</button>}
           <button disabled={busy} className="h-11 w-full rounded-lg bg-primary font-bold text-primary-foreground disabled:opacity-60">{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}</button>
         </form>
         {mode === 'login' && <button onClick={reset} disabled={busy} className="mt-4 w-full text-sm font-semibold text-primary">Forgot password?</button>}
-        <div className="mt-6 border-t pt-5 text-center text-sm text-muted-foreground">{mode === 'login' ? "Don't have an account?" : 'Already registered?'} <button onClick={()=>{setMode(mode === 'login' ? 'signup' : 'login');setError('');setMessage('');}} className="font-bold text-primary">{mode === 'login' ? 'Create account' : 'Sign in'}</button></div>
+        <div className="mt-6 border-t pt-5 text-center text-sm text-muted-foreground">{mode === 'login' ? "Don't have an account?" : 'Already registered?'} <button onClick={()=>{setMode(mode === 'login' ? 'signup' : 'login');setError('');setMessage('');setCanResend(false);}} className="font-bold text-primary">{mode === 'login' ? 'Create account' : 'Sign in'}</button></div>
       </div>
       <p className="mt-5 text-center text-xs text-muted-foreground">Your account is protected by BIGBULLS security.</p>
     </div>
