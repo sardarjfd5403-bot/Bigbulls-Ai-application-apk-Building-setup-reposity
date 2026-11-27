@@ -131,6 +131,37 @@ export default function HtmlPortal() {
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'partner',ok:true,message:'Partner application submitted for review.',data},window.location.origin);
             break;
           }
+          case 'MFA_INIT': {
+            const {data,error}=await supabase.auth.mfa.listFactors(); if(error)throw error;
+            const verified=(data?.totp||[]).filter((f:any)=>f.status==='verified');
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'MFA_DATA',enabled:verified.length>0,factors:verified.map((f:any)=>({id:f.id,friendlyName:f.friendly_name}))},window.location.origin);
+            break;
+          }
+          case 'MFA_ENROLL': {
+            const {data,error}=await supabase.auth.mfa.enroll({factorType:'totp',friendlyName:'BIGBULLS Authenticator'});
+            if(error)throw error;
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'MFA_ENROLL_DATA',factorId:data.id,qrCode:data.totp.qr_code,secret:data.totp.secret},window.location.origin);
+            break;
+          }
+          case 'MFA_VERIFY': {
+            const factorId=String(payload.factorId||''), code=String(payload.code||'').trim();
+            if(!factorId||!/^\\d{6}$/.test(code))throw new Error('Enter the 6-digit authenticator code.');
+            const {data:challenge,error:challengeError}=await supabase.auth.mfa.challenge({factorId});
+            if(challengeError)throw challengeError;
+            const {error}=await supabase.auth.mfa.verify({factorId,challengeId:challenge.id,code});
+            if(error)throw error;
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'mfa',ok:true,message:'Two-factor authentication enabled.'},window.location.origin);
+            const {data}=await supabase.auth.mfa.listFactors();
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'MFA_DATA',enabled:(data?.totp||[]).some((f:any)=>f.status==='verified'),factors:(data?.totp||[]).filter((f:any)=>f.status==='verified').map((f:any)=>({id:f.id,friendlyName:f.friendly_name}))},window.location.origin);
+            break;
+          }
+          case 'MFA_DISABLE': {
+            const {error}=await supabase.auth.mfa.unenroll({factorId:String(payload.factorId||'')});
+            if(error)throw error;
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'mfa',ok:true,message:'Two-factor authentication disabled.'},window.location.origin);
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'MFA_DATA',enabled:false,factors:[]},window.location.origin);
+            break;
+          }
           case 'AUTH_PASSWORD_UPDATE': {
             const password=String(payload.password||'');
             if(password.length<8)throw new Error('Password must contain at least 8 characters.');
