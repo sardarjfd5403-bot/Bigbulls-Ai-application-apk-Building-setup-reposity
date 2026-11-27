@@ -128,6 +128,16 @@ export default function HtmlPortal() {
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'PARTNER_DATA',data},window.location.origin);
             break;
           }
+          case 'PARTNER_TRANSFER': {
+            const amount=Number(payload.amount);
+            if(!(amount>0))throw new Error('Enter a valid partner-wallet transfer amount.');
+            await bigbullsBackend.partnerTransferToRealAccount(String(payload.accountId||''),amount);
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'partner_transfer',ok:true,message:'Partner commission transfer submitted.'},window.location.origin);
+            const data=await bigbullsBackend.partnerDashboard();
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'PARTNER_DATA',data},window.location.origin);
+            await trading.refresh();await sendSnapshot();
+            break;
+          }
           case 'PARTNER_APPLY': {
             const data=await bigbullsBackend.applyPartner({partner_type:String(payload.partner_type||'ib'),business_name:String(payload.business_name||''),website_or_social:String(payload.website_or_social||''),audience_size:String(payload.audience_size||''),experience:String(payload.experience||'')});
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'partner',ok:true,message:'Partner application submitted for review.',data},window.location.origin);
