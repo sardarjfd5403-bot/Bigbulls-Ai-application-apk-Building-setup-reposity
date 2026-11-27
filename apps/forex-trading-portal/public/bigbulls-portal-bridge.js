@@ -52,6 +52,7 @@
       renderMarketWatch();
       renderPerformance();
       renderProfileTab();
+      document.querySelectorAll('.profile-row').forEach(function(row){if((row.textContent||'').toLowerCase().includes('verification progress'))row.onclick=function(){window.openKycSheet();};});
       var email = document.getElementById('profile-email-txt');
       if (email) email.textContent = s.email || '—';
       document.documentElement.classList.remove('bb-sync-pending');
@@ -116,6 +117,7 @@
     var amount=document.getElementById('fund-amount-input'); if(amount){amount.value='';amount.placeholder='Enter USD amount';}
     var amountWrap=amount && amount.parentElement; if(amountWrap) amountWrap.style.display='none';
     box.appendChild(fundSelect('Payment method / network','bb-fund-method',[]));
+    var details=document.createElement('div');details.id='bb-fund-method-details';details.style.cssText='font-size:12px;color:#475467;line-height:1.5;margin:0 0 12px;';box.appendChild(details);
     box.appendChild(fundSelect('Real trading account','bb-fund-account',[]));
     box.appendChild(fundField('Amount (USD)','bb-fund-usd','number','0.00'));
     box.appendChild(fundField('Amount in payment currency','bb-fund-crypto','number','0.00'));
@@ -133,13 +135,73 @@
     var mode=appState.fundMode==='withdraw'?'withdraw':'deposit';
     var methods=mode==='withdraw'?fundData.wallets:fundData.methods;
     var method=document.getElementById('bb-fund-method');
-    if(method){var previous=method.value;method.innerHTML='';methods.forEach(function(x){var o=document.createElement('option');o.value=x.id;o.textContent=mode==='withdraw'?(x.asset+' · '+x.network+(x.label?' · '+x.label:'')):x.display_name+' · '+x.network;method.appendChild(o);});if(methods.some(function(x){return x.id===previous;}))method.value=previous;}
+    if(method){var previous=method.value;method.innerHTML='';methods.forEach(function(x){var o=document.createElement('option');o.value=x.id;o.textContent=mode==='withdraw'?(x.asset+' · '+x.network+(x.label?' · '+x.label:'')):x.display_name+' · '+x.network;method.appendChild(o);});if(methods.some(function(x){return x.id===previous;}))method.value=previous;
+      method.onchange=renderLiveFundData;
+      var chosen=methods.find(function(x){return x.id===method.value;});var details=document.getElementById('bb-fund-method-details');
+      if(details)details.innerHTML=chosen?(mode==='withdraw'?'Destination network: '+chosen.asset+' · '+chosen.network:'<b>'+String(chosen.display_name||'Payment method')+'</b><br>'+String(chosen.instructions||'')+'<br><b>Payment destination:</b> '+String(chosen.destination_details||chosen.account_number||'Use the payment details supplied by BIGBULLS')+(chosen.account_title?'<br>Account title: '+String(chosen.account_title):'')+(chosen.logo_url?'<br><img src="'+String(chosen.logo_url)+'" alt="Payment QR" style="max-width:140px;max-height:140px;margin-top:8px;border-radius:8px;">':'')): 'No active payment method configured.';
+    }
     var accounts=document.getElementById('bb-fund-account');
     if(accounts){accounts.innerHTML='';(appState.accounts.real||[]).forEach(function(a){var o=document.createElement('option');o.value=a.backendId;o.textContent=a.id+' · '+a.label+' · '+Number(a.balance||0).toFixed(2)+' USD';accounts.appendChild(o);});}
     var withdraw=mode==='withdraw';
     ['bb-fund-txid','bb-fund-proof'].forEach(function(id){var el=document.getElementById(id);if(el)el.parentElement.style.display=withdraw?'none':'block';});
     var dest=document.getElementById('bb-fund-destination');if(dest)dest.parentElement.style.display=withdraw?'block':'none';
     var submit=document.getElementById('fund-submit-btn');if(submit)submit.textContent=withdraw?'Submit Withdrawal Request':'Submit Deposit Request';
+    var oldList=document.getElementById('bb-fund-history');if(oldList)oldList.remove();
+    var history=document.createElement('div');history.id='bb-fund-history';history.style.cssText='margin-top:14px;border-top:1px solid #e5eaf2;padding-top:10px;font-size:12px;color:#475467;';
+    history.innerHTML='<b>Recent payment requests</b>'+(fundData.transactions||[]).slice(0,5).map(function(t){return '<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #eef1f5;"><span>'+String(t.kind||'').toUpperCase()+' · 
+  }
+  window.openFundModal = function (mode) {
+    appState.fundMode = mode === 'withdraw' ? 'withdraw' : 'deposit';
+    setText('fund-modal-title', mode === 'withdraw' ? 'Withdraw Funds' : 'Deposit Funds');
+    var modal=document.getElementById('fund-modal');if(modal)modal.classList.remove('hidden');
+    ensureFundFields();renderLiveFundData();emit('FUND_INIT');
+  };
+  window.submitFundRequest = function () {
+    var get=function(id){var el=document.getElementById(id);return el?el.value:'';};
+    var methodId=get('bb-fund-method');var methods=appState.fundMode==='withdraw'?fundData.wallets:fundData.methods;
+    var method=methods.find(function(x){return x.id===methodId;});
+    if(!method){showToast('No active payment method is available.');return;}
+    var proofEl=document.getElementById('bb-fund-proof');
+    emit('FUND_SUBMIT',{mode:appState.fundMode,methodId:methodId,accountId:get('bb-fund-account'),amountUsd:get('bb-fund-usd'),amountCrypto:get('bb-fund-crypto'),asset:method.asset,network:method.network,txHash:get('bb-fund-txid'),destination:get('bb-fund-destination'),proof:proofEl&&proofEl.files?proofEl.files[0]||null:null});
+    showToast('Submitting secure payment request…');
+  };
+
+  function kycField(label,id,type,placeholder){return '<label style="display:block;margin:0 0 10px;font-size:12px;font-weight:800;color:#344054;">'+label+'<input id="'+id+'" type="'+type+'" placeholder="'+(placeholder||'')+'" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:12px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;color:#182230;font-size:14px;" /></label>';}
+  window.openKycSheet=function(){
+    openProfileSheet('<div class="card-title-row"><div class="card-title">Identity verification</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div id="bb-kyc-status" class="card-sub" style="margin:8px 0 14px;">Loading verification status…</div><div id="bb-kyc-form"><div style="font-size:13px;font-weight:900;margin-bottom:10px;">Personal details</div>'+kycField('Full legal name','bb-kyc-name','text','As shown on document')+kycField('First name','bb-kyc-first','text','First name')+kycField('Last name','bb-kyc-last','text','Last name')+kycField('Date of birth','bb-kyc-dob','date','')+kycField('Country','bb-kyc-country','text','Country')+kycField('Residential address','bb-kyc-address','text','Full address')+'<div style="font-size:13px;font-weight:900;margin:12px 0 8px;">Identity document</div><select id="bb-kyc-type" style="width:100%;padding:12px;border:1px solid #dbe3ef;border-radius:12px;margin-bottom:10px;"><option value="passport">Passport</option><option value="national_id">National ID card</option><option value="driving_license">Driving licence</option></select>'+kycField('Document number','bb-kyc-number','text','Document number')+kycField('Front side (100 KB–20 MB)','bb-kyc-front','file','')+kycField('Back side (100 KB–20 MB)','bb-kyc-back','file','')+'<button class="primary-btn" style="width:100%;margin-top:8px;" onclick="submitKycFromHtml()">Submit verification</button></div>');
+    emit('KYC_INIT');
+  };
+  window.submitKycFromHtml=function(){
+    var val=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+    var front=document.getElementById('bb-kyc-front'),back=document.getElementById('bb-kyc-back');
+    emit('KYC_SUBMIT',{values:{legal_name:val('bb-kyc-name'),first_name:val('bb-kyc-first'),last_name:val('bb-kyc-last'),date_of_birth:val('bb-kyc-dob'),country:val('bb-kyc-country'),residential_address:val('bb-kyc-address'),document_type:val('bb-kyc-type'),document_number:val('bb-kyc-number')},front:front&&front.files?front.files[0]||null:null,back:back&&back.files?back.files[0]||null:null});
+    showToast('Submitting identity verification…');
+  };
+    window.executeInternalTransfer = function () { emit('NAVIGATE', { path: '/transfer' }); };
+  window.openNewAccount = function () { emit('NAVIGATE', { path: '/legacy/accounts' }); };
+  window.openFullSettingsOverlay = function () { emit('NAVIGATE', { path: '/profile' }); };
+  window.openIbPortal = function () { emit('NAVIGATE', { path: '/partner' }); };
+  window.openTicketPrecheck = function () { emit('NAVIGATE', { path: '/support' }); };
+  window.openLiveChatAssistant = function () { emit('NAVIGATE', { path: '/support' }); };
+  window.openWalletSheet = function () { emit('NAVIGATE', { path: '/wallet' }); };
+  window.openReferralSheet = function () { emit('NAVIGATE', { path: '/partner' }); };
+  window.openSubpage = function (name) {
+    if (name === 'verification' || name === 'kyc') window.openKycSheet();
+    else if (name === 'support_hub' || name === 'copy') emit('NAVIGATE', { path: '/support' });
+    else showToast('This section is being connected to your BIGBULLS account.');
+  };
+  window.toggleAiAutoTrade = function () { showToast('AI auto-execution is disabled until server-side risk controls are connected.'); };
+  window.executeAiSignal = function () { showToast('AI signal execution is not enabled in this build.'); };
+  window.askBbAiPrompt = function () { showToast('Live BB AI analysis is not connected yet. No generated demo analysis is shown.'); };
+  window.submitCustomAiPrompt = function () { showToast('Live BB AI analysis is not connected yet.'); };
+  window.startSafeTickLoop = function () {
+    if (appState.tickTimer) clearInterval(appState.tickTimer);
+    appState.tickTimer = null;
+  };
+  emit('READY');
+})();
++Number(t.amount_usd||0).toFixed(2)+'</span><b>'+String(t.status||'pending').toUpperCase()+'</b></div>';}).join('')||'<div style="padding:8px 0;">No payment requests yet.</div>';
+    var panel=document.querySelector('#fund-modal .sheet-panel');if(panel)panel.appendChild(history);
   }
   window.openFundModal = function (mode) {
     appState.fundMode = mode === 'withdraw' ? 'withdraw' : 'deposit';
