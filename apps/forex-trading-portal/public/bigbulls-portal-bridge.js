@@ -109,6 +109,17 @@
       appState.aiSignals=data.signals||[];
       if(typeof renderBbAiTab==='function')renderBbAiTab();
       toast(appState.aiSignals.length?appState.aiSignals.length+' live technical setup(s) found.':'No qualifying technical setups right now.');
+    } else if (data.type === 'BB_AI_CALENDAR') {
+      appState.aiEvents=(data.events||[]).map(function(e){return {
+        title:escapeHtml(e.title||'Economic event'),
+        time:escapeHtml(e.time||''),
+        pair:escapeHtml(e.pair||'GLOBAL'),
+        impact:escapeHtml(String(e.impact||'LOW').toUpperCase())
+      };});
+      appState.aiCalendarReady=true;
+      appState.aiCalendarError=data.error||'';
+      if(typeof renderBbAiTab==='function')renderBbAiTab();
+      if(data.error)toast('Economic calendar unavailable: '+data.error);
     } else if (data.type === 'BB_AI_RESULT') {
       var r=data.report||{};
       pushAiMessage('BB AI','Live technical snapshot for '+r.symbol+' ('+r.timeframe+'): '+r.bias+'. Price '+r.price+', EMA 9 '+r.ema9+', EMA 21 '+r.ema21+', RSI(14) '+r.rsi+'. Recent support '+r.support+' and resistance '+r.resistance+'. Based on '+r.candles+' historical candles; this is technical analysis, not a guaranteed trade signal.');
@@ -693,7 +704,7 @@
     if(typeof htmlRenderBbAiTab==='function')htmlRenderBbAiTab();
     document.querySelectorAll('#ai-signals-list .primary-btn').forEach(function(btn){btn.textContent='Review chart';});
     var ev=byId('ai-events-list'),news=byId('ai-news-list'),signals=byId('ai-signals-list');
-    if(ev&&!(appState.aiEvents||[]).length)ev.innerHTML='<div class="card-sub">Live economic calendar is not connected to this backend yet.</div>';
+    if(ev&&!(appState.aiEvents||[]).length)ev.innerHTML='<div class="card-sub">'+(appState.aiCalendarError?escapeHtml(appState.aiCalendarError):(appState.aiCalendarReady?'No scheduled events were returned by the live calendar.':'Live economic calendar is loading when you scan the market.'))+'</div>';
     if(news&&!(appState.aiNews||[]).length)news.innerHTML='<div class="card-sub">Verified live market news feed is not connected yet.</div>';
     if(signals&&!(appState.aiSignals||[]).length)signals.innerHTML='<div class="card-sub">No qualifying live technical setups loaded. Use Scan live market setups.</div>';
   };
