@@ -259,6 +259,7 @@
     emit('GET_CANDLES', { symbol: symbol, timeframe: timeframe });
   };
   window.placeChartOrder = function (side) {
+    if(appState.orderMode!=='MARKET'&&appState.accountMode==='demo'){toast('Pending orders are currently supported on Real accounts only.');return;}
     emit('OPEN_ORDER', { side: side, symbol: appState.selectedSymbol, lots: appState.lotSize, mode: appState.orderMode, price: appState.pendingPrice });
     toast('Submitting order to BIGBULLS server…');
   };
