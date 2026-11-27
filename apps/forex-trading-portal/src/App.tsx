@@ -5,7 +5,7 @@ import { App as NativeApp } from '@capacitor/app';
 import OneSignal from '@onesignal/capacitor-plugin';
 import { Camera } from '@capacitor/camera';
 import { Geolocation } from '@capacitor/geolocation';
-import { initializeBigbullsPush } from './lib/oneSignal';
+import { initializeBigbullsPush, syncBigbullsPushDevice } from './lib/oneSignal';
 import { useAuth, loginWithRedirect } from './lib/previewAuth';
 import { BigbullsUpdater } from './lib/bigbullsUpdater';
 import { Toaster } from '@project/components/ui/sonner';
@@ -124,8 +124,11 @@ export default function App() {
       try {
         await initializeBigbullsPush();
         if (!active) return;
-        if (user?.id) await OneSignal.login(user.id);
-        else await OneSignal.logout();
+        if (user?.id) {
+          await OneSignal.login(user.id);
+          const registered = await syncBigbullsPushDevice(user.id);
+          console.info('BIGBULLS Supabase push-device sync', { registered, userId: user.id });
+        } else await OneSignal.logout();
 
         const [subscriptionId, token, optedIn] = await Promise.all([
           OneSignal.User.pushSubscription.getIdAsync(),
@@ -143,6 +146,28 @@ export default function App() {
       }
     })();
     return () => { active = false; };
+  }, [user?.id, isLoading]);
+
+  // Retry device persistence after notification permission flow. This also
+  // covers SDK subscriptions that become available after the first login sync.
+  useEffect(() => {
+    if (isLoading || !user?.id || !Capacitor.isNativePlatform()) return;
+    let disposed = false;
+    let appStateListener: { remove: () => Promise<void> } | undefined;
+    void NativeApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive && !disposed) {
+        void syncBigbullsPushDevice(user.id).catch(error =>
+          console.error('BIGBULLS push-device resume sync failed:', error),
+        );
+      }
+    }).then(listener => {
+      if (disposed) void listener.remove();
+      else appStateListener = listener;
+    }).catch(error => console.warn('BIGBULLS app-state listener unavailable:', error));
+    return () => {
+      disposed = true;
+      void appStateListener?.remove();
+    };
   }, [user?.id, isLoading]);
 
   // Ask for Android permissions independently; notification registration
@@ -168,6 +193,14 @@ export default function App() {
           if (!granted) await OneSignal.Notifications.requestPermission(true);
         },
       );
+      if (user?.id) {
+        try {
+          const registered = await syncBigbullsPushDevice(user.id);
+          console.info('BIGBULLS post-permission device sync', { registered });
+        } catch (error) {
+          console.error('BIGBULLS push-device save failed:', error);
+        }
+      }
       await requestOnce(
         'bb-permission-camera-v1',
         'Allow BIGBULLS to use your camera when you capture KYC verification documents?',
@@ -185,7 +218,7 @@ export default function App() {
         },
       );
     })();
-  }, [isLoading]);
+  }, [isLoading, user?.id]);
 
   useEffect(() => { if (!isLoading && !user) loginWithRedirect(); }, [isLoading, user]);
 
