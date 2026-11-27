@@ -94,7 +94,7 @@
       if (email) email.textContent = s.email || '—';
       document.documentElement.classList.remove('bb-sync-pending');
       var chart = byId('chart-view');
-      if (chart && !chart.classList.contains('hidden')) window.generateChartCandles();
+      if (chart && !chart.classList.contains('hidden') && (!appState.candles || !appState.candles.length)) window.generateChartCandles();
       var walletLabel = byId('funding-wallet-bal');
       if (walletLabel && fundData.wallet) {
         var wb = fundData.wallet;
@@ -284,7 +284,6 @@
     window.switchTab = function(tabName){
     if(typeof htmlSwitchTab==='function')htmlSwitchTab(tabName);
     if(tabName==='profile'){emit('PROFILE_INIT');emit('KYC_INIT');}
-    if(tabName==='trade'&&appState.selectedSymbol)window.generateChartCandles();
   };
   function ensureProfileDetailsRow(){
     var cards=Array.from(document.querySelectorAll('.card'));
