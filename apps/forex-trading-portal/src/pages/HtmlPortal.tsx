@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTrading } from '../lib/store';
 import { supabase } from '../lib/supabase';
+import { bigbullsBackend } from '../lib/bigbullsBackend';
 
 type PortalMessage = { source?: string; action?: string; payload?: any };
 export default function HtmlPortal() {
@@ -62,6 +63,17 @@ export default function HtmlPortal() {
     }, window.location.origin);
   }, [trading.account, trading.state, trading.quotes, trading.equity, trading.floating]);
 
+  const sendFundData = useCallback(async () => {
+    const [methods, wallets, transactions, kyc, wallet] = await Promise.all([
+      bigbullsBackend.depositMethodSettings(), bigbullsBackend.cryptoWallets(),
+      bigbullsBackend.walletTransactions(), bigbullsBackend.kyc(), bigbullsBackend.walletBalance()
+    ]);
+    frame.current?.contentWindow?.postMessage({
+      source: 'BIGBULLS_NATIVE_HOST', type: 'FUND_DATA',
+      data: { methods, wallets, transactions, kyc, wallet }
+    }, window.location.origin);
+  }, []);
+
   useEffect(() => {
     const onMessage = async (event: MessageEvent<PortalMessage>) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
@@ -69,7 +81,53 @@ export default function HtmlPortal() {
       const { action, payload = {} } = event.data;
       try {
         switch (action) {
-          case 'READY': await sendSnapshot(); break;
+          case 'READY': await sendSnapshot(); await sendFundData(); break;
+          case 'FUND_INIT': await sendFundData(); break;
+          case 'FUND_SUBMIT': {
+            const mode = payload.mode === 'withdraw' ? 'withdrawal' : 'deposit';
+            const amountUsd = Number(payload.amountUsd);
+            const cryptoAmount = Number(payload.amountCrypto);
+            if (!(amountUsd > 0) || !(cryptoAmount > 0)) throw new Error('Enter valid USD and payment amounts.');
+            const account = trading.state.accounts.find(a => a.id === payload.accountId) || trading.account;
+            if (!account?.id || account.type !== 'Real') throw new Error('Select an active Real trading account.');
+            let asset = String(payload.asset || 'USDT');
+            let network = String(payload.network || 'TRC20');
+            let destination = String(payload.destination || '').trim();
+            let txHash = String(payload.txHash || '').trim();
+            let proofPath: string | undefined;
+            if (mode === 'deposit') {
+              const methods = await bigbullsBackend.depositMethodSettings();
+              const method = methods.find((m: any) => m.id === payload.methodId);
+              if (!method) throw new Error('Choose an active payment method.');
+              asset = method.asset; network = method.network;
+              if (amountUsd < Number(method.min_amount_usd || 0) || (method.max_amount_usd != null && amountUsd > Number(method.max_amount_usd))) throw new Error('Amount is outside this payment method limit.');
+              const isCrypto = method.method_type === 'crypto';
+              destination = method.method_type === 'crypto' ? method.destination_details : [method.account_title, method.account_number, method.destination_details].filter(Boolean).join(' · ');
+              if (isCrypto && txHash.length <= 10) throw new Error('Enter the blockchain transaction hash.');
+              if (!isCrypto && !(payload.proof instanceof File)) throw new Error('Upload your bank/payment receipt.');
+              if (payload.proof instanceof File) proofPath = await bigbullsBackend.uploadPaymentProof(payload.proof);
+            } else {
+              const wallets = await bigbullsBackend.cryptoWallets();
+              const wallet = wallets.find((w: any) => w.id === payload.methodId);
+              if (!wallet) throw new Error('Choose an active withdrawal network.');
+              asset = wallet.asset; network = wallet.network;
+              if (destination.length < 10) throw new Error('Enter a valid destination wallet address.');
+              if (String((await bigbullsBackend.kyc())?.status || '').toLowerCase() !== 'approved') throw new Error('Complete KYC verification before requesting a withdrawal.');
+            }
+            const created = await bigbullsBackend.submitWalletTransaction({ account_id: account.id, kind: mode, asset, network, destination_address: destination, amount_crypto: cryptoAmount, amount_usd: amountUsd, ...(txHash ? { tx_hash: txHash } : {}), ...(proofPath ? { proof_path: proofPath } : {}) });
+            if (mode === 'withdrawal') {
+              await bigbullsBackend.requestWithdrawalOtp(created.id);
+              frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'FUND_RESULT', ok:true, message:'Withdrawal request saved. Email OTP sent; verify it to continue.', transactionId:created.id, otpRequired:true }, window.location.origin);
+            } else {
+              frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'FUND_RESULT', ok:true, message:'Deposit request submitted for admin review. Balance changes only after approval.' }, window.location.origin);
+            }
+            await sendFundData(); await trading.refresh(); await sendSnapshot(); break;
+          }
+          case 'FUND_VERIFY_OTP': {
+            await bigbullsBackend.verifyWithdrawalOtp(String(payload.transactionId), String(payload.otp));
+            frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'FUND_RESULT', ok:true, message:'Email OTP verified. Withdrawal is awaiting back-office approval.' }, window.location.origin);
+            await sendFundData(); break;
+          }
           case 'REFRESH': await trading.refresh(); await sendSnapshot(); break;
           case 'SWITCH_ACCOUNT': {
             const found = trading.state.accounts.find(a => a.number === String(payload.accountNumber).replace(/^#/, '') || a.id === payload.accountId);
@@ -101,7 +159,7 @@ export default function HtmlPortal() {
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [navigate, sendSnapshot, trading]);
+  }, [navigate, sendSnapshot, sendFundData, trading]);
 
   useEffect(() => { void sendSnapshot(); }, [sendSnapshot]);
 
