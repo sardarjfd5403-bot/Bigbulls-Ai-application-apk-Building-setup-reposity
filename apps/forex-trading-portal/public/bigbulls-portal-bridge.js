@@ -8,7 +8,7 @@
     var a = typeof getActiveAccount === 'function' ? getActiveAccount() : null;
     return a && a.id ? String(a.id).replace(/^#/, '') : '';
   }
-  window.addEventListener('message', function (event) {
+  var gate = document.createElement('style'); gate.textContent = 'html.bb-sync-pending body{visibility:hidden}'; document.documentElement.classList.add('bb-sync-pending'); document.head.appendChild(gate);\n  window.addEventListener('message', function (event) {
     if (event.origin !== window.location.origin || event.source !== window.parent) return;
     var data = event.data || {};
     if (data.source !== 'BIGBULLS_NATIVE_HOST') return;
@@ -23,7 +23,7 @@
         var old = (appState.instruments || []).find(function (x) { return x.symbol === q.symbol; }) || {};
         return Object.assign({}, old, q, { name: old.name || q.symbol, category: old.category || 'Forex', spread: String(Math.round((q.ask-q.bid)*Math.pow(10,q.digits||5))) });
       }) : appState.instruments;
-      appState.perfData = s.perfData || appState.perfData;
+      appState.aiSignals = []; appState.aiEvents = []; appState.aiNews = []; appState.ibClients = [];\n      appState.perfData = s.perfData || appState.perfData;
       appState.perfCurvePoints = s.perfCurvePoints || [];
       appState.email = s.email || '';
       syncAccountHeaderAndCard();
@@ -32,7 +32,7 @@
       renderPerformance();
       renderProfileTab();
       var email = document.getElementById('profile-email-txt');
-      if (email) email.textContent = s.email || '—';
+      if (email) email.textContent = s.email || '—';\n      document.documentElement.classList.remove('bb-sync-pending');\n      var chart = document.getElementById('chart-view'); if (chart && !chart.classList.contains('hidden')) drawMainChart();
       var wallet = document.getElementById('funding-wallet-bal');
       if (wallet) wallet.textContent = 'Connected wallet';
     } else if (data.type === 'ACTION_ERROR') {
@@ -67,7 +67,7 @@
     if (list[0]) emit('SWITCH_ACCOUNT', { accountNumber: String(list[0].id).replace(/^#/, '') });
     syncAccountHeaderAndCard();
   };
-  window.setChartAccountMode = function (mode) { window.setAccountMode(mode); };
+  window.setChartAccountMode = function (mode) { window.setAccountMode(mode); };\n  window.selectChartAccountById = function (id) { window.selectAccountById(id); };
   window.refreshAccountData = function () { emit('REFRESH'); showToast('Refreshing live BIGBULLS account data…'); };
   window.openFundModal = function (mode) { emit('NAVIGATE', { path: mode === 'withdraw' ? '/withdraw' : '/deposit' }); };
   window.submitFundRequest = function () { emit('NAVIGATE', { path: appState.fundMode === 'withdraw' ? '/withdraw' : '/deposit' }); };
