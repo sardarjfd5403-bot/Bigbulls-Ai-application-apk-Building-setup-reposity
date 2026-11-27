@@ -5,6 +5,7 @@
   var fundTxnId = '';
   var htmlOpenTicketPrecheck = window.openTicketPrecheck;
   var htmlOpenSubpage = window.openSubpage;
+  var htmlSwitchTab = window.switchTab;
   var htmlRenderBbAiTab = window.renderBbAiTab;
 
   function emit(action, payload) {
@@ -211,6 +212,10 @@
     } else if (data.type === 'PROFILE_DATA') {
       var profile = data.data || {};
       if (byId('bb-profile-name')) byId('bb-profile-name').value = profile.full_name || '';
+      var nameNode=document.querySelector('.bronze-card div[style*="font-size:15px"]');if(nameNode)nameNode.textContent=profile.full_name||'BIGBULLS Client';
+      var bronze=document.querySelector('.bronze-card');if(bronze){var spans=bronze.querySelectorAll('span');if(spans[1])spans[1].textContent='Client account';var coin=bronze.querySelector('.tab-num');if(coin)coin.textContent='';}
+      ensureProfileDetailsRow();
+      var benefits=Array.from(document.querySelectorAll('.card')).find(function(card){var label=card.querySelector('.profile-sec-label');return label&&(label.textContent||'').trim()==='Benefits';});if(benefits)benefits.style.display='none';
       if (byId('bb-profile-country')) byId('bb-profile-country').value = profile.country || '';
       if (byId('bb-profile-phone')) byId('bb-profile-phone').value = profile.phone || '';
       if (byId('bb-profile-email')) byId('bb-profile-email').textContent = profile.email || appState.email || '';
@@ -272,6 +277,24 @@
         '<button type="button" class="secondary-btn" onclick="cancelHtmlPending(\''+escapeHtml(p.id)+'\')">Cancel</button></div>';}).join('') || '<div style="font-size:12px;color:#64748b;">No pending orders</div>');
   }
   window.cancelHtmlPending = function(id) { emit('CANCEL_PENDING',{id:id}); toast('Cancel request submitted…'); };
+    window.switchTab = function(tabName){
+    if(typeof htmlSwitchTab==='function')htmlSwitchTab(tabName);
+    if(tabName==='profile'){emit('PROFILE_INIT');emit('KYC_INIT');}
+    if(tabName==='trade'&&appState.selectedSymbol)window.generateChartCandles();
+  };
+  function ensureProfileDetailsRow(){
+    var cards=Array.from(document.querySelectorAll('.card'));
+    var accountCard=cards.find(function(card){var label=card.querySelector('.profile-sec-label');return label&&(label.textContent||'').trim()==='Account';});
+    if(!accountCard||byId('bb-profile-details-row'))return;
+    var row=document.createElement('div');row.id='bb-profile-details-row';row.className='profile-row';
+    row.innerHTML='<div style="font-size:13px;font-weight:800;">Personal details</div><span class="label-circle-badge">Edit &rsaquo;</span>';
+    row.onclick=function(){window.openProfileEditSheet();};
+    accountCard.appendChild(row);
+  }
+  window.openProfileEditSheet=function(){
+    openSheet('<div class="card-title-row"><div class="card-title">Personal details</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div id="bb-profile-email" class="card-sub" style="margin:8px 0;">Loading profile…</div>'+field('Full name','bb-profile-name','text','Full legal name')+field('Country','bb-profile-country','text','Country')+field('Phone','bb-profile-phone','tel','+92')+'<button class="primary-btn" style="width:100%;" onclick="saveHtmlProfile()">Save profile</button>');
+    emit('PROFILE_INIT');
+  };
     window.renderProfileTab = function () {
     var email=String(appState.email||'');
     var shown=email;
@@ -572,6 +595,7 @@
   }
   window.openSubpage = function (name) {
     if(name==='settings'){window.openFullSettingsOverlay();return;}
+    if(name==='profile'||name==='personal_details'){window.openProfileEditSheet();return;}
     if(name==='verification'||name==='kyc'){window.openKycSheet();return;}
     if(name==='support_hub'){window.openTicketPrecheck();return;}
     if(name==='ib'||name==='partner'){window.openIbPortal();return;}
