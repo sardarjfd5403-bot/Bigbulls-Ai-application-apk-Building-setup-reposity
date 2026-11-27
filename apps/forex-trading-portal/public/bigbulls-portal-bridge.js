@@ -573,6 +573,6 @@
     appState.tickTimer = null;
   };
 
-  window.addEventListener('load', function () { emit('READY'); });
+  window.addEventListener('load', function () { emit('READY'); emit('NOTIFICATIONS_INIT'); });
   emit('READY');
 })();
