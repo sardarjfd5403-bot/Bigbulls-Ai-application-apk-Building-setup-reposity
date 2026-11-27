@@ -1,5 +1,5 @@
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
-import { Wallet, LayoutGrid, LogOut, CandlestickChart, PieChart, UserCircle, AlertTriangle } from 'lucide-react';
+import { Wallet, LayoutGrid, LogOut, CandlestickChart, PieChart, UserCircle, AlertTriangle, Bot } from 'lucide-react';
 import { logout, useAuth } from '../lib/previewAuth';
 import { Button } from '@project/components/ui/button';
 import { cn } from '@project/components/lib/utils';
@@ -15,6 +15,7 @@ const SECTIONS: Section[] = [
   ] },
   { key: 'trade', label: 'Trade', icon: CandlestickChart, to: '/terminal', subs: [] },
   { key: 'performance', label: 'Performance', icon: PieChart, to: '/analytics', subs: [] },
+  { key: 'ai', label: 'AI', icon: Bot, to: '/ai', subs: [] },
   { key: 'profile', label: 'Profile', icon: UserCircle, to: '/wallet', subs: [
     { to: '/wallet', label: 'Wallet' }, { to: '/verification', label: 'KYC verification' }, { to: '/profile', label: 'Settings & security' },
     { to: '/partner', label: 'IB / Partner' }, { to: '/support', label: 'Support' },
