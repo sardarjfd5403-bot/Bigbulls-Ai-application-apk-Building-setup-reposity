@@ -115,7 +115,19 @@ function useEngine(){
   walletMove:(_accountId:string,_amount:number)=>{toast.error('Local wallet mutation is disabled.');return false;},
   setLeverage:(_id:string,_leverage:number)=>{toast.error('Leverage changes require the existing account-management workflow.');},
   resetDemo:(id:string)=>run(()=>bigbullsBackend.demoSetBalance(id,10000,'set'),'Demo balance reset requested'),
-  adjustDemoBalance:(id:string,amount:number,operation:'set'|'topup')=>run(()=>bigbullsBackend.demoSetBalance(id,amount,operation),operation==='topup'?'Demo balance topped up':'Demo balance updated'),
+  adjustDemoBalance:async(id:string,amount:number,operation:'set'|'topup')=>{
+   if(busy)return false;
+   setBusy(true);
+   try{
+    const result:any=await bigbullsBackend.demoSetBalance(id,amount,operation);
+    const balance=Number(result?.ledger?.virtual_balance??result?.balance_after);
+    if(!Number.isFinite(balance))throw new Error('Demo balance was adjusted, but the updated ledger balance was not returned. Refresh and retry.');
+    setState(old=>({...old,activeId:id,accounts:old.accounts.map(a=>a.id===id?{...a,balance}:a)}));
+    toast.success(operation==='topup'?'Demo balance topped up':'Demo balance updated');
+    return true;
+   }catch(e:any){toast.error(e?.message||'Unable to adjust Demo balance');return false;}
+   finally{setBusy(false);}
+  },
   archive:(id:string)=>run(()=>bigbullsBackend.manageTradingAccount(id,'archive'),'Account archived securely'),
  };
  return {quotes,state,account,positions,pending,history,floating,margin,equity,free,level,busy,refresh,...actions};
