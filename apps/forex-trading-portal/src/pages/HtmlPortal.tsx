@@ -7,7 +7,8 @@ import { bigbullsBackend } from '../lib/bigbullsBackend';
 import { fetchCandles } from '../lib/feed';
 import { Capacitor } from '@capacitor/core';
 import OneSignal from '@onesignal/capacitor-plugin';
-import { readAppPin, saveAppPin, removeAppPin } from '../lib/appLock';
+import { readAppPin, saveAppPin, removeAppPin, readBiometricEnabled, saveBiometricEnabled } from '../lib/appLock';
+import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
 
 type PortalMessage = { source?: string; action?: string; payload?: any };
 export default function HtmlPortal() {
@@ -218,7 +219,8 @@ export default function HtmlPortal() {
             const {data,error}=await supabase.auth.getUser();if(error)throw error;
             const enabled=await bigbullsBackend.getAppLockSettings();
             const pin=Capacitor.isNativePlatform()&&data.user?.id?await readAppPin(data.user.id):null;
-            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'APP_LOCK_DATA',enabled:enabled&&!!pin,pinSet:!!pin,native:Capacitor.isNativePlatform()},window.location.origin);
+            const biometricEnabled=Capacitor.isNativePlatform()&&data.user?.id?await readBiometricEnabled(data.user.id):false;
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'APP_LOCK_DATA',enabled:enabled&&!!pin,pinSet:!!pin,biometricEnabled,native:Capacitor.isNativePlatform()},window.location.origin);
             break;
           }
           case 'APP_PIN_SAVE': {
@@ -229,6 +231,29 @@ export default function HtmlPortal() {
             await saveAppPin(data.user.id,pin);
             await bigbullsBackend.setAppLockEnabled(true);
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'APP_LOCK_RESULT',ok:true,message:'Six-digit App Lock enabled securely on this device.'},window.location.origin);
+            break;
+          }
+          case 'BIOMETRIC_INIT': {
+            if(!Capacitor.isNativePlatform())break;
+            const {data,error}=await supabase.auth.getUser();if(error||!data.user)throw error||new Error('Sign in again.');
+            const check=await BiometricAuth.checkBiometry();
+            const enabled=await readBiometricEnabled(data.user.id);
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'BIOMETRIC_DATA',available:check.isAvailable,enabled},window.location.origin);
+            break;
+          }
+          case 'BIOMETRIC_TOGGLE': {
+            if(!Capacitor.isNativePlatform())throw new Error('Biometric sign-in is available in the installed Android app only.');
+            const {data,error}=await supabase.auth.getUser();if(error||!data.user)throw error||new Error('Sign in again.');
+            const enabled=!!payload.enabled;
+            if(enabled){
+              const check=await BiometricAuth.checkBiometry();
+              if(!check.isAvailable)throw new Error('Enroll a fingerprint or face unlock in Android settings first.');
+              const pin=await readAppPin(data.user.id);
+              if(!pin)throw new Error('Set your six-digit App Lock PIN before enabling biometric sign-in.');
+              await BiometricAuth.authenticate({reason:'Enable biometric sign-in for BIGBULLS',cancelTitle:'Cancel',allowDeviceCredential:false,androidTitle:'Enable BIGBULLS biometric sign-in',androidSubtitle:'Confirm your identity'});
+            }
+            await saveBiometricEnabled(data.user.id,enabled);
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'BIOMETRIC_RESULT',enabled,message:enabled?'Biometric sign-in enabled. App PIN remains your fallback.':'Biometric sign-in disabled.'},window.location.origin);
             break;
           }
           case 'APP_LOCK_DISABLE': {
