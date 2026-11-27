@@ -592,7 +592,7 @@
     var options=[{key:'all',title:'All accounts',sub:'All closed trades currently synced',badge:'ALL'},
       {key:'real',title:'Real accounts ('+(appState.accounts.real||[]).length+')',sub:'Real B-Book trading history',badge:'REAL'},
       {key:'demo',title:'Demo accounts ('+(appState.accounts.demo||[]).length+')',sub:'Demo paper-trading history',badge:'DEMO'}];
-    list.innerHTML=options.map(function(o){return '<button type="button" class="perf-opt-card'+(appState.perfAccountFilter===o.key?' selected':'')+'" onclick="selectPerfAccountFilter(\' '+o.key+'\')"><div><div style="display:flex;align-items:center;gap:7px;"><span class="tab-num" style="font-size:13.5px;font-weight:900;color:var(--navy);">'+o.title+'</span><span class="label-circle-badge">'+o.badge+'</span></div><div class="card-sub" style="margin-top:3px;">'+o.sub+'</div></div><span class="perf-radio-dot"></span></button>';}).join('');
+    list.innerHTML=options.map(function(o){return '<button type="button" class="perf-opt-card'+(appState.perfAccountFilter===o.key?' selected':'')+'" onclick="selectPerfAccountFilter(\''+o.key+'\')"><div><div style="display:flex;align-items:center;gap:7px;"><span class="tab-num" style="font-size:13.5px;font-weight:900;color:var(--navy);">'+o.title+'</span><span class="label-circle-badge">'+o.badge+'</span></div><div class="card-sub" style="margin-top:3px;">'+o.sub+'</div></div><span class="perf-radio-dot"></span></button>';}).join('');
     modal.classList.remove('hidden');
   };
   window.toggleAiAutoTrade = function () { toast('AI auto-execution is disabled until server-side risk controls are enabled.'); };
