@@ -13,7 +13,15 @@
     if (event.origin !== window.location.origin || event.source !== window.parent) return;
     var data = event.data || {};
     if (data.source !== 'BIGBULLS_NATIVE_HOST') return;
-    if (data.type === 'FUND_DATA') {
+    if (data.type === 'KYC_DATA') {
+      var record=data.record||null, status=document.getElementById('bb-kyc-status');
+      if(status) status.textContent=record?'Current status: '+String(record.status||'pending').toUpperCase()+(record.admin_note?' · '+record.admin_note:''):'No verification submitted yet.';
+      if(record&&String(record.status).toLowerCase()==='approved'){var form=document.getElementById('bb-kyc-form');if(form)form.style.display='none';}
+    } else if (data.type === 'KYC_RESULT') {
+      showToast(data.message||'Verification submitted.');
+      var status=document.getElementById('bb-kyc-status');if(status)status.textContent='Current status: PENDING REVIEW';
+      var form=document.getElementById('bb-kyc-form');if(form)form.style.display='none';
+    } else if (data.type === 'FUND_DATA') {
       fundData = data.data || fundData;
       renderLiveFundData();
     } else if (data.type === 'FUND_RESULT') {
@@ -149,7 +157,18 @@
     showToast('Submitting secure payment request…');
   };
 
-  window.executeInternalTransfer = function () { emit('NAVIGATE', { path: '/transfer' }); };
+  function kycField(label,id,type,placeholder){return '<label style="display:block;margin:0 0 10px;font-size:12px;font-weight:800;color:#344054;">'+label+'<input id="'+id+'" type="'+type+'" placeholder="'+(placeholder||'')+'" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:12px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;color:#182230;font-size:14px;" /></label>';}
+  window.openKycSheet=function(){
+    openProfileSheet('<div class="card-title-row"><div class="card-title">Identity verification</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div id="bb-kyc-status" class="card-sub" style="margin:8px 0 14px;">Loading verification status…</div><div id="bb-kyc-form"><div style="font-size:13px;font-weight:900;margin-bottom:10px;">Personal details</div>'+kycField('Full legal name','bb-kyc-name','text','As shown on document')+kycField('First name','bb-kyc-first','text','First name')+kycField('Last name','bb-kyc-last','text','Last name')+kycField('Date of birth','bb-kyc-dob','date','')+kycField('Country','bb-kyc-country','text','Country')+kycField('Residential address','bb-kyc-address','text','Full address')+'<div style="font-size:13px;font-weight:900;margin:12px 0 8px;">Identity document</div><select id="bb-kyc-type" style="width:100%;padding:12px;border:1px solid #dbe3ef;border-radius:12px;margin-bottom:10px;"><option value="passport">Passport</option><option value="national_id">National ID card</option><option value="driving_license">Driving licence</option></select>'+kycField('Document number','bb-kyc-number','text','Document number')+kycField('Front side (100 KB–20 MB)','bb-kyc-front','file','')+kycField('Back side (100 KB–20 MB)','bb-kyc-back','file','')+'<button class="primary-btn" style="width:100%;margin-top:8px;" onclick="submitKycFromHtml()">Submit verification</button></div>');
+    emit('KYC_INIT');
+  };
+  window.submitKycFromHtml=function(){
+    var val=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+    var front=document.getElementById('bb-kyc-front'),back=document.getElementById('bb-kyc-back');
+    emit('KYC_SUBMIT',{values:{legal_name:val('bb-kyc-name'),first_name:val('bb-kyc-first'),last_name:val('bb-kyc-last'),date_of_birth:val('bb-kyc-dob'),country:val('bb-kyc-country'),residential_address:val('bb-kyc-address'),document_type:val('bb-kyc-type'),document_number:val('bb-kyc-number')},front:front&&front.files?front.files[0]||null:null,back:back&&back.files?back.files[0]||null:null});
+    showToast('Submitting identity verification…');
+  };
+    window.executeInternalTransfer = function () { emit('NAVIGATE', { path: '/transfer' }); };
   window.openNewAccount = function () { emit('NAVIGATE', { path: '/legacy/accounts' }); };
   window.openFullSettingsOverlay = function () { emit('NAVIGATE', { path: '/profile' }); };
   window.openIbPortal = function () { emit('NAVIGATE', { path: '/partner' }); };
@@ -158,7 +177,8 @@
   window.openWalletSheet = function () { emit('NAVIGATE', { path: '/wallet' }); };
   window.openReferralSheet = function () { emit('NAVIGATE', { path: '/partner' }); };
   window.openSubpage = function (name) {
-    if (name === 'support_hub' || name === 'copy') emit('NAVIGATE', { path: '/support' });
+    if (name === 'verification' || name === 'kyc') window.openKycSheet();
+    else if (name === 'support_hub' || name === 'copy') emit('NAVIGATE', { path: '/support' });
     else showToast('This section is being connected to your BIGBULLS account.');
   };
   window.toggleAiAutoTrade = function () { showToast('AI auto-execution is disabled until server-side risk controls are connected.'); };
