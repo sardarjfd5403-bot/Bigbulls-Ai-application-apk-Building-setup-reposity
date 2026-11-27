@@ -7,6 +7,7 @@ import { bigbullsBackend } from '../lib/bigbullsBackend';
 import { fetchCandles } from '../lib/feed';
 import { Capacitor } from '@capacitor/core';
 import OneSignal from '@onesignal/capacitor-plugin';
+import { readAppPin, saveAppPin, removeAppPin } from '../lib/appLock';
 
 type PortalMessage = { source?: string; action?: string; payload?: any };
 export default function HtmlPortal() {
@@ -211,6 +212,31 @@ export default function HtmlPortal() {
             if(error)throw error;
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'mfa',ok:true,message:'Two-factor authentication disabled.'},window.location.origin);
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'MFA_DATA',enabled:false,factors:[]},window.location.origin);
+            break;
+          }
+          case 'APP_LOCK_INIT': {
+            const {data,error}=await supabase.auth.getUser();if(error)throw error;
+            const enabled=await bigbullsBackend.getAppLockSettings();
+            const pin=Capacitor.isNativePlatform()&&data.user?.id?await readAppPin(data.user.id):null;
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'APP_LOCK_DATA',enabled:enabled&&!!pin,pinSet:!!pin,native:Capacitor.isNativePlatform()},window.location.origin);
+            break;
+          }
+          case 'APP_PIN_SAVE': {
+            const pin=String(payload.pin||'');
+            if(!/^\\d{6}$/.test(pin))throw new Error('App Lock PIN must contain exactly 6 digits.');
+            if(!Capacitor.isNativePlatform())throw new Error('Secure App Lock PIN is available in the installed Android app only.');
+            const {data,error}=await supabase.auth.getUser();if(error||!data.user)throw error||new Error('Sign in again.');
+            await saveAppPin(data.user.id,pin);
+            await bigbullsBackend.setAppLockEnabled(true);
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'APP_LOCK_RESULT',ok:true,message:'Six-digit App Lock enabled securely on this device.'},window.location.origin);
+            break;
+          }
+          case 'APP_LOCK_DISABLE': {
+            if(!Capacitor.isNativePlatform())throw new Error('App Lock is available in the installed Android app only.');
+            const {data,error}=await supabase.auth.getUser();if(error||!data.user)throw error||new Error('Sign in again.');
+            await removeAppPin(data.user.id);
+            await bigbullsBackend.setAppLockEnabled(false);
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'APP_LOCK_RESULT',ok:true,message:'App Lock disabled.'},window.location.origin);
             break;
           }
           case 'NOTIFICATIONS_INIT': {
