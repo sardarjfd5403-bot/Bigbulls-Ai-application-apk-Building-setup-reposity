@@ -123,6 +123,11 @@
           closeFundModal();
         }
       } else toast(data.message || 'Payment request failed.');
+    } else if (data.type === 'NOTIFICATIONS_RESULT') {
+      appState.settings.notifications=!!data.enabled;
+      var row=Array.from(document.querySelectorAll('.profile-row')).find(function(x){return (x.textContent||'').toLowerCase().includes('notifications');});
+      var track=row&&row.querySelector('.sw-track');if(track)track.classList.toggle('on',!!data.enabled);
+      toast(data.message||'Notification preference updated.');
     } else if (data.type === 'KYC_DATA') {
       var record = data.record || null;
       var status = byId('bb-kyc-status');
@@ -536,7 +541,7 @@
   };
   window.toggleSettingsSwitch = function (key,row) {
     if(key==='biometrics'){toast('Biometric sign-in requires native device enrollment and is not enabled yet.');return;}
-    if(key==='notifications'){toast('Notification preferences are not yet persisted to your BIGBULLS profile.');return;}
+    if(key==='notifications'){emit('NOTIFICATIONS_TOGGLE',{enabled:!appState.settings.notifications});return;}
   };
     window.openReferralSheet = function () { window.openIbPortal(); };
   window.openLiveChatAssistant = function () { window.openTicketPrecheck(); };
