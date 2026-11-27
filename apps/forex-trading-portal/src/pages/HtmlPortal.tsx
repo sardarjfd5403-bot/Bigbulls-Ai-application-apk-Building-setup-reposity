@@ -157,6 +157,13 @@ export default function HtmlPortal() {
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'SUPPORT_DATA',tickets},window.location.origin);
             break;
           }
+          case 'FEATURE_SUGGESTION': {
+            const suggestion=String(payload.suggestion||'').trim();
+            if(suggestion.length<10)throw new Error('Please describe your feature idea in at least 10 characters.');
+            const ticket=await bigbullsBackend.createSupportTicket({subject:'Client feature suggestion',category:'feature_suggestion',message:suggestion});
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'suggestion',ok:true,message:'Feature suggestion submitted to BIGBULLS.'},window.location.origin);
+            break;
+          }
           case 'SUPPORT_SUBMIT': {
             const subject=String(payload.subject||'').trim(), message=String(payload.message||'').trim();
             if(subject.length<3||message.length<10)throw new Error('Enter a subject and a message of at least 10 characters.');
