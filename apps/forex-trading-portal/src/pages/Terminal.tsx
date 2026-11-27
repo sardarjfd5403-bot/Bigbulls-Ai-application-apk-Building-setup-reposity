@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ListFilter, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, ListFilter, ChevronLeft, Wallet, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
 import { Button } from '@project/components/ui/button';
 import { cn } from '@project/components/lib/utils';
@@ -18,6 +18,16 @@ export default function Terminal() {
   const [tabs,setTabs]=useState(['EURUSD','XAUUSD','BTCUSD']);
   const [mobileMarkets,setMobileMarkets]=useState(true);
   const select=(s:string)=>{setSymbol(s);if(!tabs.includes(s))setTabs(x=>[...x.slice(-4),s]);setMobileMarkets(false);};
+  const addDemoFunds=async()=>{
+    const raw=window.prompt('Amount to ADD to this Demo account (virtual USD):');
+    if(raw===null)return;
+    const amount=Number(raw);
+    if(!Number.isFinite(amount)||amount<=0||amount>100000000||Math.round(amount*100)!==amount*100){
+      window.alert('Enter a valid amount up to 2 decimal places.');
+      return;
+    }
+    await t.adjustDemoBalance(t.account.id,amount,'topup');
+  };
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
       <header className="z-20 flex min-h-12 shrink-0 flex-nowrap items-center gap-1 border-b bg-card px-1.5 py-1.5 sm:min-h-14 sm:gap-2 sm:px-3 sm:py-2">
@@ -38,7 +48,16 @@ export default function Terminal() {
             </SelectTrigger>
             <SelectContent>{t.state.accounts.map(a=><SelectItem key={a.id} value={a.id}><span className={cn('mr-2 rounded px-1.5 py-0.5 text-[10px] font-bold',a.type==='Real'?'bg-primary text-primary-foreground':'bg-muted')}>{a.type}</span>#{a.number}</SelectItem>)}</SelectContent>
           </Select>
-          <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/deposit">Deposit</Link></Button>
+          {t.account.type==='Real' ? (
+            <>
+              <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/deposit"><ArrowDownToLine className="mr-1.5 h-4 w-4"/>Deposit</Link></Button>
+              <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex"><Link to="/withdraw"><ArrowUpFromLine className="mr-1.5 h-4 w-4"/>Withdraw</Link></Button>
+            </>
+          ) : (
+            <Button size="sm" variant="outline" className="hidden sm:inline-flex" onClick={()=>void addDemoFunds()} disabled={t.busy}>
+              <Wallet className="mr-1.5 h-4 w-4"/>Add Fund
+            </Button>
+          )}
           <Button size="sm" variant="outline" className="h-8 w-[58px] shrink-0 gap-0.5 whitespace-nowrap px-1 text-[9px] sm:w-auto sm:gap-1 sm:h-9 sm:px-2 sm:text-xs lg:hidden" onClick={()=>setMobileMarkets(v=>!v)}>
             {mobileMarkets?<><ChevronLeft className="h-3.5 w-3.5"/>Chart</>:<><ListFilter className="h-3.5 w-3.5"/>Markets</>}
           </Button>
