@@ -197,6 +197,7 @@
       window.renderIbContent();
     } else if (data.type === 'SUPPORT_DATA') {
       var supportBox = byId('bb-support-history');
+      if(!supportBox){var subBody=byId('subpage-body');if(subBody&&byId('subpage-title')&&(byId('subpage-title').textContent||'').toLowerCase().includes('ticket')){supportBox=document.createElement('div');supportBox.id='bb-support-history';supportBox.className='card';subBody.insertBefore(supportBox,subBody.firstChild);}}
       if (supportBox) supportBox.innerHTML = '<b>Your recent tickets</b>' + ((data.tickets || []).slice(0, 8).map(function (t) {
         return '<div style="padding:7px 0;border-bottom:1px solid #e5eaf2;">' + escapeHtml(t.subject) + ' · <b>' +
           escapeHtml(String(t.status || '').toUpperCase()) + '</b><br><span style="font-size:11px;">' +
@@ -574,6 +575,7 @@
   };
   window.openTicketPrecheck = function () {
     if(typeof htmlOpenTicketPrecheck==='function') htmlOpenTicketPrecheck();
+    emit('SUPPORT_INIT');
   };
   window.submitPrecheckedTicket = function () {
     emit('SUPPORT_SUBMIT',{subject:value('tk-subject'),category:'general',message:value('tk-desc')});
