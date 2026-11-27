@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, MoreVertical, CandlestickChart, ArrowDownToLine, ArrowUpFromLine, ChevronDown, ChevronUp } from 'lucide-react';
 import PositionsPanel from '../components/PositionsPanel';
@@ -54,7 +55,10 @@ function AccountCard({ a, expanded, onToggleTrades }: { a: Account; expanded: bo
         <DropdownMenu>
           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="ml-auto h-7 w-7"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {a.type === 'Demo' && <DropdownMenuItem onClick={() => t.resetDemo(a.id)}>Set balance to $10,000</DropdownMenuItem>}
+            {a.type === 'Demo' && <>
+              <DropdownMenuItem onClick={() => { const raw = window.prompt('Amount to ADD to this Demo balance (USD):'); if (raw === null) return; const amount = Number(raw); if (!Number.isFinite(amount) || amount <= 0 || amount > 100000000 || Math.round(amount * 100) !== amount * 100) { toast.error('Enter a valid amount (up to 2 decimals).'); return; } void t.adjustDemoBalance(a.id, amount, 'topup'); }}>＋ Add Demo balance</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { const raw = window.prompt('Set this Demo balance to (USD):'); if (raw === null) return; const amount = Number(raw); if (!Number.isFinite(amount) || amount < 0 || amount > 100000000 || Math.round(amount * 100) !== amount * 100) { toast.error('Enter a valid amount (up to 2 decimals).'); return; } void t.adjustDemoBalance(a.id, amount, 'set'); }}>Set Demo balance</DropdownMenuItem>
+            </>}
             {t.state.accounts.length > 1 && <DropdownMenuItem className="text-destructive" onClick={() => setArch(true)}>Archive account</DropdownMenuItem>}
           </DropdownMenuContent>
         </DropdownMenu>
