@@ -224,6 +224,9 @@
           escapeHtml(t.admin_reply || t.message || '') + '</span></div>';
       }).join('') || '<div>No support tickets yet.</div>');
     } else if (data.type === 'MFA_DATA') {
+      appState.settings.twoFactorEnabled=!!data.enabled;
+      var mfaButton=document.querySelector('[onclick*="toggleTwoFactorBtn"]');
+      if(mfaButton)mfaButton.textContent='2FA: '+(data.enabled?'ON':'OFF');
       var enabled=!!data.enabled, factors=data.factors||[];
       window.bbMfaFactorId=enabled&&factors[0]?factors[0].id:'';
       openSheet('<div class="card-title-row"><div class="card-title">Two-factor authentication</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:10px 0 14px;">'+(enabled?'Authenticator protection is enabled.':'Protect your BIGBULLS sign-in with an authenticator app.')+'</div>'+(enabled?'<button class="primary-btn" style="width:100%;" onclick="disableHtmlMfa()">Disable 2FA</button>':'<button class="primary-btn" style="width:100%;" onclick="emitMfaEnroll()">Set up authenticator</button>'));
@@ -666,6 +669,23 @@
     var pinInput=byId('new-pin-input');if(pinInput){pinInput.maxLength=6;pinInput.inputMode='numeric';}
   };
   window.saveNewPin = function () { var pin=value('new-pin-input');if(!/^\d{6}$/.test(pin)){toast('Enter exactly 6 digits.');return;}emit('APP_PIN_SAVE',{pin:pin});toast('Saving PIN in Android secure storage…'); };
+  window.toggleTwoFactorBtn = function () { emit('MFA_INIT'); };
+  window.emitMfaEnroll = function () { emit('MFA_ENROLL'); };
+  window.verifyHtmlMfa = function () {
+    var code=value('bb-mfa-code');
+    if(!/^\\d{6}$/.test(code)){toast('Enter the 6-digit authenticator code.');return;}
+    emit('MFA_VERIFY',{factorId:window.bbMfaFactorId,code:code});
+  };
+  window.disableHtmlMfa = function () {
+    if(!window.bbMfaFactorId){toast('No verified authenticator factor was found.');return;}
+    emit('MFA_DISABLE',{factorId:window.bbMfaFactorId});
+  };
+  window.saveNewPassword = function () {
+    var password=value('new-pass-inp');
+    if(password.length<8){toast('Password must contain at least 8 characters.');return;}
+    emit('AUTH_PASSWORD_UPDATE',{password:password});
+    toast('Sending password update securely…');
+  };
   window.cycleSkipPinInterval = function () { toast('PIN timeout preference is not configurable yet.'); };
   window.cycleSettingsLanguage = function () { toast('The BIGBULLS portal is currently available in English.'); };
   window.setAiLot = function (lot) {
