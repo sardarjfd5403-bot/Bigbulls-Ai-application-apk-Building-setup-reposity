@@ -13,7 +13,12 @@
     if (event.origin !== window.location.origin || event.source !== window.parent) return;
     var data = event.data || {};
     if (data.source !== 'BIGBULLS_NATIVE_HOST') return;
-    if (data.type === 'WALLET_DATA') {
+    if (data.type === 'CANDLES') {
+      if(data.symbol===appState.selectedSymbol && data.timeframe===(appState.timeframe||'1m')){
+        appState.candles=(data.candles||[]).map(function(c){return {open:c.o,high:c.h,low:c.l,close:c.c,time:c.t};});
+        if(appState.candles.length)drawMainChart();else showToast('No historical candles returned for this instrument/timeframe.');
+      }
+    } else if (data.type === 'WALLET_DATA') {
       var bal=document.getElementById('bb-wallet-summary'),led=document.getElementById('bb-wallet-ledger');
       if(bal)bal.innerHTML='<b>Available wallet balance</b><div style="font-size:26px;font-weight:900;margin-top:8px;">
       var record=data.record||null, status=document.getElementById('bb-kyc-status');
@@ -58,7 +63,7 @@
       var email = document.getElementById('profile-email-txt');
       if (email) email.textContent = s.email || '—';
       document.documentElement.classList.remove('bb-sync-pending');
-      var chart = document.getElementById('chart-view'); if (chart && !chart.classList.contains('hidden')) drawMainChart();
+      var chart = document.getElementById('chart-view'); if (chart && !chart.classList.contains('hidden')) { window.generateChartCandles(); drawMainChart(); }
       var wallet = document.getElementById('funding-wallet-bal');
       if (wallet) wallet.textContent = 'Connected wallet';
     } else if (data.type === 'ACTION_ERROR') {
@@ -66,7 +71,10 @@
     }
   });
   window.addEventListener('load', function () { emit('READY'); });
-  window.placeChartOrder = function (side) {
+  window.generateChartCandles=function(){
+    emit('GET_CANDLES',{symbol:appState.selectedSymbol,timeframe:appState.timeframe||'1m'});
+  };
+    window.placeChartOrder = function (side) {
     var inst = getInstrumentBySymbol(appState.selectedSymbol);
     emit('OPEN_ORDER', { side: side, symbol: appState.selectedSymbol, lots: appState.lotSize, mode: appState.orderMode, price: appState.pendingPrice });
     showToast('Submitting order to BIGBULLS server…');
