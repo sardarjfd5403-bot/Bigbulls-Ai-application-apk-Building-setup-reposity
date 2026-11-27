@@ -131,6 +131,14 @@ export default function HtmlPortal() {
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'partner',ok:true,message:'Partner application submitted for review.',data},window.location.origin);
             break;
           }
+          case 'AUTH_PASSWORD_UPDATE': {
+            const password=String(payload.password||'');
+            if(password.length<8)throw new Error('Password must contain at least 8 characters.');
+            const {error}=await supabase.auth.updateUser({password});
+            if(error)throw error;
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'password',ok:true,message:'Account password updated successfully.'},window.location.origin);
+            break;
+          }
           case 'PROFILE_INIT': {
             const data=await bigbullsBackend.profile();
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'PROFILE_DATA',data},window.location.origin);
