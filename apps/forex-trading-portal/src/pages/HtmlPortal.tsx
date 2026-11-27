@@ -40,7 +40,7 @@ export default function HtmlPortal() {
     }));
     const instruments = Object.entries(trading.quotes).map(([symbol, q]: [string, any]) => ({
       symbol, bid: Number(q.bid), ask: Number(q.ask), digits: Number(q.digits || (symbol.includes('JPY') ? 3 : 5)),
-      dir: q.direction || 'up'
+      dir: q.dir || 0
     }));
     for (const a of all) {
       const currentRows=trading.state.history.filter(p=>p.accountId===a.id);
