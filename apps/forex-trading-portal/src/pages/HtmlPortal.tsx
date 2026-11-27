@@ -23,11 +23,11 @@ export default function HtmlPortal() {
       demo: all.filter(a => a.type === 'Demo').map(mapAccount)
     };
     const activeId = account.id ? '#' + account.number : '';
-    const positions = trading.positions.map(p => ({
+    const positions = trading.state.positions.filter(p => p.accountId === account.id).map(p => ({
       id: p.id, symbol: p.symbol, side: p.side.toUpperCase(), lots: p.volume,
       openPrice: p.openPrice, sl: p.sl || 0, tp: p.tp || 0, pnl: p.floating ?? 0
     }));
-    const closed = trading.history.map(p => ({
+    const closed = trading.state.history.filter(p => p.accountId === account.id).map(p => ({
       id: p.id, symbol: p.symbol, side: p.side.toUpperCase(), lots: p.volume,
       pnl: p.profit, time: new Date(p.closeTime).toLocaleString()
     }));
@@ -35,7 +35,7 @@ export default function HtmlPortal() {
       symbol, bid: Number(q.bid), ask: Number(q.ask), digits: Number(q.digits || (symbol.includes('JPY') ? 3 : 5)),
       dir: q.direction || 'up'
     }));
-    const history = trading.history;
+    const history = trading.state.history.filter(p => p.accountId === account.id);
     const makeStats = (days: number) => {
       const cutoff = days ? Date.now() - days * 86400000 : 0;
       const rows = history.filter(p => p.closeTime >= cutoff);
@@ -60,7 +60,7 @@ export default function HtmlPortal() {
         perfCurvePoints: history.slice().reverse().reduce((arr,p)=>{arr.push((arr[arr.length-1]||0)+p.profit);return arr;},[0])
       }
     }, window.location.origin);
-  }, [trading.account, trading.state.accounts, trading.positions, trading.history, trading.quotes, trading.equity, trading.floating]);
+  }, [trading.account, trading.state, trading.quotes, trading.equity, trading.floating]);
 
   useEffect(() => {
     const onMessage = async (event: MessageEvent<PortalMessage>) => {
