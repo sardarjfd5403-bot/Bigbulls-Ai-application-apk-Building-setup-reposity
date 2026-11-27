@@ -137,6 +137,19 @@ export default function HtmlPortal() {
             }));
             const signals=results.filter(Boolean);
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'BB_AI_SIGNALS',signals},window.location.origin);
+            try {
+              const {data:calendar,error:calendarError}=await supabase.functions.invoke('economic-calendar',{body:{}});
+              if(calendarError)throw calendarError;
+              const events=(calendar?.events||[]).map((e:any)=>({
+                title:String(e.title||'Economic event'),
+                time:String(e.time||new Date(Number(e.timestamp||0)*1000).toLocaleString()),
+                pair:String(e.currency||'GLOBAL'),
+                impact:String(e.impact||'low').toUpperCase()
+              }));
+              frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'BB_AI_CALENDAR',events,provider:calendar?.provider||'Economic Calendar',generatedAt:calendar?.generated_at||null},window.location.origin);
+            } catch(calendarError:any) {
+              frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'BB_AI_CALENDAR',events:[],error:calendarError?.message||'Economic calendar unavailable'},window.location.origin);
+            }
             break;
           }
           case 'BB_AI_ANALYZE': {
