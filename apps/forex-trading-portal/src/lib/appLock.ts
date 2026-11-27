@@ -16,3 +16,14 @@ export async function removeAppPin(userId:string){
   if(!isNativeApp()) return;
   await SecureStorage.remove(appLockKey(userId));
 }
+
+export const biometricPreferenceKey = (userId:string) => 'bigbulls-biometric-enabled-v1-' + userId;
+export async function readBiometricEnabled(userId:string):Promise<boolean>{
+  if(!isNativeApp()) return false;
+  const value=await SecureStorage.get(biometricPreferenceKey(userId),false);
+  return value===true||value==='true';
+}
+export async function saveBiometricEnabled(userId:string,enabled:boolean){
+  if(!isNativeApp()) throw new Error('Biometric sign-in is available in the BIGBULLS Android app only.');
+  await SecureStorage.set(biometricPreferenceKey(userId),String(enabled),false,false);
+}
