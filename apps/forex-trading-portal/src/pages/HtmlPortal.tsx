@@ -183,12 +183,18 @@ export default function HtmlPortal() {
             }
             const created = await bigbullsBackend.submitWalletTransaction({ account_id: account.id, kind: mode, asset, network, destination_address: destination, amount_crypto: cryptoAmount, amount_usd: amountUsd, ...(txHash ? { tx_hash: txHash } : {}), ...(proofPath ? { proof_path: proofPath } : {}) });
             if (mode === 'withdrawal') {
-              await bigbullsBackend.requestWithdrawalOtp(created.id);
-              frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'FUND_RESULT', ok:true, message:'Withdrawal request saved. Email OTP sent; verify it to continue.', transactionId:created.id, otpRequired:true }, window.location.origin);
+              let otpSent = true;
+              try { await bigbullsBackend.requestWithdrawalOtp(created.id); } catch { otpSent = false; }
+              frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'FUND_RESULT', ok:true, message:otpSent ? 'Withdrawal request saved. Email OTP sent; verify it to continue.' : 'Withdrawal request saved, but email OTP could not be sent. Retry OTP below.', transactionId:created.id, otpRequired:true, otpSent }, window.location.origin);
             } else {
               frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'FUND_RESULT', ok:true, message:'Deposit request submitted for admin review. Balance changes only after approval.' }, window.location.origin);
             }
             await sendFundData(); await trading.refresh(); await sendSnapshot(); break;
+          }
+          case 'FUND_RESEND_OTP': {
+            await bigbullsBackend.requestWithdrawalOtp(String(payload.transactionId));
+            frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'FUND_RESULT', ok:true, message:'A new withdrawal OTP has been sent.' }, window.location.origin);
+            break;
           }
           case 'FUND_VERIFY_OTP': {
             await bigbullsBackend.verifyWithdrawalOtp(String(payload.transactionId), String(payload.otp));
@@ -214,7 +220,9 @@ export default function HtmlPortal() {
           case 'MODIFY_POSITION': await trading.modifyPosition(String(payload.id), Number(payload.sl)||undefined, Number(payload.tp)||undefined); await sendSnapshot(); break;
           case 'NAVIGATE': navigate(String(payload.path || '/')); break;
           case 'OPEN_ACCOUNT': {
-            await trading.openAccount({ type: payload.type === 'real' ? 'Real' : 'Demo', kind: payload.kind || 'Standard', platform: 'BIGBULLS', leverage: Number(payload.leverage)||100 });
+            const created = await trading.openAccount({ type: payload.type === 'real' ? 'Real' : 'Demo', kind: payload.kind || 'Standard', platform: 'BIGBULLS', leverage: Number(payload.leverage)||100 });
+            if (!created) throw new Error('Account creation did not complete. Check the account service and try again.');
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'account',ok:true,message:'Trading account created.'},window.location.origin);
             await sendSnapshot(); break;
           }
           default: console.warn('Unsupported BIGBULLS HTML portal action:', action);
