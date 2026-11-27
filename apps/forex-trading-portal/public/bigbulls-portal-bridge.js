@@ -181,6 +181,12 @@
           escapeHtml(String(t.status || '').toUpperCase()) + '</b><br><span style="font-size:11px;">' +
           escapeHtml(t.admin_reply || t.message || '') + '</span></div>';
       }).join('') || '<div>No support tickets yet.</div>');
+    } else if (data.type === 'MFA_DATA') {
+      var enabled=!!data.enabled, factors=data.factors||[];
+      openSheet('<div class=\"card-title-row\"><div class=\"card-title\">Two-factor authentication</div><button class=\"circle-icon-btn\" onclick=\"closeProfileSheet()\">&times;</button></div><div class=\"card-sub\" style=\"margin:10px 0 14px;\">'+(enabled?'Authenticator protection is enabled.':'Protect your BIGBULLS sign-in with an authenticator app.')+'</div>'+(enabled?'<button class=\"primary-btn\" style=\"width:100%;\" onclick=\"disableHtmlMfa(\\\''+escapeHtml(factors[0].id)+'\\\')\">Disable 2FA</button>':'<button class=\"primary-btn\" style=\"width:100%;\" onclick=\"emitMfaEnroll()\">Set up authenticator</button>'));
+    } else if (data.type === 'MFA_ENROLL_DATA') {
+      window.bbMfaFactorId=data.factorId;
+      openSheet('<div class=\"card-title-row\"><div class=\"card-title\">Set up authenticator</div><button class=\"circle-icon-btn\" onclick=\"closeProfileSheet()\">&times;</button></div><div class=\"card-sub\">Scan this QR code in your authenticator app, then enter the 6-digit code.</div><img alt=\"Authenticator QR code\" src=\"'+escapeHtml(data.qrCode)+'\" style=\"display:block;width:210px;height:210px;margin:14px auto;\"><div style=\"font-size:11px;word-break:break-all;margin-bottom:12px;\">Manual setup key: '+escapeHtml(data.secret)+'</div>'+field('6-digit verification code','bb-mfa-code','text','000000')+'<button class=\"primary-btn\" style=\"width:100%;\" onclick=\"verifyHtmlMfa()\">Verify and enable 2FA</button>');
     } else if (data.type === 'PROFILE_DATA') {
       var profile = data.data || {};
       if (byId('bb-profile-name')) byId('bb-profile-name').value = profile.full_name || '';
