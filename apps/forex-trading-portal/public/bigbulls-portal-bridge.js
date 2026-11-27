@@ -375,7 +375,7 @@
       else {
         details.innerHTML = '<b>' + escapeHtml(selected.display_name || 'Payment method') + '</b><br>' +
           escapeHtml(selected.instructions || '') + '<br><b>Payment destination:</b> ' +
-          escapeHtml(selected.destination_details || selected.account_number || 'Follow the payment instructions.') +
+          escapeHtml((selected.method_type==='crypto' ? ((fundData.wallets||[]).find(function(w){return w.id===selected.crypto_wallet_id;})||{}).address : '') || selected.destination_details || selected.account_number || 'Follow the payment instructions.') +
           (selected.account_title ? '<br>Account title: ' + escapeHtml(selected.account_title) : '') +
           (selected.logo_url ? '<br><img src="' + escapeHtml(selected.logo_url) + '" alt="Payment method" style="max-width:140px;max-height:140px;margin-top:8px;border-radius:8px;">' : '');
       }
