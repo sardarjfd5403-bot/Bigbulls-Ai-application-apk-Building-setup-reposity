@@ -213,7 +213,7 @@
       var profile = data.data || {};
       if (byId('bb-profile-name')) byId('bb-profile-name').value = profile.full_name || '';
       var nameNode=document.querySelector('.bronze-card div[style*="font-size:15px"]');if(nameNode)nameNode.textContent=profile.full_name||'BIGBULLS Client';
-      var bronze=document.querySelector('.bronze-card');if(bronze){var spans=bronze.querySelectorAll('span');if(spans[1])spans[1].textContent='Client account';var coin=bronze.querySelector('.tab-num');if(coin)coin.textContent='';}
+      var bronze=document.querySelector('.bronze-card');if(bronze){var spans=bronze.querySelectorAll('span');if(spans[1])spans[1].textContent='Client account';var tier=bronze.querySelector('.bronze-tag');if(tier)tier.textContent='Client';var coin=bronze.querySelector('.tab-num');if(coin)coin.textContent='';}
       ensureProfileDetailsRow();
       var benefits=Array.from(document.querySelectorAll('.card')).find(function(card){var label=card.querySelector('.profile-sec-label');return label&&(label.textContent||'').trim()==='Benefits';});if(benefits)benefits.style.display='none';
       if (byId('bb-profile-country')) byId('bb-profile-country').value = profile.country || '';
@@ -226,7 +226,7 @@
         if (data.workflow === 'account') closeProfileSheet();
         if (data.workflow === 'password') { var passInput=byId('new-pass-inp'); if(passInput)passInput.value=''; }
         if (data.workflow === 'support') { var sub=byId('subpage-view'); if(sub)sub.classList.add('hidden'); emit('SUPPORT_INIT'); }
-        if (data.workflow === 'profile') emit('PROFILE_INIT');
+        if (data.workflow === 'profile') { closeProfileSheet(); emit('PROFILE_INIT'); }
         if (data.workflow === 'partner' || data.workflow === 'partner_transfer') { emit('PARTNER_INIT'); }
       } else toast(data.message || 'Request failed.');
     } else if (data.type === 'ACTION_ERROR') {
