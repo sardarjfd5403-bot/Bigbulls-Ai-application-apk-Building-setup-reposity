@@ -65,7 +65,7 @@ export default function HtmlPortal() {
         activeAccountId: account.id, runningTrades: positions, pendingOrders: trading.state.pending.filter(p=>p.accountId===account.id).map(p=>({id:p.id,symbol:p.symbol,side:p.side.toUpperCase(),kind:p.kind,lots:p.volume,price:p.price,sl:p.sl||0,tp:p.tp||0})), closedTrades: closed,
         instruments, equity: trading.equity, floating: trading.floating,
         email: data.user?.email || '', perfData, perfDataByFilter,
-        perfCurvePoints: history.slice().reverse().reduce((arr,p)=>{arr.push((arr[arr.length-1]||0)+p.profit);return arr;},[0])
+        perfCurvePoints: allClosed.filter(p=>p.accountId===account.id).slice().reverse().reduce((arr,p)=>{arr.push((arr[arr.length-1]||0)+p.profit);return arr;},[0])
       }
     }, window.location.origin);
   }, [trading.account, trading.state, trading.quotes, trading.equity, trading.floating]);
