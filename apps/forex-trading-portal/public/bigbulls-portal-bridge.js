@@ -70,6 +70,7 @@
       appState.aiNews = [];
       appState.ibClients = [];
       if (typeof renderBbAiTab === 'function') renderBbAiTab();
+      ensureAiScanButton();
       appState.perfData = s.perfData || appState.perfData;
       appState.perfDataByFilter = s.perfDataByFilter || appState.perfDataByFilter;
       appState.perfCurvePoints = s.perfCurvePoints || [];
@@ -96,6 +97,10 @@
         var amount = Number(wb.balance != null ? wb.balance : (wb.available_balance != null ? wb.available_balance : 0));
         walletLabel.textContent = Number.isFinite(amount) ? '$' + amount.toFixed(2) : 'Wallet connected';
       }
+    } else if (data.type === 'BB_AI_SIGNALS') {
+      appState.aiSignals=data.signals||[];
+      if(typeof renderBbAiTab==='function')renderBbAiTab();
+      toast(appState.aiSignals.length?appState.aiSignals.length+' live technical setup(s) found.':'No qualifying technical setups right now.');
     } else if (data.type === 'BB_AI_RESULT') {
       var r=data.report||{};
       pushAiMessage('BB AI','Live technical snapshot for '+r.symbol+' ('+r.timeframe+'): '+r.bias+'. Price '+r.price+', EMA 9 '+r.ema9+', EMA 21 '+r.ema21+', RSI(14) '+r.rsi+'. Recent support '+r.support+' and resistance '+r.resistance+'. Based on '+r.candles+' historical candles; this is technical analysis, not a guaranteed trade signal.');
@@ -584,7 +589,23 @@
   };
   window.toggleAiAutoTrade = function () { toast('AI auto-execution is disabled until server-side risk controls are enabled.'); };
   window.executeAiSignal = function () { toast('AI signal execution is not enabled; no simulated order was placed.'); };
-  window.askBbAiPrompt = function (promptText) {
+  function ensureAiScanButton(){
+    var list=byId('ai-signals-list');if(!list||byId('bb-ai-scan-btn'))return;
+    var btn=document.createElement('button');btn.id='bb-ai-scan-btn';btn.type='button';btn.className='primary-btn';btn.style.margin='8px 0 12px';btn.textContent='Scan live market setups';
+    btn.onclick=function(){emit('BB_AI_SCAN');toast('Scanning live market candles…');};
+    list.parentNode.insertBefore(btn,list);
+  }
+  window.executeAiSignal = function (idx) {
+    var signal=(appState.aiSignals||[])[idx];if(!signal)return;
+    window.openChartForSymbol(signal.symbol);
+    toast('Review the live chart and place the order manually. No trade was auto-executed.');
+  };
+  window.toggleAiAutoTrade = function () {
+    appState.aiAutoTrade=false;
+    var sw=byId('ai-auto-switch');if(sw)sw.classList.remove('on');
+    toast('Auto-trading remains disabled until server-side AI risk and execution controls are configured.');
+  };
+    window.askBbAiPrompt = function (promptText) {
     var prompt=String(promptText||'').trim();
     if(!prompt){toast('Enter a market question first.');return;}
     pushAiMessage('You',prompt);
