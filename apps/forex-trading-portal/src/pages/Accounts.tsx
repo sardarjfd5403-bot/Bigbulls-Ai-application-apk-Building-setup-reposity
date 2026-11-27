@@ -104,16 +104,16 @@ function AccountCard({ a, expanded, onSelect, onToggleTrades }: {
   const equity = a.balance + floating;
   const equityPct = a.balance > 0 ? (floating / a.balance) * 100 : 0;
   const go = (path: string) => { t.setActive(a.id); nav(path); };
-  const adjustDemo = async (operation: 'topup' | 'set') => {
-    const raw = window.prompt(operation === 'topup' ? 'Amount to ADD to this Demo balance (USD):' : 'Set this Demo balance to (USD):');
+  const adjustDemo = async () => {
+    const raw = window.prompt('Amount to ADD to this Demo balance (USD):');
     if (raw === null) return;
     const amount = Number(raw);
-    if (!Number.isFinite(amount) || (operation === 'topup' ? amount <= 0 : amount < 0) || amount > 100000000 || Math.round(amount * 100) !== amount * 100) {
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 100000000 || Math.round(amount * 100) !== amount * 100) {
       toast.error('Enter a valid amount (up to 2 decimals).');
       return;
     }
     setDemoBusy(true);
-    try { await t.adjustDemoBalance(a.id, amount, operation); }
+    try { await t.adjustDemoBalance(a.id, amount, 'topup'); }
     finally { setDemoBusy(false); }
   };
 
@@ -135,9 +135,7 @@ function AccountCard({ a, expanded, onSelect, onToggleTrades }: {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {a.type === 'Demo' && <>
-              <DropdownMenuItem disabled={demoBusy} onClick={() => void adjustDemo('topup')}>＋ Add Demo balance</DropdownMenuItem>
-              <DropdownMenuItem disabled={demoBusy} onClick={() => void adjustDemo('set')}>Set Demo balance</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { void t.resetDemo(a.id); }}>Reset Demo balance ($10,000)</DropdownMenuItem>
+              <DropdownMenuItem disabled={demoBusy} onClick={() => void adjustDemo()}>＋ Add Demo balance</DropdownMenuItem>
             </>}
             {t.state.accounts.length > 1 && <DropdownMenuItem className="text-destructive" onClick={() => setArch(true)}>Archive account</DropdownMenuItem>}
           </DropdownMenuContent>
@@ -178,14 +176,9 @@ function AccountCard({ a, expanded, onSelect, onToggleTrades }: {
               <Button variant="outline" onClick={() => go('/withdraw')} className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800 hover:bg-slate-100 sm:text-sm">
                 <ArrowUpFromLine className="mr-1.5 h-4 w-4 text-slate-600" /> Withdraw
               </Button>
-            </> : <>
-              <Button variant="outline" onClick={() => void adjustDemo('topup')} disabled={demoBusy} className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800 hover:bg-slate-100 sm:text-sm">
-                <Wallet className="mr-1.5 h-4 w-4 text-[#0066FF]" /> Add balance
-              </Button>
-              <Button variant="outline" onClick={() => { onSelect(); toast.info('Demo withdrawals are disabled.'); }} className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500 hover:bg-slate-100 sm:text-sm">
-                <ArrowUpFromLine className="mr-1.5 h-4 w-4" /> Withdraw
-              </Button>
-            </>}
+            </> : <Button variant="outline" onClick={() => void adjustDemo()} disabled={demoBusy} className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800 hover:bg-slate-100 sm:text-sm">
+              <Wallet className="mr-1.5 h-4 w-4 text-[#0066FF]" /> Add Demo balance
+            </Button>}
           </div>
         </div>
       </div>
