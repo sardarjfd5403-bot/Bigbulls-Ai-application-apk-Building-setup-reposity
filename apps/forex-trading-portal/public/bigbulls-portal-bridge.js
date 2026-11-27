@@ -68,6 +68,7 @@
       appState.aiNews = [];
       appState.ibClients = [];
       appState.perfData = s.perfData || appState.perfData;
+      appState.perfDataByFilter = s.perfDataByFilter || appState.perfDataByFilter;
       appState.perfCurvePoints = s.perfCurvePoints || [];
       appState.email = s.email || '';
       syncAccountHeaderAndCard();
@@ -200,7 +201,32 @@
 
   var lastCandleKey = '';
   var lastCandleAt = 0;
-  window.generateChartCandles = function () {
+  window.selectPerfAccountFilter = function (key) {
+    appState.perfAccountFilter = key;
+    var modal = byId('perf-acc-modal'); if (modal) modal.classList.add('hidden');
+    window.renderPerformance();
+    if (typeof drawPerformanceCharts === 'function') drawPerformanceCharts();
+  };
+  window.renderPerformance = function () {
+    var filters = appState.perfDataByFilter || {};
+    var selected = filters[appState.perfAccountFilter || 'all'];
+    var period = appState.perfPeriod || '30D';
+    var stats = selected && (selected[period] || selected['30D']);
+    if (!stats) return;
+    var names = {all:'All accounts',real:'Real accounts',demo:'Demo accounts'};
+    setText('perf-acc-selected-label', names[appState.perfAccountFilter || 'all']);
+    setText('perf-net-profit', (stats.net >= 0 ? '+' : '-') + fmtMoney(Math.abs(stats.net)));
+    setText('perf-profit-factor', Number(stats.pf || 0).toFixed(2));
+    setText('perf-win-rate', Number(stats.win || 0).toFixed(1) + '%');
+    var bar = byId('perf-win-bar'); if (bar) bar.style.width = Math.max(0,Math.min(100,Number(stats.win)||0)) + '%';
+    setText('kpi-closed', String(stats.closed || 0));
+    setText('kpi-volume', stats.vol || '0.00 Lots');
+    setText('kpi-tprofit', '+' + fmtMoney(Number(stats.profit)||0));
+    setText('kpi-tloss', '-' + fmtMoney(Number(stats.loss)||0));
+    setText('kpi-best', '+' + fmtMoney(Number(stats.best)||0));
+    setText('kpi-avg', (Number(stats.avg)>=0?'+':'-') + fmtMoney(Math.abs(Number(stats.avg)||0)));
+  };
+    window.generateChartCandles = function () {
     var symbol = appState.selectedSymbol, timeframe = appState.timeframe || '1m';
     var key = symbol + '|' + timeframe, now = Date.now();
     if (key === lastCandleKey && now - lastCandleAt < 30000) return;
