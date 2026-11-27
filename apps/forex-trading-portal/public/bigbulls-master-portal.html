@@ -2850,22 +2850,7 @@
       showToast('Copied ' + idStr);
     }
 
-    function executeInternalTransfer() {
-      var inp = document.getElementById('transfer-amt-input');
-      var amt = inp ? parseFloat(inp.value) : 0;
-      if (isNaN(amt) || amt <= 0) {
-        showToast('Enter a valid transfer amount');
-        return;
-      }
-      var fromMode = appState.accountMode;
-      var toMode = fromMode === 'real' ? 'demo' : 'real';
-      var fromAcc = getActiveAccount(fromMode);
-      var toAcc = getActiveAccount(toMode);
-      fromAcc.balance = Math.max(0, fromAcc.balance - amt);
-      toAcc.balance += amt;
-      syncAccountHeaderAndCard();
-      showToast('Transferred ' + fmtMoney(amt) + ' to ' + toMode.toUpperCase() + ' ' + toAcc.id);
-    }
+    function executeInternalTransfer(){ showToast('Use the secure BIGBULLS funds transfer workflow.'); }
 
     function getFloatingPnl() {
       var sum = 0;
@@ -3039,47 +3024,9 @@
       if (modal) modal.classList.add('hidden');
     }
 
-    function saveTradeSlTp() {
-      var id = appState.editingTradeId;
-      var slVal = parseFloat(document.getElementById('te-sl-input').value);
-      var tpVal = parseFloat(document.getElementById('te-tp-input').value);
-      for (var i = 0; i < appState.runningTrades.length; i++) {
-        if (appState.runningTrades[i].id === id) {
-          if (!isNaN(slVal)) appState.runningTrades[i].sl = slVal;
-          if (!isNaN(tpVal)) appState.runningTrades[i].tp = tpVal;
-          break;
-        }
-      }
-      renderTradesLists();
-      closeTradeEditModal();
-      showToast('SL / TP saved');
-    }
+    function saveTradeSlTp(){ showToast('Use the connected BIGBULLS position modification workflow.'); }
 
-    function closeRunningTradeNow() {
-      var id = appState.editingTradeId;
-      var activeAcc = getActiveAccount();
-      for (var i = 0; i < appState.runningTrades.length; i++) {
-        if (appState.runningTrades[i].id === id) {
-          var closedItem = appState.runningTrades[i];
-          activeAcc.balance += closedItem.pnl;
-          appState.closedTrades.unshift({
-            id: closedItem.id,
-            symbol: closedItem.symbol,
-            side: closedItem.side,
-            lots: closedItem.lots,
-            pnl: closedItem.pnl,
-            time: 'Just now'
-          });
-          appState.runningTrades.splice(i, 1);
-          break;
-        }
-      }
-      syncAccountHeaderAndCard();
-      renderTradesLists();
-      drawMainChart();
-      closeTradeEditModal();
-      showToast('Trade closed on ' + activeAcc.id);
-    }
+    function closeRunningTradeNow(){ showToast('Use the connected BIGBULLS position close workflow.'); }
 
     /* =====================================================================
        MARKET WATCH & INTERACTIVE CHART
@@ -4385,24 +4332,7 @@
       setText('fund-method-subtitle', 'Method: ' + appState.selectedMethod);
     }
 
-    function submitFundRequest() {
-      var inp = document.getElementById('fund-amount-input');
-      var amt = inp ? parseFloat(inp.value) : 0;
-      if (isNaN(amt) || amt <= 0) {
-        showToast('Enter a valid amount');
-        return;
-      }
-      var acc = getActiveAccount(appState.accountMode);
-      if (appState.fundMode === 'deposit') {
-        acc.balance += amt;
-        showToast('Deposited ' + fmtMoney(amt) + ' to ' + acc.id + ' (' + appState.selectedMethod + ')');
-      } else {
-        acc.balance = Math.max(0, acc.balance - amt);
-        showToast('Withdrew ' + fmtMoney(amt) + ' from ' + acc.id + ' (' + appState.selectedMethod + ')');
-      }
-      syncAccountHeaderAndCard();
-      closeFundModal();
-    }
+    function submitFundRequest(){ showToast('Use the secure BIGBULLS payment request workflow.'); }
 
     /* =====================================================================
        SAFE LIGHTWEIGHT TICK LOOP (1200ms WITH RE-ENTRANCY GUARD)
