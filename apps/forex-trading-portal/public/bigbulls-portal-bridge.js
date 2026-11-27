@@ -473,6 +473,7 @@
     appState.fundMode = mode === 'withdraw' ? 'withdraw' : 'deposit';
     setText('fund-modal-title', mode === 'withdraw' ? 'Withdraw Funds' : 'Deposit Funds');
     var modal = byId('fund-modal'); if (modal) modal.classList.remove('hidden');
+    fundTxnId='';var otpBox=byId('bb-fund-otp-box');if(otpBox)otpBox.style.display='none';var otpInput=byId('bb-fund-otp');if(otpInput)otpInput.value='';
     var submit=byId('fund-submit-btn');if(submit)submit.disabled=false;
     ensureFundFields(); renderFundData(); emit('FUND_INIT');
   };
