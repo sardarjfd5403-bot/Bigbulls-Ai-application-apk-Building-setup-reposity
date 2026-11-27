@@ -673,7 +673,7 @@
   window.emitMfaEnroll = function () { emit('MFA_ENROLL'); };
   window.verifyHtmlMfa = function () {
     var code=value('bb-mfa-code');
-    if(!/^\\d{6}$/.test(code)){toast('Enter the 6-digit authenticator code.');return;}
+    if(!/^\d{6}$/.test(code)){toast('Enter the 6-digit authenticator code.');return;}
     emit('MFA_VERIFY',{factorId:window.bbMfaFactorId,code:code});
   };
   window.disableHtmlMfa = function () {
