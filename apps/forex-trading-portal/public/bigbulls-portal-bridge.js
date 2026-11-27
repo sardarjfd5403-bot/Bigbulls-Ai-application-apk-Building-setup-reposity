@@ -31,7 +31,7 @@
     if (typeof openProfileSheet === 'function') openProfileSheet(html);
   }
   function accountOptions() {
-    return (appState.accounts.real || []).concat(appState.accounts.demo || []).map(function (a) {
+    return (appState.accounts.real || []).map(function (a) {
       return '<option value="' + escapeHtml(a.backendId) + '">' + escapeHtml(a.id + ' · ' + a.label + ' · ' + a.type) + '</option>';
     }).join('');
   }
