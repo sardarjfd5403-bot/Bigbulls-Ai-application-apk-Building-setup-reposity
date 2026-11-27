@@ -4,6 +4,7 @@
   var fundData = { methods: [], wallets: [], transactions: [], wallet: null };
   var fundTxnId = '';
   var htmlOpenTicketPrecheck = window.openTicketPrecheck;
+  var htmlOpenSubpage = window.openSubpage;
   var htmlRenderBbAiTab = window.renderBbAiTab;
 
   function emit(action, payload) {
@@ -133,6 +134,10 @@
           closeFundModal();
         }
       } else toast(data.message || 'Payment request failed.');
+    } else if (data.type === 'APP_LOCK_DATA') {
+      window.bbAppLockEnabled=!!data.enabled;ensureAppLockRow(data);
+    } else if (data.type === 'APP_LOCK_RESULT') {
+      toast(data.message||'App Lock updated.');closeProfileSheet();emit('APP_LOCK_INIT');
     } else if (data.type === 'NOTIFICATIONS_RESULT') {
       appState.settings.notifications=!!data.enabled;
       var row=Array.from(document.querySelectorAll('.profile-row')).find(function(x){return (x.textContent||'').toLowerCase().includes('notifications');});
@@ -538,48 +543,48 @@
   };
   window.openLiveChatAssistant = function () { window.openTicketPrecheck(); };
   window.openFullSettingsOverlay = function () {
-    openSheet('<div class="card-title-row"><div class="card-title">Profile settings</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div>' +
-      '<div id="bb-profile-email" class="card-sub" style="margin:8px 0;">Loading profile…</div>' +
-      field('Full name', 'bb-profile-name', 'text', 'Full name') + field('Country', 'bb-profile-country', 'text', 'Country') +
-      field('Phone', 'bb-profile-phone', 'tel', '+92') +
-      '<button class="primary-btn" style="width:100%;" onclick="saveHtmlProfile()">Save profile</button>');
-    emit('PROFILE_INIT');
+    if(typeof htmlOpenSubpage==='function')htmlOpenSubpage('settings');
+    emit('NOTIFICATIONS_INIT');
+    emit('APP_LOCK_INIT');
   };
-  window.saveHtmlProfile = function () {
-    emit('PROFILE_SAVE', { full_name: value('bb-profile-name'), country: value('bb-profile-country'), phone: value('bb-profile-phone') });
-    toast('Saving profile…');
+  function ensureAppLockRow(data){
+    var body=byId('subpage-body');if(!body)return;
+    var cards=body.querySelectorAll('.card'),securityCard=null;
+    cards.forEach(function(card){if((card.textContent||'').includes('Set new PIN'))securityCard=card;});
+    if(!securityCard)return;
+    var row=byId('bb-app-lock-row');
+    if(!row){row=document.createElement('div');row.id='bb-app-lock-row';row.className='profile-row';}
+    row.innerHTML='<div style="font-size:13px;font-weight:800;">App Lock</div><span class="label-circle-badge">'+(data.native?(data.enabled?'ON':'OFF'):'Android only')+' &rsaquo;</span>';
+    var pinRow=Array.from(securityCard.querySelectorAll('.profile-row')).find(function(x){return (x.textContent||'').includes('Set new PIN');});
+    if(pinRow)securityCard.insertBefore(row,pinRow);else securityCard.appendChild(row);
+    row.onclick=function(){if(!data.native){toast('Secure App Lock is available in the installed Android app only.');return;}if(data.enabled){emit('APP_LOCK_DISABLE');}else window.openSetPinSheet();};
+  }
+  window.openSubpage = function (name) {
+    if(name==='settings'){window.openFullSettingsOverlay();return;}
+    if(name==='verification'||name==='kyc'){window.openKycSheet();return;}
+    if(name==='support_hub'){window.openTicketPrecheck();return;}
+    if(name==='ib'||name==='partner'){window.openIbPortal();return;}
+    if(name==='copy'){openSheet('<div class="card-title-row"><div class="card-title">Copy Trading</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:10px 0;">Copy Trading is not enabled on the connected BIGBULLS backend. No strategy allocation or investment has been created.</div>');return;}
+    if(name==='suggest'){window.openTicketPrecheck();return;}
+    if(name==='legal'){openSheet('<div class="card-title-row"><div class="card-title">Legal documents</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub">Official legal documents are not currently published through the connected client portal. Contact BIGBULLS support for the current agreements and risk disclosures.</div>');return;}
+    if(typeof htmlOpenSubpage==='function')htmlOpenSubpage(name);
   };
-  window.saveNewPassword = function () {
-    var input=byId('new-pass-inp'), password=input?input.value:'';
-    if(password.length<8){toast('Use a password with at least 8 characters.');return;}
-    emit('AUTH_PASSWORD_UPDATE',{password:password});
-    if(input)input.value='';
-    toast('Updating account password securely…');
-  };
-  window.toggleTwoFactorBtn = function () { emit('MFA_INIT'); };
-  window.emitMfaEnroll = function(){emit('MFA_ENROLL');};
-  window.verifyHtmlMfa = function(){emit('MFA_VERIFY',{factorId:window.bbMfaFactorId,code:value('bb-mfa-code')});};
-  window.disableHtmlMfa = function(){emit('MFA_DISABLE',{factorId:window.bbMfaFactorId});};
   window.openSetPinSheet = function () {
-    openSheet('<div class="card-title-row"><div class="card-title">Security PIN</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:10px 0;">Secure PIN storage and verification are not configured in the current BIGBULLS backend. No PIN will be accepted or stored until that vault is available.</div>');
+    openSheet('<div class="card-title-row"><div class="card-title">Set App Lock PIN</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:8px 0 12px;">Your six-digit PIN is stored in Android secure storage and checked by the BIGBULLS App Lock screen.</div>'+field('New 6-digit PIN','new-pin-input','password','000000')+'<button class="primary-btn" style="width:100%;margin-top:8px;" onclick="saveNewPin()">Save secure PIN</button>');
   };
-    window.cycleSkipPinInterval = function () { toast('PIN timeout preferences require a secure PIN lock feature, which is not configured yet.'); };
+  window.saveNewPin = function () { var pin=value('new-pin-input');if(!/^\\d{6}$/.test(pin)){toast('Enter exactly 6 digits.');return;}emit('APP_PIN_SAVE',{pin:pin});toast('Saving PIN in Android secure storage…'); };
+  window.cycleSkipPinInterval = function () { toast('PIN timeout preference is not configurable yet.'); };
   window.cycleSettingsLanguage = function () { toast('The BIGBULLS portal is currently available in English.'); };
   window.setAiLot = function (lot) {
-    appState.aiLot=Number(lot)||0.01;
-    appState.lotSize=appState.aiLot;
-    setText('exec-lot-val',appState.lotSize.toFixed(2));
+    appState.aiLot=Number(lot)||0.01;appState.lotSize=appState.aiLot;setText('exec-lot-val',appState.lotSize.toFixed(2));
     document.querySelectorAll('.lot-choice').forEach(function(btn){btn.classList.toggle('active',Number(btn.getAttribute('data-ailot'))===appState.aiLot);});
     toast('Lot size selected for manual chart orders: '+appState.aiLot.toFixed(2));
-  };
-    window.saveNewPin = function () {
-    toast('A secure PIN vault is not configured on this account. No PIN was saved.');
   };
   window.toggleSettingsSwitch = function (key,row) {
     if(key==='biometrics'){toast('Biometric sign-in requires native device enrollment and is not enabled yet.');return;}
     if(key==='notifications'){emit('NOTIFICATIONS_TOGGLE',{enabled:!appState.settings.notifications});return;}
   };
-    window.openReferralSheet = function () { window.openIbPortal(); };
+  window.openReferralSheet = function () { window.openIbPortal(); };
   window.openLiveChatAssistant = function () { window.openTicketPrecheck(); };
   window.openSubpage = function (name) {
     if (name === 'verification' || name === 'kyc') window.openKycSheet();
