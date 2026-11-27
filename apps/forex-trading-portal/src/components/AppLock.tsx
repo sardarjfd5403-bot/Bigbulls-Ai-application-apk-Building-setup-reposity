@@ -36,7 +36,7 @@ export default function AppLock({children}:{children:ReactNode}) {
         if(!secret){await bigbullsBackend.setAppLockEnabled(false);if(alive)setChecking(false);return;}
         if(alive){setSavedPin(secret);setLocked(true);setChecking(false);}
         const tryBiometric=async()=>{
-          if(!biometric)return false;
+          if(!(await readBiometricEnabled(id)))return false;
           try{
             await BiometricAuth.authenticate({reason:'Unlock BIGBULLS securely',cancelTitle:'Use App PIN',allowDeviceCredential:false,androidTitle:'BIGBULLS App Lock',androidSubtitle:'Authenticate to continue'});
             if(alive)setLocked(false);
