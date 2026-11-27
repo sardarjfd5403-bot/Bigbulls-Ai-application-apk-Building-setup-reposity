@@ -68,6 +68,7 @@
       appState.aiEvents = [];
       appState.aiNews = [];
       appState.ibClients = [];
+      if (typeof renderBbAiTab === 'function') renderBbAiTab();
       appState.perfData = s.perfData || appState.perfData;
       appState.perfDataByFilter = s.perfDataByFilter || appState.perfDataByFilter;
       appState.perfCurvePoints = s.perfCurvePoints || [];
@@ -541,9 +542,22 @@
   window.openLiveChatAssistant = function () { window.openTicketPrecheck(); };
   window.openSubpage = function (name) {
     if (name === 'verification' || name === 'kyc') window.openKycSheet();
-    else if (name === 'support_hub' || name === 'copy') window.openTicketPrecheck();
+    else if (name === 'support_hub') window.openTicketPrecheck();
     else if (name === 'ib' || name === 'partner') window.openIbPortal();
-    else toast('This section is not available from the connected BIGBULLS services yet.');
+    else if (name === 'settings') window.openFullSettingsOverlay();
+    else if (name === 'copy') {
+      openSheet('<div class="card-title-row"><div class="card-title">Copy Trading</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:10px 0;">Copy Trading is not enabled on the connected BIGBULLS backend. No strategy allocation or investment has been created.</div>');
+    } else if (name === 'suggest') window.openTicketPrecheck();
+    else if (name === 'legal') openSheet('<div class="card-title-row"><div class="card-title">Legal documents</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub">Official legal documents are not currently published through the connected client portal. Contact BIGBULLS support for the current agreements and risk disclosures.</div>');
+    else toast('This section is not enabled on the connected BIGBULLS services.');
+  };
+  window.openPerfAccountModal = function () {
+    var modal=byId('perf-acc-modal'), list=byId('perf-acc-options-list'); if(!modal||!list)return;
+    var options=[{key:'all',title:'All accounts',sub:'All closed trades currently synced',badge:'ALL'},
+      {key:'real',title:'Real accounts ('+(appState.accounts.real||[]).length+')',sub:'Real B-Book trading history',badge:'REAL'},
+      {key:'demo',title:'Demo accounts ('+(appState.accounts.demo||[]).length+')',sub:'Demo paper-trading history',badge:'DEMO'}];
+    list.innerHTML=options.map(function(o){return '<button type="button" class="perf-opt-card'+(appState.perfAccountFilter===o.key?' selected':'')+'" onclick="selectPerfAccountFilter(\\''+o.key+'\\')"><div><div style="display:flex;align-items:center;gap:7px;"><span class="tab-num" style="font-size:13.5px;font-weight:900;color:var(--navy);">'+o.title+'</span><span class="label-circle-badge">'+o.badge+'</span></div><div class="card-sub" style="margin-top:3px;">'+o.sub+'</div></div><span class="perf-radio-dot"></span></button>';}).join('');
+    modal.classList.remove('hidden');
   };
   window.toggleAiAutoTrade = function () { toast('AI auto-execution is disabled until server-side risk controls are enabled.'); };
   window.executeAiSignal = function () { toast('AI signal execution is not enabled; no simulated order was placed.'); };
