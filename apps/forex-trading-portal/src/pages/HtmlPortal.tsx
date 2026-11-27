@@ -135,7 +135,29 @@ export default function HtmlPortal() {
                 return {symbol,dir,conf:'Technical',entry:entry.toFixed(digits),sl:sl.toFixed(digits),tp:tp.toFixed(digits),series:close.slice(-24),rsi:Number(rsi.toFixed(1))};
               }catch{return null;}
             }));
-            const signals=results.filter(Boolean);
+            let signals=results.filter(Boolean);
+            try {
+              const {data:published,error:feedError}=await supabase.from('bb_market_signal_feed')
+                .select('symbol,direction,score,signal_data,generated_at,expires_at')
+                .eq('published',true).gt('expires_at',new Date().toISOString()).order('score',{ascending:false}).limit(20);
+              if(!feedError&&Array.isArray(published)&&published.length){
+                const brainSignals=await Promise.all(published.map(async(row:any)=>{
+                  const sd=row.signal_data||{};
+                  if(!['BUY','SELL'].includes(String(row.direction||'').toUpperCase())||sd.data_status!=='FRESH'||sd.news_block===true||!Number.isFinite(Number(sd.stop_loss))||!Number.isFinite(Number(sd.take_profit)))return null;
+                  const symbol=String(row.symbol||sd.symbol||'');
+                  const digits=Number(sd.digits)||5;
+                  const fmt=(n:any)=>Number(n).toFixed(digits);
+                  const local=signals.find((x:any)=>x.symbol===symbol);
+                  let series=local?.series||[];
+                  if(series.length<2){
+                    try{series=(await fetchCandles(symbol,'1h',24)).map((x:any)=>Number(x.c)).filter((x:number)=>Number.isFinite(x));}catch{series=[];}
+                  }
+                  return {symbol,dir:String(row.direction).toUpperCase(),conf:'Market Brain '+Number(row.score||sd.score||0)+'/100',entry:fmt(sd.entry_low)+' – '+fmt(sd.entry_high),sl:fmt(sd.stop_loss),tp:fmt(sd.take_profit),series:series.length>=2?series:[Number(sd.price)||0,Number(sd.price)||0],reasons:Array.isArray(sd.reasons)?sd.reasons:[],generatedAt:row.generated_at};
+                }));
+                const validBrain=brainSignals.filter(Boolean);
+                if(validBrain.length)signals=validBrain as any[];
+              }
+            } catch(feedError) { console.warn('Published Market Brain feed unavailable; retaining live technical scan.',feedError); }
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'BB_AI_SIGNALS',signals},window.location.origin);
             try {
               const {data:calendar,error:calendarError}=await supabase.functions.invoke('economic-calendar',{body:{}});
