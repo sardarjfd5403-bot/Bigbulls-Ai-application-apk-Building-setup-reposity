@@ -182,7 +182,15 @@
     function bbField(label,id,type,placeholder){return '<label style="display:block;margin:0 0 10px;font-size:12px;font-weight:800;color:#344054;">'+label+'<input id="'+id+'" type="'+type+'" placeholder="'+(placeholder||'')+'" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:12px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;color:#182230;font-size:14px;" /></label>';}
   function bbSelect(label,id,opts){return '<label style="display:block;margin:0 0 10px;font-size:12px;font-weight:800;color:#344054;">'+label+'<select id="'+id+'" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:12px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;color:#182230;font-size:14px;">'+opts+'</select></label>';}
   function accountOptions(){return (appState.accounts.real||[]).concat(appState.accounts.demo||[]).map(function(a){return '<option value="'+a.backendId+'">'+a.id+' · '+a.label+' · '+a.type+'</option>';}).join('');}
-  window.openTransferSheet=function(){
+  window.openNewAccount=function(){
+    openProfileSheet('<div class="card-title-row"><div class="card-title">Open trading account</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:8px 0 14px;">Create a BIGBULLS account using your existing account provisioning workflow.</div>'+bbSelect('Account mode','bb-new-mode','<option value="real">Real account</option><option value="demo">Demo account</option>')+bbSelect('Account type','bb-new-kind','<option value="Standard">Standard</option><option value="Raw Spread">Raw Spread</option><option value="Pro">Pro</option>')+bbSelect('Leverage','bb-new-leverage','<option value="100">1:100</option><option value="200">1:200</option><option value="500">1:500</option><option value="1000">1:1000</option>')+'<button class="primary-btn" style="width:100%;" onclick="submitNewAccount()">Create account</button>');
+  };
+  window.submitNewAccount=function(){
+    emit('OPEN_ACCOUNT',{type:document.getElementById('bb-new-mode').value,kind:document.getElementById('bb-new-kind').value,leverage:document.getElementById('bb-new-leverage').value});
+    showToast('Creating trading account…');
+  };
+  window.openReferralSheet=function(){window.openIbPortal();};
+    window.openTransferSheet=function(){
     openProfileSheet('<div class="card-title-row"><div class="card-title">Funds transfer</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:6px 0 14px;">Transfer between your BIGBULLS wallet and trading accounts. Requests are processed by the secure account ledger.</div>'+bbSelect('From','bb-transfer-from','<option value="wallet">BIGBULLS Wallet</option>'+accountOptions())+bbSelect('To','bb-transfer-to',accountOptions()+'<option value="wallet">BIGBULLS Wallet</option>')+bbField('Amount (USD)','bb-transfer-amount','number','0.00')+bbField('Note (optional)','bb-transfer-note','text','Transfer note')+'<button class="primary-btn" style="width:100%;" onclick="submitHtmlTransfer()">Confirm transfer</button>');
   };
   window.submitHtmlTransfer=function(){
@@ -220,13 +228,13 @@
     showToast('Saving profile…');
   };
     window.executeInternalTransfer = function () { window.openTransferSheet(); };
-  window.openNewAccount = function () { emit('NAVIGATE', { path: '/legacy/accounts' }); };
+
 
 
 
   window.openLiveChatAssistant = function () { window.openTicketPrecheck(); };
 
-  window.openReferralSheet = function () { emit('NAVIGATE', { path: '/partner' }); };
+
   window.openSubpage = function (name) {
     if (name === 'verification' || name === 'kyc') window.openKycSheet();
     else if (name === 'support_hub' || name === 'copy') emit('NAVIGATE', { path: '/support' });
