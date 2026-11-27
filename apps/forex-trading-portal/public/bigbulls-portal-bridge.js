@@ -572,7 +572,7 @@
   window.openSetPinSheet = function () {
     openSheet('<div class="card-title-row"><div class="card-title">Set App Lock PIN</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:8px 0 12px;">Your six-digit PIN is stored in Android secure storage and checked by the BIGBULLS App Lock screen.</div>'+field('New 6-digit PIN','new-pin-input','password','000000')+'<button class="primary-btn" style="width:100%;margin-top:8px;" onclick="saveNewPin()">Save secure PIN</button>');
   };
-  window.saveNewPin = function () { var pin=value('new-pin-input');if(!/^\\d{6}$/.test(pin)){toast('Enter exactly 6 digits.');return;}emit('APP_PIN_SAVE',{pin:pin});toast('Saving PIN in Android secure storage…'); };
+  window.saveNewPin = function () { var pin=value('new-pin-input');if(!/^\d{6}$/.test(pin)){toast('Enter exactly 6 digits.');return;}emit('APP_PIN_SAVE',{pin:pin});toast('Saving PIN in Android secure storage…'); };
   window.cycleSkipPinInterval = function () { toast('PIN timeout preference is not configurable yet.'); };
   window.cycleSettingsLanguage = function () { toast('The BIGBULLS portal is currently available in English.'); };
   window.setAiLot = function (lot) {
