@@ -284,7 +284,9 @@ export default function HtmlPortal() {
               asset = method.asset; network = method.network;
               if (amountUsd < Number(method.min_amount_usd || 0) || (method.max_amount_usd != null && amountUsd > Number(method.max_amount_usd))) throw new Error('Amount is outside this payment method limit.');
               const isCrypto = method.method_type === 'crypto';
-              destination = method.method_type === 'crypto' ? method.destination_details : [method.account_title, method.account_number, method.destination_details].filter(Boolean).join(' · ');
+              const depositWallets = method.method_type === 'crypto' ? await bigbullsBackend.cryptoWallets() : [];
+              const cryptoWallet = depositWallets.find((w:any)=>w.id===method.crypto_wallet_id);
+              destination = method.method_type === 'crypto' ? (cryptoWallet?.address || method.destination_details) : [method.account_title, method.account_number, method.destination_details].filter(Boolean).join(' · ');
               if (isCrypto && txHash.length <= 10) throw new Error('Enter the blockchain transaction hash.');
               if (!isCrypto && !(payload.proof && typeof payload.proof.size === 'number' && typeof payload.proof.name === 'string')) throw new Error('Upload your bank/payment receipt.');
               if (payload.proof && typeof payload.proof.size === 'number' && typeof payload.proof.name === 'string') proofPath = await bigbullsBackend.uploadPaymentProof(payload.proof as File);
