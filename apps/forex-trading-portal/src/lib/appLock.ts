@@ -25,5 +25,5 @@ export async function readBiometricEnabled(userId:string):Promise<boolean>{
 }
 export async function saveBiometricEnabled(userId:string,enabled:boolean){
   if(!isNativeApp()) throw new Error('Biometric sign-in is available in the BIGBULLS Android app only.');
-  await SecureStorage.set(biometricPreferenceKey(userId),enabled,false,false);
+  await SecureStorage.set(biometricPreferenceKey(userId),String(enabled),false,false);
 }
