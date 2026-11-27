@@ -255,7 +255,7 @@ export const bigbullsBackend = {
 
   async demoOpen(accountId: string, input: {
     symbol: string; side: 'BUY' | 'SELL'; quantity: number;
-    stop_loss: number; take_profit?: number | null;
+    stop_loss?: number | null; take_profit?: number | null;
   }) {
     return invokeAuthed<Record<string, unknown>>('paper-execution', {
       action: 'open', account_id: accountId, account_mode: 'demo', ...input,
@@ -268,10 +268,10 @@ export const bigbullsBackend = {
     });
   },
 
-  async demoModify(accountId: string, tradeId: string, stopLoss: number, takeProfit?: number | null) {
+  async demoModify(accountId: string, tradeId: string, stopLoss?: number | null, takeProfit?: number | null) {
     return invokeAuthed<Record<string, unknown>>('paper-execution', {
       action: 'modify', account_id: accountId, account_mode: 'demo',
-      trade_id: tradeId, stop_loss: stopLoss, take_profit: takeProfit ?? null,
+      trade_id: tradeId, stop_loss: stopLoss ?? null, take_profit: takeProfit ?? null,
     });
   },
 
