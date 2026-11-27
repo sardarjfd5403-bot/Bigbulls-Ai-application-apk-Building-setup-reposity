@@ -560,7 +560,14 @@
   window.emitMfaEnroll = function(){emit('MFA_ENROLL');};
   window.verifyHtmlMfa = function(){emit('MFA_VERIFY',{factorId:window.bbMfaFactorId,code:value('bb-mfa-code')});};
   window.disableHtmlMfa = function(){emit('MFA_DISABLE',{factorId:window.bbMfaFactorId});};
-  window.saveNewPin = function () {
+  window.cycleSkipPinInterval = function () { toast('PIN timeout preferences require a secure PIN lock feature, which is not configured yet.'); };
+  window.cycleSettingsLanguage = function () { toast('The BIGBULLS portal is currently available in English.'); };
+  window.setAiLot = function (lot) {
+    appState.aiLot=Number(lot)||0.01;
+    document.querySelectorAll('.lot-choice').forEach(function(btn){btn.classList.toggle('active',Number(btn.getAttribute('data-ailot'))===appState.aiLot);});
+    toast('Lot size selected for manual chart orders: '+appState.aiLot.toFixed(2));
+  };
+    window.saveNewPin = function () {
     toast('A secure PIN vault is not configured on this account. No PIN was saved.');
   };
   window.toggleSettingsSwitch = function (key,row) {
