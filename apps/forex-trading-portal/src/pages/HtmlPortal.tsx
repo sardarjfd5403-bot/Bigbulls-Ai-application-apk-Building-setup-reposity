@@ -59,6 +59,11 @@ export default function HtmlPortal() {
     };
     const perfDataByFilter = Object.fromEntries(Object.entries(scoped).map(([key,rows])=>[key,{'7D':makeStats(rows,7),'30D':makeStats(rows,30),'ALL':makeStats(rows,0)}]));
     const perfData = perfDataByFilter[account.type==='Real'?'real':'demo'];
+    const perfCurvePointsByFilter = Object.fromEntries(Object.entries(scoped).map(([key,rows])=>{
+      let total=0;const points=[0];
+      rows.slice().sort((a,b)=>a.closeTime-b.closeTime).forEach(p=>{total+=p.profit;points.push(total);});
+      return [key,points];
+    }));
     frame.current?.contentWindow?.postMessage({
       source: 'BIGBULLS_NATIVE_HOST', type: 'STATE',
       state: {
@@ -68,7 +73,7 @@ export default function HtmlPortal() {
         },
         activeAccountId: account.id, runningTrades: positions, pendingOrders: trading.state.pending.filter(p=>p.accountId===account.id).map(p=>({id:p.id,symbol:p.symbol,side:p.side.toUpperCase(),kind:p.kind,lots:p.volume,price:p.price,sl:p.sl||0,tp:p.tp||0})), closedTrades: closed,
         instruments, equity: trading.equity, floating: trading.floating,
-        email: data.user?.email || '', perfData, perfDataByFilter,
+        email: data.user?.email || '', perfData, perfDataByFilter, perfCurvePointsByFilter,
         perfCurvePoints: allClosed.filter(p=>p.accountId===account.id).slice().reverse().reduce((arr,p)=>{arr.push((arr[arr.length-1]||0)+p.profit);return arr;},[0])
       }
     }, window.location.origin);
