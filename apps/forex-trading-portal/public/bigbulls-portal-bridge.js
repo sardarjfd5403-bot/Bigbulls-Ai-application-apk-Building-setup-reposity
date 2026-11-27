@@ -198,8 +198,14 @@
     }
   });
 
+  var lastCandleKey = '';
+  var lastCandleAt = 0;
   window.generateChartCandles = function () {
-    emit('GET_CANDLES', { symbol: appState.selectedSymbol, timeframe: appState.timeframe || '1m' });
+    var symbol = appState.selectedSymbol, timeframe = appState.timeframe || '1m';
+    var key = symbol + '|' + timeframe, now = Date.now();
+    if (key === lastCandleKey && now - lastCandleAt < 30000) return;
+    lastCandleKey = key; lastCandleAt = now;
+    emit('GET_CANDLES', { symbol: symbol, timeframe: timeframe });
   };
   window.placeChartOrder = function (side) {
     emit('OPEN_ORDER', { side: side, symbol: appState.selectedSymbol, lots: appState.lotSize, mode: appState.orderMode, price: appState.pendingPrice });
