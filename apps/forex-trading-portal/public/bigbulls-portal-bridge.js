@@ -137,7 +137,7 @@
     panel.insertBefore(box, document.getElementById('fund-submit-btn'));
     var otpBox=document.createElement('div'); otpBox.id='bb-fund-otp-box'; otpBox.style.display='none'; otpBox.style.marginTop='12px';
     var otp=fundField('Email OTP','bb-fund-otp','text','6-digit code'); otpBox.appendChild(otp);
-    var verify=document.createElement('button'); verify.type='button'; verify.textContent='Verify withdrawal OTP'; verify.className='primary-btn'; verify.onclick=function(){emit('FUND_VERIFY_OTP',{transactionId:fundTxnId,otp:(document.getElementById('bb-fund-otp')||{}).value||''});}; otpBox.appendChild(verify); panel.insertBefore(otpBox,document.getElementById('fund-submit-btn'));
+    var verify=document.createElement('button'); verify.type='button'; verify.textContent='Verify withdrawal OTP'; verify.className='primary-btn'; verify.onclick=function(){emit('FUND_VERIFY_OTP',{transactionId:fundTxnId,otp:(document.getElementById('bb-fund-otp')||{}).value||''});}; otpBox.appendChild(verify); var resend=document.createElement('button');resend.type='button';resend.textContent='Resend OTP';resend.className='secondary-btn';resend.style.marginTop='8px';resend.onclick=function(){emit('FUND_RESEND_OTP',{transactionId:fundTxnId});};otpBox.appendChild(resend); panel.insertBefore(otpBox,document.getElementById('fund-submit-btn'));
     return box;
   }
   function renderLiveFundData() {
@@ -1163,7 +1163,7 @@
       var d=data.data||{};var set=function(id,v){var e=document.getElementById(id);if(e)e.value=v||'';};set('bb-profile-name',d.full_name);set('bb-profile-country',d.country);set('bb-profile-phone',d.phone);
       var pe=document.getElementById('bb-profile-email');if(pe)pe.textContent=d.email||appState.email||'';
     } else if (data.type === 'WORKFLOW_RESULT') {
-      if(data.ok){showToast(data.message||'Saved successfully.');if(data.workflow==='transfer')window.refreshAccountData();if(data.workflow==='support')emit('SUPPORT_INIT');if(data.workflow==='profile')emit('PROFILE_INIT');}
+      if(data.ok){showToast(data.message||'Saved successfully.');if(data.workflow==='transfer'){window.refreshAccountData();closeProfileSheet();}if(data.workflow==='account')closeProfileSheet();if(data.workflow==='support')emit('SUPPORT_INIT');if(data.workflow==='profile')emit('PROFILE_INIT');if(data.workflow==='partner'){var form=document.getElementById('bb-partner-apply');if(form)form.style.display='none';emit('PARTNER_INIT');}}
       else showToast(data.message||'Request failed.');
     } else if (data.type === 'KYC_DATA') {
       var record=data.record||null, status=document.getElementById('bb-kyc-status');
