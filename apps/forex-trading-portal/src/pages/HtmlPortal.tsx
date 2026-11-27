@@ -83,6 +83,46 @@ export default function HtmlPortal() {
         switch (action) {
           case 'READY': await sendSnapshot(); await sendFundData(); break;
           case 'FUND_INIT': await sendFundData(); break;
+          case 'WALLET_INIT': {
+            const [balance, ledger, tx] = await Promise.all([bigbullsBackend.walletBalance(), bigbullsBackend.walletLedger(), bigbullsBackend.walletTransactions()]);
+            frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'WALLET_DATA', data:{balance,ledger,transactions:tx} }, window.location.origin);
+            break;
+          }
+          case 'TRANSFER_SUBMIT': {
+            const amount=Number(payload.amount);
+            if (!(amount>0)) throw new Error('Enter a valid transfer amount.');
+            await bigbullsBackend.clientFundsTransfer({fromType:payload.fromType==='wallet'?'wallet':'account',fromAccountId:payload.fromType==='wallet'?null:String(payload.fromAccountId||''),toType:payload.toType==='wallet'?'wallet':'account',toAccountId:payload.toType==='wallet'?null:String(payload.toAccountId||''),amount,note:String(payload.note||'BIGBULLS client transfer')});
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'transfer',ok:true,message:'Transfer completed successfully.'},window.location.origin);
+            await trading.refresh(); await sendSnapshot();
+            break;
+          }
+          case 'SUPPORT_SUBMIT': {
+            const subject=String(payload.subject||'').trim(), message=String(payload.message||'').trim();
+            if(subject.length<3||message.length<10)throw new Error('Enter a subject and a message of at least 10 characters.');
+            const ticket=await bigbullsBackend.createSupportTicket({subject,category:String(payload.category||'general'),message});
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'support',ok:true,message:'Support ticket created: '+ticket.id},window.location.origin);
+            break;
+          }
+          case 'PARTNER_INIT': {
+            const data=await bigbullsBackend.partnerDashboard();
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'PARTNER_DATA',data},window.location.origin);
+            break;
+          }
+          case 'PARTNER_APPLY': {
+            const data=await bigbullsBackend.applyPartner({partner_type:String(payload.partner_type||'ib'),business_name:String(payload.business_name||''),website_or_social:String(payload.website_or_social||''),audience_size:String(payload.audience_size||''),experience:String(payload.experience||'')});
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'partner',ok:true,message:'Partner application submitted for review.',data},window.location.origin);
+            break;
+          }
+          case 'PROFILE_INIT': {
+            const data=await bigbullsBackend.profile();
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'PROFILE_DATA',data},window.location.origin);
+            break;
+          }
+          case 'PROFILE_SAVE': {
+            const data=await bigbullsBackend.updateProfile({full_name:String(payload.full_name||''),country:String(payload.country||''),phone:String(payload.phone||'')});
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'profile',ok:true,message:'Profile saved.',data},window.location.origin);
+            break;
+          }
           case 'KYC_INIT': {
             const record = await bigbullsBackend.kyc();
             frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'KYC_DATA', record }, window.location.origin);
