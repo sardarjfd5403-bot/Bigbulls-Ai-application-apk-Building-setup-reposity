@@ -95,7 +95,7 @@
       if (email) email.textContent = s.email || '—';
       document.documentElement.classList.remove('bb-sync-pending');
       var chart = byId('chart-view');
-      if (chart && !chart.classList.contains('hidden') && (!appState.candles || !appState.candles.length)) window.generateChartCandles();
+      if (chart && !chart.classList.contains('hidden') && (!appState.candles || !appState.candles.length) && !appState.candlesLoading) window.generateChartCandles();
       var walletLabel = byId('funding-wallet-bal');
       if (walletLabel && fundData.wallet) {
         var wb = fundData.wallet;
@@ -234,6 +234,7 @@
         if (data.workflow === 'partner' || data.workflow === 'partner_transfer') { emit('PARTNER_INIT'); }
       } else toast(data.message || 'Request failed.');
     } else if (data.type === 'ACTION_ERROR') {
+      appState.candlesLoading=false;appState.candlesLoadingKey='';
       toast(data.message || 'Request failed');
     }
   });
