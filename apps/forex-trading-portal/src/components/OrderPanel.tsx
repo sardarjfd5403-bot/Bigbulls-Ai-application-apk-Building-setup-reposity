@@ -25,7 +25,6 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
   const v = Number(vol);
   const validVol = Number.isFinite(v) && v >= 0.01 && v <= 200;
   const margin = validVol ? marginFor(symbol, v, t.account?.leverage ?? 100, t.quotes ?? initialQuotes()) : 0;
-  const missingDemoSl = (t.account?.type ?? 'Demo') === 'Demo' && (!useSl || !sl || !(Number(sl) > 0));
   const pip = s.digits >= 3 ? Math.pow(10, -(s.digits - 1)) : Math.pow(10, -s.digits);
   const pipValue = validVol ? pip * v * s.contract : 0;
   const ref = side === 'buy' ? q.ask : q.bid;
@@ -59,7 +58,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
       </div>
       <AIAutoTradeControl />
       <div className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-stretch gap-1.5 sm:gap-2">
-        <button type="button" disabled={t.busy || !t.account.id || !validVol || missingDemoSl || (mode === 'Pending' && !(Number(price) > 0))} onClick={() => { setSide('sell'); if (mode === 'Market') submit('sell'); }} className={cn('min-w-0 rounded-lg border-2 p-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 sm:p-2.5', side === 'sell' ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-destructive/30 text-destructive')}>
+        <button type="button" disabled={t.busy || !t.account.id || !validVol || (mode === 'Pending' && !(Number(price) > 0))} onClick={() => { setSide('sell'); if (mode === 'Market') submit('sell'); }} className={cn('min-w-0 rounded-lg border-2 p-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 sm:p-2.5', side === 'sell' ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-destructive/30 text-destructive')}>
           <div className="text-[10px] font-bold uppercase">{mode === 'Market' ? 'Sell' : 'Sell'}</div><div className="num truncate text-sm font-bold sm:text-base">{q.bid.toFixed(s.digits)}</div>
           {mode === 'Market' && <div className="mt-1 text-[10px] font-semibold">{t.busy && side === 'sell' ? 'Sending…' : 'SELL NOW'}</div>}
         </button>
@@ -72,7 +71,7 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
           </div>
           {!validVol && <p className="text-center text-[9px] text-destructive">0.01–200</p>}
         </div>
-        <button type="button" disabled={t.busy || !t.account.id || !validVol || missingDemoSl || (mode === 'Pending' && !(Number(price) > 0))} onClick={() => { setSide('buy'); if (mode === 'Market') submit('buy'); }} className={cn('min-w-0 rounded-lg border-2 p-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 sm:p-2.5', side === 'buy' ? 'border-primary bg-primary text-primary-foreground' : 'border-primary/30 text-primary')}>
+        <button type="button" disabled={t.busy || !t.account.id || !validVol || (mode === 'Pending' && !(Number(price) > 0))} onClick={() => { setSide('buy'); if (mode === 'Market') submit('buy'); }} className={cn('min-w-0 rounded-lg border-2 p-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 sm:p-2.5', side === 'buy' ? 'border-primary bg-primary text-primary-foreground' : 'border-primary/30 text-primary')}>
           <div className="text-[10px] font-bold uppercase">Buy</div><div className="num truncate text-sm font-bold sm:text-base">{q.ask.toFixed(s.digits)}</div>
           {mode === 'Market' && <div className="mt-1 text-[10px] font-semibold">{t.busy && side === 'buy' ? 'Sending…' : 'BUY NOW'}</div>}
         </button>
@@ -88,12 +87,11 @@ export default function OrderPanel({ symbol }: { symbol: string }) {
       )}
       <Toggle label="Take Profit" on={useTp} setOn={setUseTp} value={tp} setValue={setTp} ph={ref.toFixed(s.digits)} />
       <Toggle label="Stop Loss" on={useSl} setOn={setUseSl} value={sl} setValue={setSl} ph={ref.toFixed(s.digits)} />
-      {missingDemoSl && <p className="text-xs text-amber-700">Demo paper execution requires a Stop Loss. Enable Stop Loss and enter a valid price before submitting.</p>}
       <div className="space-y-1.5 rounded-lg bg-muted/60 p-3 text-xs">
         <Row k="Margin" v={money(margin)} /><Row k="Free margin" v={money(t.free)} />
         <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${(t.account?.leverage ?? 100)}`} />
       </div>
-      {mode === 'Pending' && <Button size="lg" disabled={!validVol || !t.account.id || t.busy || missingDemoSl || !(Number(price) > 0)} onClick={() => submit()} className="mt-auto h-12 text-base font-bold">Place {side === 'buy' ? 'Buy' : 'Sell'} pending order · {vol} lots</Button>}
+      {mode === 'Pending' && <Button size="lg" disabled={!validVol || !t.account.id || t.busy || !(Number(price) > 0)} onClick={() => submit()} className="mt-auto h-12 text-base font-bold">Place {side === 'buy' ? 'Buy' : 'Sell'} pending order · {vol} lots</Button>}
       {mode === 'Market' && <p className="mt-auto text-center text-[11px] text-muted-foreground">{t.busy ? 'Sending order securely…' : 'Tap BUY or SELL to execute immediately'}</p>}
     </div>
   );
