@@ -581,7 +581,7 @@
     if(!prompt){toast('Enter a market question first.');return;}
     pushAiMessage('You',prompt);
     var symbol=(appState.selectedSymbol||'EURUSD');
-    var match=prompt.toUpperCase().match(/\\b(EURUSD|GBPUSD|USDJPY|XAUUSD|XAGUSD|BTCUSD|ETHUSD|US30|US500|USTEC)\\b/);
+    var match=prompt.toUpperCase().match(/\b(EURUSD|GBPUSD|USDJPY|XAUUSD|XAGUSD|BTCUSD|ETHUSD|US30|US500|USTEC)\b/);
     if(match)symbol=match[1];
     emit('BB_AI_ANALYZE',{symbol:symbol,timeframe:appState.timeframe||'1h',prompt:prompt});
   };
