@@ -14,6 +14,7 @@ import { PortalProvider } from './lib/portal';
 import Layout from './components/Layout';
 import Logo from './components/Logo';
 import Accounts from './pages/Accounts';
+import HtmlPortal from './pages/HtmlPortal';
 import Funds from './pages/Funds';
 import Transfer from './pages/Transfer';
 import HistoryPage from './pages/HistoryPage';
@@ -233,9 +234,10 @@ export default function App() {
         <AppLock>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<HtmlPortal />} />
             <Route path="/terminal" element={<Terminal />} />
             <Route element={<Layout />}>
-              <Route path="/" element={<Accounts />} />
+              <Route path="/legacy/accounts" element={<Accounts />} />
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/deposit" element={<Funds key="d" mode="Deposit" />} />
               <Route path="/withdraw" element={<Funds key="w" mode="Withdrawal" />} />
