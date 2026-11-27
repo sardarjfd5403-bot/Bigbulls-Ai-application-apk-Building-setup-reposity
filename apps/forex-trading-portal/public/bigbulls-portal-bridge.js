@@ -4,6 +4,7 @@
   var fundData = { methods: [], wallets: [], transactions: [], wallet: null };
   var fundTxnId = '';
   var htmlOpenTicketPrecheck = window.openTicketPrecheck;
+  var htmlRenderBbAiTab = window.renderBbAiTab;
 
   function emit(action, payload) {
     window.parent.postMessage({ source: 'BIGBULLS_HTML_PORTAL', action: action, payload: payload || {} }, window.location.origin);
@@ -589,6 +590,10 @@
   };
   window.toggleAiAutoTrade = function () { toast('AI auto-execution is disabled until server-side risk controls are enabled.'); };
   window.executeAiSignal = function () { toast('AI signal execution is not enabled; no simulated order was placed.'); };
+  window.renderBbAiTab = function(){
+    if(typeof htmlRenderBbAiTab==='function')htmlRenderBbAiTab();
+    document.querySelectorAll('#ai-signals-list .primary-btn').forEach(function(btn){btn.textContent='Review chart';});
+  };
   function ensureAiScanButton(){
     var list=byId('ai-signals-list');if(!list||byId('bb-ai-scan-btn'))return;
     var btn=document.createElement('button');btn.id='bb-ai-scan-btn';btn.type='button';btn.className='primary-btn';btn.style.margin='8px 0 12px';btn.textContent='Scan live market setups';
