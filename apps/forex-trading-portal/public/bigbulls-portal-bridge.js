@@ -181,6 +181,7 @@
         }
       });
     } else if (data.type === 'KYC_RESULT') {
+      appState.kycSubmitting=false;
       toast(data.message || 'Verification submitted.');
       var kycStatus = byId('bb-kyc-status');
       if (kycStatus) kycStatus.textContent = 'Current status: PENDING REVIEW';
@@ -244,6 +245,7 @@
       appState.fundSubmitting=false;var fb=byId('fund-submit-btn');if(fb&&!fundTxnId)fb.disabled=false;
       appState.transferSubmitting=false;var tb=byId('bb-transfer-submit');if(tb)tb.disabled=false;
       appState.accountCreating=false;var ab=byId('bb-new-account-submit');if(ab)ab.disabled=false;
+      appState.kycSubmitting=false;var kb=byId('bb-kyc-submit');if(kb)kb.disabled=false;
       toast(data.message || 'Request failed');
     }
   });
@@ -510,10 +512,11 @@
       field('Document number', 'bb-kyc-number', 'text', 'Document number') +
       field('Front side (100 KB–20 MB)', 'bb-kyc-front', 'file', '') +
       field('Back side (100 KB–20 MB)', 'bb-kyc-back', 'file', '') +
-      '<button class="primary-btn" style="width:100%;margin-top:8px;" onclick="submitKycFromHtml()">Submit verification</button></div>');
+      '<button id="bb-kyc-submit" class="primary-btn" style="width:100%;margin-top:8px;" onclick="submitKycFromHtml()">Submit verification</button></div>');
     emit('KYC_INIT');
   };
   window.submitKycFromHtml = function () {
+    if(appState.kycSubmitting)return;appState.kycSubmitting=true;var btn=byId('bb-kyc-submit');if(btn)btn.disabled=true;
     var front = byId('bb-kyc-front'), back = byId('bb-kyc-back');
     emit('KYC_SUBMIT', {
       values: {
