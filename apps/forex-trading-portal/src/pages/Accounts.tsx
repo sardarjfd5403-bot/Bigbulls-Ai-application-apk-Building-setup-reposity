@@ -135,7 +135,7 @@ function AccountCard({ a, expanded, onSelect, onToggleTrades }: {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {a.type === 'Demo' && <>
-              <DropdownMenuItem disabled={demoBusy} onClick={() => void adjustDemo()}>＋ Add Demo balance</DropdownMenuItem>
+              <DropdownMenuItem disabled={demoBusy} onClick={() => void adjustDemo()}>＋ Add Fund</DropdownMenuItem>
             </>}
             {t.state.accounts.length > 1 && <DropdownMenuItem className="text-destructive" onClick={() => setArch(true)}>Archive account</DropdownMenuItem>}
           </DropdownMenuContent>
