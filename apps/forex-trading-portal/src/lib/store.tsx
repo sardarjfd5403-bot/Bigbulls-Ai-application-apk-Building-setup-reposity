@@ -36,7 +36,9 @@ function useEngine(){
  const [busy,setBusy]=useState(false);
  const accountsRef=useRef(state.accounts); useEffect(()=>{accountsRef.current=state.accounts;},[state.accounts]);
  const refresh=useCallback(async()=>{
-  const [rows, history]=await Promise.all([bigbullsBackend.accounts(),bigbullsBackend.transactionHistory()]);
+  const [rows, history, realClosed, demoClosed]=await Promise.all([bigbullsBackend.accounts(),bigbullsBackend.transactionHistory(),supabase.from('bb_bbook_positions').select('id,account_id,symbol,side,quantity,entry_price,mark_price,realized_pnl,close_reason,opened_at,closed_at').eq('status','CLOSED').order('closed_at',{ascending:false}).limit(1000),supabase.from('bb_paper_execution_trades').select('id,account_id,symbol,side,quantity,entry_price,exit_price,mark_price,realized_pnl,close_reason,opened_at,closed_at').eq('status','CLOSED').order('closed_at',{ascending:false}).limit(1000)]);
+  if(realClosed.error||demoClosed.error)throw realClosed.error||demoClosed.error;
+  const closedTrades=[...(realClosed.data||[]),...(demoClosed.data||[])].filter((x:any)=>SYM[x.symbol]&&x.account_id).map((x:any)=>({...mapPosition(x),closePrice:Number(x.exit_price??x.mark_price??x.entry_price),closeTime:Date.parse(x.closed_at||x.opened_at),profit:Number(x.realized_pnl||0),reason:x.close_reason||'Closed'})).filter((x:any)=>Number.isFinite(x.closeTime));
   let accounts=rows.filter(a=>a.status==='approved'&&!a.archived_at&&!a.deleted_at).map(mapAccount);
   // Demo balances live in the paper-execution ledger, not trading_accounts.balance.
   // Hydrate every Demo card from that ledger so inactive accounts also show their real virtual balance.
@@ -65,7 +67,7 @@ function useEngine(){
    amount:Number(x.amount||0),status:['completed','approved'].includes(String(x.status).toLowerCase())?'Done':String(x.status||'Pending').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),time:Date.parse(x.created_at)
   }));
   const txns=[...walletTxns,...accountTxns,...fundTxns].filter(x=>Number.isFinite(x.time)).sort((a,b)=>b.time-a.time);
-  setState(old=>({...old,accounts,txns,activeId:accounts.some(a=>a.id===old.activeId)?old.activeId:(accounts[0]?.id||'')}));
+  setState(old=>({...old,accounts,txns,history:closedTrades,activeId:accounts.some(a=>a.id===old.activeId)?old.activeId:(accounts[0]?.id||'')}));
  },[]);
  const refreshAccount=useCallback(async(accountId:string)=>{
   const account=accountsRef.current.find(a=>a.id===accountId); if(!account)return;
