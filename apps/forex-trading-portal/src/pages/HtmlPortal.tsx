@@ -37,18 +37,24 @@ export default function HtmlPortal() {
       symbol, bid: Number(q.bid), ask: Number(q.ask), digits: Number(q.digits || (symbol.includes('JPY') ? 3 : 5)),
       dir: q.direction || 'up'
     }));
-    const history = trading.state.history.filter(p => p.accountId === account.id);
-    const makeStats = (days: number) => {
+    const allClosed = trading.state.history;
+    const makeStats = (rows: typeof allClosed, days: number) => {
       const cutoff = days ? Date.now() - days * 86400000 : 0;
-      const rows = history.filter(p => p.closeTime >= cutoff);
-      const profits = rows.filter(p => p.profit > 0).reduce((n,p) => n+p.profit,0);
-      const losses = Math.abs(rows.filter(p => p.profit < 0).reduce((n,p) => n+p.profit,0));
+      const filtered = rows.filter(p => p.closeTime >= cutoff);
+      const profits = filtered.filter(p => p.profit > 0).reduce((n,p) => n+p.profit,0);
+      const losses = Math.abs(filtered.filter(p => p.profit < 0).reduce((n,p) => n+p.profit,0));
       const net = profits - losses;
-      return { net, pf: losses ? profits/losses : (profits ? profits : 0), win: rows.length ? rows.filter(p=>p.profit>0).length/rows.length*100 : 0,
-        closed: rows.length, vol: rows.reduce((n,p)=>n+p.volume,0).toFixed(2)+' Lots',
-        profit: profits, loss: losses, best: Math.max(0,...rows.map(p=>p.profit)), avg: rows.length ? net/rows.length : 0 };
+      return { net, pf: losses ? profits/losses : (profits ? profits : 0), win: filtered.length ? filtered.filter(p=>p.profit>0).length/filtered.length*100 : 0,
+        closed: filtered.length, vol: filtered.reduce((n,p) => n+p.volume,0).toFixed(2)+' Lots',
+        profit: profits, loss: losses, best: Math.max(0,...filtered.map(p=>p.profit)), avg: filtered.length ? net/filtered.length : 0 };
     };
-    const perfData = { '7D': makeStats(7), '30D': makeStats(30), 'ALL': makeStats(0) };
+    const scoped = {
+      all: allClosed,
+      real: allClosed.filter(p=>all.some(a=>a.id===p.accountId&&a.type==='Real')),
+      demo: allClosed.filter(p=>all.some(a=>a.id===p.accountId&&a.type==='Demo')),
+    };
+    const perfDataByFilter = Object.fromEntries(Object.entries(scoped).map(([key,rows])=>[key,{'7D':makeStats(rows,7),'30D':makeStats(rows,30),'ALL':makeStats(rows,0)}]));
+    const perfData = perfDataByFilter[account.type==='Real'?'real':'demo'];
     frame.current?.contentWindow?.postMessage({
       source: 'BIGBULLS_NATIVE_HOST', type: 'STATE',
       state: {
@@ -58,7 +64,7 @@ export default function HtmlPortal() {
         },
         activeAccountId: account.id, runningTrades: positions, closedTrades: closed,
         instruments, equity: trading.equity, floating: trading.floating,
-        email: data.user?.email || '', perfData,
+        email: data.user?.email || '', perfData, perfDataByFilter,
         perfCurvePoints: history.slice().reverse().reduce((arr,p)=>{arr.push((arr[arr.length-1]||0)+p.profit);return arr;},[0])
       }
     }, window.location.origin);
