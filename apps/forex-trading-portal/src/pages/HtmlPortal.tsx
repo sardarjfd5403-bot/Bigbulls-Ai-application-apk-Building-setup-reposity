@@ -15,6 +15,7 @@ export default function HtmlPortal() {
   const frame = useRef<HTMLIFrameElement>(null);
   const trading = useTrading();
   const navigate = useNavigate();
+  const historyCache = useRef<Record<string, any[]>>({});
 
   const sendSnapshot = useCallback(async () => {
     const { data } = await supabase.auth.getUser();
@@ -41,7 +42,24 @@ export default function HtmlPortal() {
       symbol, bid: Number(q.bid), ask: Number(q.ask), digits: Number(q.digits || (symbol.includes('JPY') ? 3 : 5)),
       dir: q.direction || 'up'
     }));
-    const allClosed = trading.state.history;
+    for (const a of all) {
+      const currentRows=trading.state.history.filter(p=>p.accountId===a.id);
+      if(currentRows.length)historyCache.current[a.id]=currentRows;
+    }
+    const missingHistory=all.filter(a=>!Object.prototype.hasOwnProperty.call(historyCache.current,a.id));
+    await Promise.all(missingHistory.map(async a=>{
+      try{
+        const status:any=a.type==='Real'?await bigbullsBackend.realStatus(a.id):await bigbullsBackend.demoStatus(a.id);
+        const raw=a.type==='Real'?(status.positions||[]):(status.trades||[]);
+        historyCache.current[a.id]=raw.filter((p:any)=>String(p.status||'').toUpperCase()==='CLOSED').map((p:any)=>({
+          id:p.id,accountId:a.id,symbol:p.symbol,side:String(p.side||'').toLowerCase(),volume:Number(p.quantity||p.volume||0),
+          openPrice:Number(p.entry_price||p.open_price||0),closePrice:Number(p.exit_price||p.mark_price||0),
+          closeTime:Date.parse(p.closed_at||p.close_time||p.opened_at||p.created_at||''),
+          profit:Number(p.realized_pnl??p.profit??0),reason:p.close_reason||'Closed'
+        })).filter((p:any)=>Number.isFinite(p.closeTime));
+      }catch(error){console.warn('Performance history sync failed for account',a.id,error);historyCache.current[a.id]=[];}
+    }));
+    const allClosed = all.flatMap(a=>historyCache.current[a.id]||[]);
     const makeStats = (rows: typeof allClosed, days: number) => {
       const cutoff = days ? Date.now() - days * 86400000 : 0;
       const filtered = rows.filter(p => p.closeTime >= cutoff);
