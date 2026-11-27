@@ -164,6 +164,12 @@ export default function HtmlPortal() {
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'MFA_DATA',enabled:false,factors:[]},window.location.origin);
             break;
           }
+          case 'NOTIFICATIONS_INIT': {
+            if(!Capacitor.isNativePlatform())break;
+            const enabled=await OneSignal.User.pushSubscription.getOptedInAsync();
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'NOTIFICATIONS_RESULT',enabled:!!enabled,message:''},window.location.origin);
+            break;
+          }
           case 'NOTIFICATIONS_TOGGLE': {
             if (!Capacitor.isNativePlatform()) throw new Error('Push notification preferences can be changed in the installed BIGBULLS app.');
             const enabled=!!payload.enabled;
