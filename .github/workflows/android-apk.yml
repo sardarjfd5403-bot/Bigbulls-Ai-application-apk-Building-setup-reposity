@@ -27,6 +27,8 @@ jobs:
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
       - name: Install monorepo dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
+      - name: Validate HTML portal bridge JavaScript
+        run: node --check apps/forex-trading-portal/public/bigbulls-portal-bridge.js
       - name: Build BIGBULLS frontend
         run: npm run build --workspace apps/forex-trading-portal
       - name: Install Capacitor Android tooling
