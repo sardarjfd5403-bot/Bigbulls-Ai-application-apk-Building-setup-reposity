@@ -167,19 +167,8 @@
         }).join('') || '<div style="padding:8px 0;">No wallet activity.</div>');
       }
     } else if (data.type === 'PARTNER_DATA') {
-      var partnerBox = byId('bb-partner-data');
-      var applyBox = byId('bb-partner-apply');
-      var pd = data.data || {};
-      var application = pd.application || {};
-      var pw = pd.wallet || {};
-      if (partnerBox) partnerBox.innerHTML =
-        '<b>Status:</b> ' + escapeHtml(String(application.status || 'Not registered').toUpperCase()) +
-        '<br><b>Referral code:</b> ' + escapeHtml(application.referral_code || 'Not assigned') +
-        '<br><b>Partner wallet:</b> $' + Number(pw.available_balance || 0).toFixed(2) +
-        '<br><b>Total earned:</b> $' + Number(pw.total_earned || 0).toFixed(2) +
-        '<br><b>Referrals:</b> ' + (pd.referrals || []).length +
-        '<br><b>Trading commissions:</b> ' + (pd.commissions || []).length;
-      if (applyBox) applyBox.style.display = (!pd.application || ['rejected', 'not_approved'].includes(String(application.status).toLowerCase())) ? 'block' : 'none';
+      window.bbPartnerData=data.data||{};
+      window.renderIbContent();
     } else if (data.type === 'SUPPORT_DATA') {
       var supportBox = byId('bb-support-history');
       if (supportBox) supportBox.innerHTML = '<b>Your recent tickets</b>' + ((data.tickets || []).slice(0, 8).map(function (t) {
@@ -208,7 +197,7 @@
         if (data.workflow === 'password') { var passInput=byId('new-pass-inp'); if(passInput)passInput.value=''; }
         if (data.workflow === 'support') emit('SUPPORT_INIT');
         if (data.workflow === 'profile') emit('PROFILE_INIT');
-        if (data.workflow === 'partner') { var partnerForm = byId('bb-partner-apply'); if (partnerForm) partnerForm.style.display = 'none'; emit('PARTNER_INIT'); }
+        if (data.workflow === 'partner' || data.workflow === 'partner_transfer') { emit('PARTNER_INIT'); }
       } else toast(data.message || 'Request failed.');
     } else if (data.type === 'ACTION_ERROR') {
       toast(data.message || 'Request failed');
@@ -483,21 +472,43 @@
     emit('WALLET_INIT');
   };
   window.openIbPortal = function () {
-    openSheet('<div class="card-title-row"><div class="card-title">IB Partner</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div>' +
-      '<div id="bb-partner-data" class="card-sub" style="margin:12px 0;">Loading partner account…</div><div id="bb-partner-apply" style="display:none;">' +
-      field('Business name', 'bb-partner-name', 'text', 'Business name') +
-      field('Website or social link', 'bb-partner-link', 'text', 'https://') +
-      field('Audience size', 'bb-partner-audience', 'text', 'e.g. 5000') +
-      field('Experience', 'bb-partner-experience', 'text', 'Forex / IB experience') +
-      '<button class="primary-btn" style="width:100%;" onclick="submitPartnerApplication()">Apply as partner</button></div>');
+    closeProfileSheet();
+    var view=byId('ib-portal-view'); if(view)view.classList.remove('hidden');
+    appState.ibSection='dashboard';
+    window.renderIbContent();
     emit('PARTNER_INIT');
   };
+  window.renderIbContent = function () {
+    var body=byId('ib-content-body'); if(!body)return;
+    var d=window.bbPartnerData||{}, a=d.application||null, w=d.wallet||{};
+    var section=appState.ibSection||'dashboard';
+    var money=function(n){return '$'+Number(n||0).toFixed(2);};
+    var rows='';
+    if(section==='rep_clients'){
+      rows=(d.referrals||[]).map(function(x){return '<div class="trade-item" style="cursor:default;"><div><b>Client '+escapeHtml(String(x.referred_user_id||'').slice(-7)||'—')+'</b><div class="card-sub">'+escapeHtml(new Date(x.created_at).toLocaleDateString())+'</div></div><span class="label-circle-badge">Referral</span></div>';}).join('')||'<div class="card-sub">No referrals recorded yet.</div>';
+      body.innerHTML='<div class="card"><div class="card-title">Referred clients</div>'+rows+'</div>';return;
+    }
+    if(section==='rep_tx'||section==='rebates'){
+      var tx=section==='rebates'?(d.commissions||[]):(d.ledger||[]).concat(d.depositCommissions||[]);
+      rows=tx.map(function(x){var amount=x.commission_usd??x.commission_amount_usd??x.amount??0;return '<div class="trade-item" style="cursor:default;"><div><b>'+escapeHtml(x.entry_type||x.symbol||'Commission')+'</b><div class="card-sub">'+escapeHtml(String(x.status||x.direction||'recorded').toUpperCase())+' · '+escapeHtml(new Date(x.created_at).toLocaleDateString())+'</div></div><span class="tab-num" style="font-weight:900;">'+money(amount)+'</span></div>';}).join('')||'<div class="card-sub">No partner transactions recorded yet.</div>';
+      body.innerHTML='<div class="card"><div class="card-title">'+(section==='rebates'?'Rebates and commissions':'Partner wallet transactions')+'</div>'+rows+'</div>';return;
+    }
+    if(!a){
+      body.innerHTML='<div class="card"><div class="card-title">Become a BIGBULLS Partner</div><div class="card-sub" style="margin:8px 0 14px;">Submit your partner application for review. Your referral account is activated after approval.</div>'+
+        field('Business name','bb-partner-name','text','Business name')+field('Website or social link','bb-partner-link','text','https://')+field('Audience size','bb-partner-audience','text','e.g. 5000')+field('Experience','bb-partner-experience','text','Forex / IB experience')+
+        '<button class="primary-btn" style="width:100%;" onclick="submitPartnerApplication()">Apply as partner</button></div>';return;
+    }
+    var accounts=appState.accounts.real||[];
+    var accountOpts=accounts.map(function(x){return '<option value="'+escapeHtml(x.backendId)+'">'+escapeHtml(x.id+' · '+x.label)+'</option>';}).join('');
+    body.innerHTML='<div class="card"><div class="card-sub">Partner status</div><div class="card-title" style="margin-top:5px;">'+escapeHtml(String(a.status||'pending').toUpperCase())+'</div><div class="card-sub" style="margin-top:5px;">Referral code: <b>'+escapeHtml(a.referral_code||'Pending approval')+'</b></div></div>'+
+      '<div class="grid grid-cols-2 gap-3"><div class="card"><div class="card-sub">Available balance</div><div class="clean-money-value tab-num" style="font-size:20px;">'+money(w.available_balance)+'</div></div><div class="card"><div class="card-sub">Total earned</div><div class="clean-money-value tab-num" style="font-size:20px;">'+money(w.total_earned)+'</div></div></div>'+
+      '<div class="card"><div class="card-title">Partner overview</div><div class="profile-row"><span>Referrals</span><b>'+(d.referrals||[]).length+'</b></div><div class="profile-row"><span>Trading commissions</span><b>'+(d.commissions||[]).length+'</b></div><div class="profile-row"><span>Deposit commissions</span><b>'+(d.depositCommissions||[]).length+'</b></div></div>'+
+      '<div class="card"><div class="card-title">Transfer commission to Real account</div>'+selectField('Destination account','bb-partner-account',accountOpts||'<option value="">No Real account available</option>')+field('Amount (USD)','bb-partner-amount','number','0.00')+'<button class="primary-btn" style="width:100%;" onclick="submitPartnerTransfer()">Transfer funds</button></div>'+
+      '<div class="card"><div class="card-title">Recent commissions</div>'+((d.commissions||[]).slice(0,8).map(function(x){return '<div class="trade-item" style="cursor:default;"><div><b>'+escapeHtml(x.symbol||'Trading commission')+'</b><div class="card-sub">'+escapeHtml(String(x.status||'pending').toUpperCase())+' · '+escapeHtml(new Date(x.created_at).toLocaleDateString())+'</div></div><b class="tab-num">'+money(x.commission_usd)+'</b></div>';}).join('')||'<div class="card-sub">No commissions yet.</div>')+'</div>';
+  };
+  window.submitPartnerTransfer=function(){emit('PARTNER_TRANSFER',{accountId:value('bb-partner-account'),amount:value('bb-partner-amount')});toast('Submitting partner commission transfer…');};
   window.submitPartnerApplication = function () {
-    emit('PARTNER_APPLY', {
-      partner_type: 'ib', business_name: value('bb-partner-name'),
-      website_or_social: value('bb-partner-link'), audience_size: value('bb-partner-audience'),
-      experience: value('bb-partner-experience')
-    });
+    emit('PARTNER_APPLY', {partner_type:'ib',business_name:value('bb-partner-name'),website_or_social:value('bb-partner-link'),audience_size:value('bb-partner-audience'),experience:value('bb-partner-experience')});
     toast('Submitting partner application…');
   };
   window.openTicketPrecheck = function () {
