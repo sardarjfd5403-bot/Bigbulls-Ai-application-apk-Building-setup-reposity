@@ -165,8 +165,8 @@
       var status = byId('bb-kyc-status');
       if (status) {
         status.textContent = record ? 'Current status: ' + String(record.status || 'pending').toUpperCase() : 'No verification submitted yet.';
-        if (record && record.admin_note) status.textContent += ' · ' + record.admin_note;
-        if (record && record.rejection_reasons && record.rejection_reasons.length) status.textContent += ' · ' + record.rejection_reasons.join(', ');
+        var reason=record&&(Array.isArray(record.rejection_reasons)?record.rejection_reasons.join(', '):(record.rejection_reason||record.admin_note||''));
+        if(reason)status.textContent+=' · '+reason;
       }
       if (record && ['approved', 'verified', 'pending'].includes(String(record.status).toLowerCase())) {
         var form = byId('bb-kyc-form');
