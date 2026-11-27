@@ -5,7 +5,8 @@ import { Button } from '@project/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
 import { bigbullsBackend } from '../lib/bigbullsBackend';
-import { isNativeApp,readAppPin } from '../lib/appLock';
+import { isNativeApp,readAppPin,readBiometricEnabled } from '../lib/appLock';
+import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
 
 export default function AppLock({children}:{children:ReactNode}) {
   const [checking,setChecking]=useState(true);
@@ -31,11 +32,21 @@ export default function AppLock({children}:{children:ReactNode}) {
         const enabled=await bigbullsBackend.getAppLockSettings();
         if(!enabled){if(alive)setChecking(false);return;}
         const secret=await readAppPin(id);
+        const biometric=await readBiometricEnabled(id);
         if(!secret){await bigbullsBackend.setAppLockEnabled(false);if(alive)setChecking(false);return;}
         if(alive){setSavedPin(secret);setLocked(true);setChecking(false);}
+        const tryBiometric=async()=>{
+          if(!biometric)return false;
+          try{
+            await BiometricAuth.authenticate({reason:'Unlock BIGBULLS securely',cancelTitle:'Use App PIN',allowDeviceCredential:false,androidTitle:'BIGBULLS App Lock',androidSubtitle:'Authenticate to continue'});
+            if(alive)setLocked(false);
+            return true;
+          }catch(error){console.info('BIGBULLS biometric fallback to App PIN:',error);return false;}
+        };
+        if(biometric)await tryBiometric();
         listener=await CapacitorApp.addListener('appStateChange',({isActive})=>{
           if(!isActive){setPin('');}
-          else if(alive){setPin('');setLocked(true);}
+          else if(alive){setPin('');setLocked(true);void tryBiometric();}
         });
       }catch(e){console.warn('Optional App Lock unavailable:',e);if(alive)setChecking(false);}
     };
