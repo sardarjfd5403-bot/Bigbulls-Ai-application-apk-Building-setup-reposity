@@ -25,6 +25,7 @@ import Partner from './pages/Partner';
 import Analytics from './pages/Analytics';
 import Support from './pages/Support';
 import TradeHistory from './pages/TradeHistory';
+import BBAI from './pages/BBAI';
 import AuthScreen from './pages/AuthScreen';
 import AppLock from './components/AppLock';
 
@@ -243,6 +244,7 @@ export default function App() {
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/trades" element={<TradeHistory />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/ai" element={<BBAI />} />
               <Route path="/partner" element={<Partner />} />
               <Route path="/verification" element={<Verification />} />
               <Route path="/profile" element={<ProfilePage />} />

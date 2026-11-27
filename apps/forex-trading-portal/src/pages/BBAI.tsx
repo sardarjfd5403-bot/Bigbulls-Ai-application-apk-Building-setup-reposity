@@ -1,0 +1,23 @@
+import {useCallback,useEffect,useState} from 'react';
+import {Link} from 'react-router-dom';
+import {Activity,ArrowUpRight,BrainCircuit,RefreshCw,ShieldAlert,Sparkles} from 'lucide-react';
+import {Card} from '@project/components/ui/card';
+import {Button} from '@project/components/ui/button';
+import {supabase} from '../lib/supabase';
+import {useTrading} from '../lib/store';
+import {money} from '../lib/symbols';
+type Signal={id:string;symbol:string;direction:string;score:number;signal_data:any;generated_at:string;expires_at:string|null};
+export default function BBAI(){
+ const trading=useTrading();const [rows,setRows]=useState<Signal[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState('');
+ const load=useCallback(async()=>{setError('');const {data,error}=await supabase.from('bb_market_signal_feed').select('id,symbol,direction,score,signal_data,generated_at,expires_at').eq('published',true).order('generated_at',{ascending:false}).limit(30);if(error){setError(error.message);setRows([]);}else setRows((data||[]) as Signal[]);setLoading(false);},[]);
+ useEffect(()=>{void load();const c=supabase.channel('bb-ai-signals').on('postgres_changes',{event:'*',schema:'public',table:'bb_market_signal_feed'},()=>void load()).subscribe();return()=>{void supabase.removeChannel(c);};},[load]);
+ const active=rows.filter(x=>!x.expires_at||Date.parse(x.expires_at)>Date.now());
+ return <div className="space-y-5">
+ <section className="overflow-hidden rounded-3xl bg-[#101B32] p-5 text-white sm:p-7"><div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.16em] text-blue-200"><Sparkles className="h-4 w-4"/> BIGBULLS intelligence</div><h2 className="mt-3 text-2xl font-black sm:text-3xl">BB AI Market Desk</h2><p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">Published market research and confluence signals from the BIGBULLS server. Informational only; no guaranteed outcomes.</p></div><BrainCircuit className="h-10 w-10 text-blue-200"/></div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-white/10 p-3"><div className="text-xs text-slate-300">Active signals</div><div className="mt-1 text-2xl font-black">{active.length}</div></div><div className="rounded-2xl bg-white/10 p-3"><div className="text-xs text-slate-300">Account equity</div><div className="mt-1 text-2xl font-black">{money(trading.equity)}</div></div></div></section>
+ <div className="flex items-center justify-between gap-3"><div><h3 className="text-lg font-black">Published signal feed</h3><p className="text-xs text-muted-foreground">Realtime database updates</p></div><Button variant="outline" size="sm" onClick={()=>{setLoading(true);void load();}} disabled={loading}><RefreshCw className="mr-2 h-4 w-4"/>Refresh</Button></div>
+ {error&&<Card className="flex gap-3 border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><ShieldAlert className="h-5 w-5 shrink-0"/><div><b>Signal feed unavailable</b><p>{error}</p></div></Card>}
+ {loading&&!rows.length&&<Card className="p-6 text-center text-sm text-muted-foreground">Loading published signals…</Card>}
+ {!loading&&!error&&!active.length&&<Card className="p-8 text-center"><Activity className="mx-auto h-8 w-8 text-muted-foreground"/><h4 className="mt-3 font-bold">No published signals right now</h4><p className="mt-1 text-sm text-muted-foreground">New server-published research will appear here.</p></Card>}
+ <div className="grid gap-3 sm:grid-cols-2">{active.map(s=><Card key={s.id} className="p-4"><div className="flex items-start justify-between"><div><div className="text-xs font-bold text-muted-foreground">{s.symbol}</div><div className="mt-1 text-xl font-black">{s.direction||'WAIT'}</div></div><div className="rounded-xl bg-blue-50 px-3 py-2 text-right text-blue-700"><div className="text-[10px] font-bold uppercase">Score</div><div className="text-lg font-black">{Number(s.score)||0}</div></div></div><p className="mt-3 text-xs leading-5 text-muted-foreground">{String(s.signal_data?.summary||s.signal_data?.setup_status||'Published server-side market research. Review market conditions before trading.')}</p><div className="mt-3 flex items-center justify-between border-t pt-3"><span className="text-[10px] text-muted-foreground">{new Date(s.generated_at).toLocaleString()}</span><Link to="/terminal" className="inline-flex items-center gap-1 text-xs font-bold text-primary">Open terminal <ArrowUpRight className="h-3.5 w-3.5"/></Link></div></Card>)}</div>
+ <p className="text-[11px] leading-5 text-muted-foreground">Signals are research, not investment recommendations. Balances, execution and risk controls remain server-authoritative.</p></div>;
+}
