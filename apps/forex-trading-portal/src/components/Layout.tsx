@@ -1,5 +1,5 @@
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutGrid, LogOut, CandlestickChart, PieChart, UserCircle, Settings, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, History, ShieldCheck } from 'lucide-react';
+import { LayoutGrid, LogOut, CandlestickChart, PieChart, UserCircle, Settings, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, History, ShieldCheck, BrainCircuit, Wallet, Headphones } from 'lucide-react';
 import { logout, useAuth } from '../lib/previewAuth';
 import { Button } from '@project/components/ui/button';
 import { cn } from '@project/components/lib/utils';
@@ -11,6 +11,7 @@ import { money } from '../lib/symbols';
 const MAIN = [
   { label: 'Accounts', to: '/', icon: LayoutGrid },
   { label: 'Trade', to: '/terminal', icon: CandlestickChart },
+  { label: 'BB AI', to: '/ai', icon: BrainCircuit },
   { label: 'Performance', to: '/analytics', icon: PieChart },
   { label: 'Profile', to: '/profile', icon: UserCircle },
 ];
@@ -20,6 +21,8 @@ const SUB = [
   { label: 'Withdrawal', to: '/withdraw', icon: ArrowUpFromLine },
   { label: 'Transfer', to: '/transfer', icon: ArrowLeftRight },
   { label: 'Activity', to: '/history', icon: History },
+  { label: 'Wallet', to: '/wallet', icon: Wallet },
+  { label: 'Support', to: '/support', icon: Headphones },
 ];
 const isCurrent = (path: string, to: string) => to === '/' ? path === '/' : path === to || path.startsWith(to + '/');
 
@@ -82,7 +85,7 @@ export default function Layout() {
           </div>
         </div>
 
-        {pathname !== '/profile' && pathname !== '/verification' && (
+        {pathname !== '/profile' && pathname !== '/verification' && pathname !== '/ai' && (
           <nav className="mb-5 flex gap-1 overflow-x-auto rounded-2xl border border-[#E7EBF2] bg-white p-1.5 shadow-[0_2px_10px_rgba(18,36,66,.03)]">
             {SUB.map(item => {
               const Icon = item.icon;
@@ -100,11 +103,11 @@ export default function Layout() {
         <main className="min-w-0"><Outlet /></main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-[#E7EBF2] bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 shadow-[0_-5px_24px_rgba(20,40,70,.06)] backdrop-blur sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-[#E7EBF2] bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 shadow-[0_-5px_24px_rgba(20,40,70,.06)] backdrop-blur sm:hidden">
         {MAIN.map(item => {
           const Icon = item.icon;
           const selected = isCurrent(pathname, item.to);
-          return <Link key={item.to} to={item.to} className={cn('flex flex-col items-center gap-1 rounded-xl py-1.5 text-[10px] font-extrabold', selected ? 'text-[#0066FF]' : 'text-[#8994A5]')}><span className={cn('flex h-8 w-9 items-center justify-center rounded-xl', selected && 'bg-[#EAF1FF]')}><Icon className="h-[18px] w-[18px]"/></span>{item.label}</Link>;
+          return <Link key={item.to} to={item.to} className={cn('flex flex-col items-center gap-1 rounded-xl py-1.5 text-[9px] font-extrabold', selected ? 'text-[#0066FF]' : 'text-[#8994A5]')}><span className={cn('flex h-8 w-9 items-center justify-center rounded-xl', selected && 'bg-[#EAF1FF]')}><Icon className="h-[18px] w-[18px]"/></span>{item.label}</Link>;
         })}
       </nav>
     </div>
