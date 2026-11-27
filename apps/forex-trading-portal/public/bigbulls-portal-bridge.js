@@ -137,6 +137,7 @@
           fundTxnId = data.transactionId || '';
           var otpBox = byId('bb-fund-otp-box');
           if (otpBox) otpBox.style.display = 'block';
+          var fundSubmit=byId('fund-submit-btn');if(fundSubmit){fundSubmit.disabled=true;fundSubmit.textContent='Request submitted — verify OTP';}
         } else if (appState.fundMode === 'deposit' || data.otpVerified) {
           closeFundModal();
         }
@@ -472,6 +473,7 @@
     appState.fundMode = mode === 'withdraw' ? 'withdraw' : 'deposit';
     setText('fund-modal-title', mode === 'withdraw' ? 'Withdraw Funds' : 'Deposit Funds');
     var modal = byId('fund-modal'); if (modal) modal.classList.remove('hidden');
+    var submit=byId('fund-submit-btn');if(submit)submit.disabled=false;
     ensureFundFields(); renderFundData(); emit('FUND_INIT');
   };
   window.submitFundRequest = function () {
