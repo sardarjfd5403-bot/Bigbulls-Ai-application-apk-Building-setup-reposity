@@ -92,6 +92,23 @@ export default function HtmlPortal() {
         switch (action) {
           case 'READY': await sendSnapshot(); await sendFundData(); break;
           case 'FUND_INIT': await sendFundData(); break;
+          case 'BB_AI_ANALYZE': {
+            const symbol=String(payload.symbol||trading.account?.type&&'EURUSD'||'EURUSD');
+            const timeframe=String(payload.timeframe||'1h');
+            const candles=await fetchCandles(symbol,timeframe,200);
+            if(candles.length<30)throw new Error('Not enough live historical candles are available for this instrument.');
+            const closes=candles.map((x:any)=>Number(x.c));
+            const ema=(period:number)=>{const k=2/(period+1);let v=closes.slice(0,period).reduce((n:number,x:number)=>n+x,0)/period;for(let i=period;i<closes.length;i++)v=closes[i]*k+v*(1-k);return v;};
+            let gains=0,losses=0;for(let i=closes.length-14;i<closes.length;i++){const d=closes[i]-closes[i-1];if(d>0)gains+=d;else losses-=d;}
+            const avgGain=gains/14,avgLoss=losses/14, rsi=avgLoss===0?100:100-(100/(1+avgGain/avgLoss));
+            const last=closes[closes.length-1], e9=ema(9),e21=ema(21);
+            const recent=candles.slice(-30),support=Math.min(...recent.map((x:any)=>Number(x.l))),resistance=Math.max(...recent.map((x:any)=>Number(x.h)));
+            const bias=e9>e21&&rsi>=50&&rsi<70?'Bullish':e9<e21&&rsi>30&&rsi<=50?'Bearish':'Neutral / mixed';
+            const digits=symbol.includes('JPY')?3:(symbol==='XAUUSD'?2:5);
+            const report={symbol,timeframe,price:last.toFixed(digits),ema9:e9.toFixed(digits),ema21:e21.toFixed(digits),rsi:rsi.toFixed(1),support:support.toFixed(digits),resistance:resistance.toFixed(digits),bias,candles:candles.length};
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'BB_AI_RESULT',report},window.location.origin);
+            break;
+          }
           case 'GET_CANDLES': {
             const symbol=String(payload.symbol||'EURUSD'), timeframe=String(payload.timeframe||'1m');
             const candles=await fetchCandles(symbol,timeframe,500);
