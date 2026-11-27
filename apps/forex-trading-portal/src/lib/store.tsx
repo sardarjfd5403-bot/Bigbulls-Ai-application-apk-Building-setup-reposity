@@ -36,7 +36,10 @@ function useEngine(){
  const [busy,setBusy]=useState(false);
  const accountsRef=useRef(state.accounts); useEffect(()=>{accountsRef.current=state.accounts;},[state.accounts]);
  const refresh=useCallback(async()=>{
-  const [rows, history, realClosed, demoClosed]=await Promise.all([bigbullsBackend.accounts(),bigbullsBackend.transactionHistory(),supabase.from('bb_bbook_positions').select('id,account_id,symbol,side,quantity,entry_price,mark_price,realized_pnl,close_reason,opened_at,closed_at').eq('status','CLOSED').order('closed_at',{ascending:false}).limit(1000),supabase.from('bb_paper_execution_trades').select('id,account_id,symbol,side,quantity,entry_price,exit_price,mark_price,realized_pnl,close_reason,opened_at,closed_at').eq('status','CLOSED').order('closed_at',{ascending:false}).limit(1000)]);
+  const [userResult, rows, history]=await Promise.all([supabase.auth.getUser(),bigbullsBackend.accounts(),bigbullsBackend.transactionHistory()]);
+  if(userResult.error)throw userResult.error;
+  const userId=userResult.data.user?.id;if(!userId)throw new Error('Please sign in to view trade history.');
+  const [realClosed,demoClosed]=await Promise.all([supabase.from('bb_bbook_positions').select('id,account_id,symbol,side,quantity,entry_price,mark_price,realized_pnl,close_reason,opened_at,closed_at').eq('user_id',userId).eq('status','CLOSED').order('closed_at',{ascending:false}).limit(1000),supabase.from('bb_paper_execution_trades').select('id,account_id,symbol,side,quantity,entry_price,exit_price,mark_price,realized_pnl,close_reason,opened_at,closed_at').eq('user_id',userId).eq('status','CLOSED').order('closed_at',{ascending:false}).limit(1000)]);
   if(realClosed.error||demoClosed.error)throw realClosed.error||demoClosed.error;
   const closedTrades=[...(realClosed.data||[]),...(demoClosed.data||[])].filter((x:any)=>SYM[x.symbol]&&x.account_id).map((x:any)=>({...mapPosition(x),closePrice:Number(x.exit_price??x.mark_price??x.entry_price),closeTime:Date.parse(x.closed_at||x.opened_at),profit:Number(x.realized_pnl||0),reason:x.close_reason||'Closed'})).filter((x:any)=>Number.isFinite(x.closeTime));
   let accounts=rows.filter(a=>a.status==='approved'&&!a.archived_at&&!a.deleted_at).map(mapAccount);
