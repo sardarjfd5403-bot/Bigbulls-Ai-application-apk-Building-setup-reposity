@@ -198,7 +198,7 @@ export default function HtmlPortal() {
           }
           case 'FUND_VERIFY_OTP': {
             await bigbullsBackend.verifyWithdrawalOtp(String(payload.transactionId), String(payload.otp));
-            frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'FUND_RESULT', ok:true, message:'Email OTP verified. Withdrawal is awaiting back-office approval.' }, window.location.origin);
+            frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'FUND_RESULT', ok:true, otpVerified:true, message:'Email OTP verified. Withdrawal is awaiting back-office approval.' }, window.location.origin);
             await sendFundData(); break;
           }
           case 'REFRESH': await trading.refresh(); await sendSnapshot(); break;
