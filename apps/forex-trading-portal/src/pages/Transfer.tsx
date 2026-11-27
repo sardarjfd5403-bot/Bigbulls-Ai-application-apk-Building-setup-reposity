@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowDown } from 'lucide-react';
 import { Card } from '@project/components/ui/card';
@@ -14,6 +14,11 @@ export default function Transfer() {
   const real = t.state.accounts.filter((a) => a.type === 'Real');
   const [from, setFrom] = useState(real[0]?.id ?? ''); const [to, setTo] = useState(real[1]?.id ?? '');
   const [amount, setAmount] = useState(''); const [busy,setBusy] = useState(false);
+  useEffect(() => {
+    if (!real.length) return;
+    if (!real.some((a) => a.id === from)) setFrom(real[0].id);
+    if (!real.some((a) => a.id === to) || to === from) setTo(real.find((a) => a.id !== from)?.id ?? '');
+  }, [real, from, to]);
   const src = real.find((a) => a.id === from); const n = Number(amount);
   const err = !amount ? '' : !(n > 0) ? 'Enter a valid amount' : src && n > src.balance ? 'Insufficient balance' : from === to ? 'Choose two different accounts' : '';
   const Pick = ({ v, set, label }: { v: string; set: (s: string) => void; label: string }) => (

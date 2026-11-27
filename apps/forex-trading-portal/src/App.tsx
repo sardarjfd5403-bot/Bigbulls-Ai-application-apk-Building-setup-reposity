@@ -23,6 +23,7 @@ import Verification from './pages/Verification';
 import ProfilePage from './pages/ProfilePage';
 import Partner from './pages/Partner';
 import Analytics from './pages/Analytics';
+import AICenter from './pages/AICenter';
 import Support from './pages/Support';
 import TradeHistory from './pages/TradeHistory';
 import AuthScreen from './pages/AuthScreen';
@@ -243,6 +244,7 @@ export default function App() {
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/trades" element={<TradeHistory />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/ai" element={<AICenter />} />
               <Route path="/partner" element={<Partner />} />
               <Route path="/verification" element={<Verification />} />
               <Route path="/profile" element={<ProfilePage />} />
