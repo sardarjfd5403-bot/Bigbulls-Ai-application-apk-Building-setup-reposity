@@ -92,6 +92,28 @@ export default function HtmlPortal() {
         switch (action) {
           case 'READY': await sendSnapshot(); await sendFundData(); break;
           case 'FUND_INIT': await sendFundData(); break;
+          case 'BB_AI_SCAN': {
+            const symbols=['EURUSD','GBPUSD','USDJPY','XAUUSD','BTCUSD'];
+            const results=await Promise.all(symbols.map(async(symbol)=>{
+              try{
+                const candles=await fetchCandles(symbol,'1h',120);if(candles.length<30)return null;
+                const close=candles.map((x:any)=>Number(x.c));
+                const calcEma=(period:number)=>{const k=2/(period+1);let v=close.slice(0,period).reduce((n:number,x:number)=>n+x,0)/period;for(let i=period;i<close.length;i++)v=close[i]*k+v*(1-k);return v;};
+                let gain=0,loss=0;for(let i=close.length-14;i<close.length;i++){const d=close[i]-close[i-1];if(d>0)gain+=d;else loss-=d;}
+                const avgGain=gain/14,avgLoss=loss/14,rsi=avgLoss===0?100:100-(100/(1+avgGain/avgLoss));
+                const e9=calcEma(9),e21=calcEma(21),dir=e9>e21&&rsi>=50&&rsi<68?'BUY':e9<e21&&rsi>32&&rsi<=50?'SELL':'';
+                if(!dir)return null;
+                const digits=symbol.includes('JPY')?3:(symbol==='XAUUSD'?2:(symbol==='BTCUSD'?1:5));
+                const recent=candles.slice(-30),entry=close[close.length-1],support=Math.min(...recent.map((x:any)=>Number(x.l))),resistance=Math.max(...recent.map((x:any)=>Number(x.h)));
+                const sl=dir==='BUY'?support:resistance, risk=Math.abs(entry-sl);if(!risk)return null;
+                const tp=dir==='BUY'?entry+risk*2:entry-risk*2;
+                return {symbol,dir,conf:'Technical',entry:entry.toFixed(digits),sl:sl.toFixed(digits),tp:tp.toFixed(digits),series:close.slice(-24),rsi:Number(rsi.toFixed(1))};
+              }catch{return null;}
+            }));
+            const signals=results.filter(Boolean);
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'BB_AI_SIGNALS',signals},window.location.origin);
+            break;
+          }
           case 'BB_AI_ANALYZE': {
             const symbol=String(payload.symbol||'EURUSD');
             const timeframe=String(payload.timeframe||'1h');
