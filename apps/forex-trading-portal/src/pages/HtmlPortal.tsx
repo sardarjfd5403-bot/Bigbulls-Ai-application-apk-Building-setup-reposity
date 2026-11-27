@@ -145,7 +145,7 @@ export default function HtmlPortal() {
           }
           case 'MFA_VERIFY': {
             const factorId=String(payload.factorId||''), code=String(payload.code||'').trim();
-            if(!factorId||!/^\\d{6}$/.test(code))throw new Error('Enter the 6-digit authenticator code.');
+            if(!factorId||!/^\d{6}$/.test(code))throw new Error('Enter the 6-digit authenticator code.');
             const {data:challenge,error:challengeError}=await supabase.auth.mfa.challenge({factorId});
             if(challengeError)throw challengeError;
             const {error}=await supabase.auth.mfa.verify({factorId,challengeId:challenge.id,code});
