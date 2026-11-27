@@ -3204,22 +3204,8 @@
     }
 
     function generateChartCandles() {
-      var inst = getInstrumentBySymbol(appState.selectedSymbol);
-      var tick = Math.pow(10, -inst.digits);
-      var multMap = { '1m': 4, '5m': 8, '15m': 14, '30m': 20, '1h': 32, '4h': 55, '1D': 95, '1W': 160, '1M': 280 };
-      var vol = tick * (multMap[appState.timeframe] || 14);
-      var arr = [];
-      var cur = inst.bid - (Math.random() - 0.45) * vol * 12;
-
-      for (var i = 0; i < 80; i++) {
-        var o = cur;
-        var c = i === 79 ? inst.bid : Math.max(tick, o + (Math.random() - 0.48) * vol * 1.6);
-        var h = Math.max(o, c) + Math.random() * vol * 0.8;
-        var l = Math.max(tick, Math.min(o, c) - Math.random() * vol * 0.8);
-        arr.push({ open: o, high: h, low: l, close: c });
-        cur = c;
-      }
-      appState.candles = arr;
+      // Production chart candles are supplied by the authenticated Twelve Data host bridge.
+      appState.candles = [];
     }
 
     function computeMaArray(candles, period, isEma) {
@@ -4529,7 +4515,7 @@
 
     function startSafeTickLoop() {
       if (appState.tickTimer) clearInterval(appState.tickTimer);
-      appState.tickTimer = setInterval(runTickStep, 1200);
+      appState.tickTimer = null;
     }
 
     window.addEventListener('resize', function () {
