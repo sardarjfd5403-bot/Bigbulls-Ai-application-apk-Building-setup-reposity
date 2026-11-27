@@ -57,7 +57,7 @@ export default function AuthScreen() {
   const reset = async () => {
     if (!email.trim()) { setError('Enter your email address first.'); return; }
     setBusy(true); setError(''); setMessage('');
-    try { const { error } = await supabase.auth.resetPasswordForEmail(email.trim()); if (error) throw error; setMessage('Password reset email sent.'); }
+    try { const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: 'https://bigbullsglobalmarket.is-an.ai/auth.html?mode=reset' }); if (error) throw error; setMessage('Password reset link sent. Open the email on this device, tap Reset Password, set a new password on the secure BIGBULLS page, then return here and sign in.'); }
     catch (e) { setError(e instanceof Error ? e.message : 'Could not send reset email.'); }
     finally { setBusy(false); }
   };
