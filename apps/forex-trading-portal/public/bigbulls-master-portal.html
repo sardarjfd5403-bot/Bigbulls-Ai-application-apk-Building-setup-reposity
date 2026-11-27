@@ -2788,20 +2788,7 @@
       else if (subKey === 'withdrawal') openFundModal('withdraw');
     }
 
-    function openNewAccount() {
-      var mode = appState.accountMode;
-      var nextNum = Math.floor(600000 + Math.random() * 390000);
-      var newId = '#' + nextNum;
-      appState.accounts[mode].unshift({
-        id: newId,
-        label: mode === 'real' ? 'Pro' : 'Paper Pro',
-        balance: mode === 'real' ? 1000.00 : 25000.00,
-        leverage: '1:500'
-      });
-      appState.selectedAccountId[mode] = newId;
-      syncAccountHeaderAndCard();
-      showToast('Opened new ' + mode.toUpperCase() + ' account ' + newId);
-    }
+    function openNewAccount(){ showToast('Use the secure BIGBULLS account creation workflow.'); }
 
     function getActiveAccount(mode) {
       var m = mode || appState.accountMode;
@@ -3609,30 +3596,7 @@
       setText('buy-btn-px', inst.ask.toFixed(inst.digits));
     }
 
-    function placeChartOrder(side) {
-      var inst = getInstrumentBySymbol(appState.selectedSymbol);
-      var acc = getActiveAccount();
-      var isPending = appState.orderMode === 'LIMIT' || appState.orderMode === 'STOP';
-      var px = !isPending ? (side === 'BUY' ? inst.ask : inst.bid) : appState.pendingPrice;
-      var orderTag = !isPending ? side : (side + ' ' + appState.orderMode);
-
-      if (appState.orderMode === 'MARKET') {
-        appState.runningTrades.unshift({
-          id: 'TR-' + Math.floor(910 + Math.random() * 89),
-          symbol: inst.symbol,
-          side: side,
-          lots: appState.lotSize,
-          openPrice: Number(px.toFixed(inst.digits)),
-          sl: 0,
-          tp: 0,
-          pnl: 14.20
-        });
-        syncAccountHeaderAndCard();
-        renderTradesLists();
-        drawMainChart();
-      }
-      showToast(orderTag + ' ' + appState.lotSize.toFixed(2) + ' ' + inst.symbol + ' on ' + acc.id);
-    }
+    function placeChartOrder(side){ showToast('Use the connected BIGBULLS order workflow.'); }
 
     /* =====================================================================
        3. BB AI ASSISTANT (PROMPTS, LIVE RESPONSES & SIGNALS)
@@ -3711,24 +3675,7 @@
       box.innerHTML = html;
     }
 
-    function executeAiSignal(idx) {
-      var sig = appState.aiSignals[idx];
-      if (!sig) return;
-      appState.runningTrades.unshift({
-        id: 'AI-' + Math.floor(100 + Math.random() * 899),
-        symbol: sig.symbol,
-        side: sig.dir,
-        lots: appState.aiLot,
-        openPrice: parseFloat(sig.entry),
-        sl: parseFloat(sig.sl),
-        tp: parseFloat(sig.tp),
-        pnl: 19.50
-      });
-      syncAccountHeaderAndCard();
-      renderTradesLists();
-      pushAiMessage('BB AI', 'Executed ' + sig.dir + ' ' + appState.aiLot.toFixed(2) + ' ' + sig.symbol + ' @ ' + sig.entry);
-      showToast('Executed ' + sig.dir + ' ' + sig.symbol);
-    }
+    function executeAiSignal(idx){ showToast('Review the live chart and place an order manually.'); }
 
     function renderBbAiTab() {
       var f = appState.aiFilter;
