@@ -192,6 +192,7 @@
         toast(data.message || 'Saved successfully.');
         if (data.workflow === 'transfer') { window.refreshAccountData(); closeProfileSheet(); }
         if (data.workflow === 'account') closeProfileSheet();
+        if (data.workflow === 'password') { var passInput=byId('new-pass-inp'); if(passInput)passInput.value=''; }
         if (data.workflow === 'support') emit('SUPPORT_INIT');
         if (data.workflow === 'profile') emit('PROFILE_INIT');
         if (data.workflow === 'partner') { var partnerForm = byId('bb-partner-apply'); if (partnerForm) partnerForm.style.display = 'none'; emit('PARTNER_INIT'); }
@@ -511,7 +512,24 @@
     emit('PROFILE_SAVE', { full_name: value('bb-profile-name'), country: value('bb-profile-country'), phone: value('bb-profile-phone') });
     toast('Saving profile…');
   };
-  window.openReferralSheet = function () { window.openIbPortal(); };
+  window.saveNewPassword = function () {
+    var input=byId('new-pass-inp'), password=input?input.value:'';
+    if(password.length<8){toast('Use a password with at least 8 characters.');return;}
+    emit('AUTH_PASSWORD_UPDATE',{password:password});
+    if(input)input.value='';
+    toast('Updating account password securely…');
+  };
+  window.toggleTwoFactorBtn = function () {
+    toast('Two-factor authentication must be enrolled and verified in Account Security; this toggle cannot safely enable it by itself.');
+  };
+  window.saveNewPin = function () {
+    toast('A secure PIN vault is not configured on this account. No PIN was saved.');
+  };
+  window.toggleSettingsSwitch = function (key,row) {
+    if(key==='biometrics'){toast('Biometric sign-in requires native device enrollment and is not enabled yet.');return;}
+    if(key==='notifications'){toast('Notification preferences are not yet persisted to your BIGBULLS profile.');return;}
+  };
+    window.openReferralSheet = function () { window.openIbPortal(); };
   window.openLiveChatAssistant = function () { window.openTicketPrecheck(); };
   window.openSubpage = function (name) {
     if (name === 'verification' || name === 'kyc') window.openKycSheet();
