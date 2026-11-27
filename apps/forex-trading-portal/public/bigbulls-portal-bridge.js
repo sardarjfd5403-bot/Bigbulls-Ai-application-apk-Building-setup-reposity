@@ -68,12 +68,15 @@
           });
         });
       }
-      appState.aiSignals = [];
-      appState.aiEvents = [];
-      appState.aiNews = [];
-      appState.ibClients = [];
-      if (typeof renderBbAiTab === 'function') renderBbAiTab();
-      ensureAiScanButton();
+      if(!appState.liveStateReady){
+        appState.aiSignals = [];
+        appState.aiEvents = [];
+        appState.aiNews = [];
+        appState.ibClients = [];
+        if (typeof renderBbAiTab === 'function') renderBbAiTab();
+        ensureAiScanButton();
+        appState.liveStateReady=true;
+      }
       appState.perfData = s.perfData || appState.perfData;
       appState.perfDataByFilter = s.perfDataByFilter || appState.perfDataByFilter;
       appState.perfCurvePointsByFilter = s.perfCurvePointsByFilter || appState.perfCurvePointsByFilter;
