@@ -251,6 +251,13 @@
         '<button type="button" class="secondary-btn" onclick="cancelHtmlPending(\''+escapeHtml(p.id)+'\')">Cancel</button></div>';}).join('') || '<div style="font-size:12px;color:#64748b;">No pending orders</div>');
   }
   window.cancelHtmlPending = function(id) { emit('CANCEL_PENDING',{id:id}); toast('Cancel request submitted…'); };
+    window.renderProfileTab = function () {
+    var email=String(appState.email||'');
+    var shown=email;
+    if(appState.emailMasked&&email.indexOf('@')>0){var parts=email.split('@');shown=(parts[0].slice(0,1)+'***@'+parts[1]);}
+    setText('profile-email-txt',shown||'—');
+    setText('profile-eye-label',appState.emailMasked?'Show':'Hide');
+  };
     window.generateChartCandles = function () {
     var symbol = appState.selectedSymbol, timeframe = appState.timeframe || '1m';
     var key = symbol + '|' + timeframe, now = Date.now();
