@@ -3,6 +3,7 @@
   'use strict';
   var fundData = { methods: [], wallets: [], transactions: [], wallet: null };
   var fundTxnId = '';
+  var htmlOpenTicketPrecheck = window.openTicketPrecheck;
 
   function emit(action, payload) {
     window.parent.postMessage({ source: 'BIGBULLS_HTML_PORTAL', action: action, payload: payload || {} }, window.location.origin);
@@ -195,7 +196,7 @@
         if (data.workflow === 'transfer') { window.refreshAccountData(); closeProfileSheet(); }
         if (data.workflow === 'account') closeProfileSheet();
         if (data.workflow === 'password') { var passInput=byId('new-pass-inp'); if(passInput)passInput.value=''; }
-        if (data.workflow === 'support') emit('SUPPORT_INIT');
+        if (data.workflow === 'support') { var sub=byId('subpage-view'); if(sub)sub.classList.add('hidden'); emit('SUPPORT_INIT'); }
         if (data.workflow === 'profile') emit('PROFILE_INIT');
         if (data.workflow === 'partner' || data.workflow === 'partner_transfer') { emit('PARTNER_INIT'); }
       } else toast(data.message || 'Request failed.');
@@ -512,18 +513,13 @@
     toast('Submitting partner application…');
   };
   window.openTicketPrecheck = function () {
-    openSheet('<div class="card-title-row"><div class="card-title">BIGBULLS Support</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div>' +
-      '<div id="bb-support-history" class="card-sub" style="margin:8px 0 14px;">Loading your tickets…</div>' +
-      field('Subject', 'bb-support-subject', 'text', 'How can we help?') +
-      selectField('Category', 'bb-support-category', '<option value="account">Account</option><option value="deposit">Deposit</option><option value="withdrawal">Withdrawal</option><option value="trading">Trading</option><option value="technical">Technical</option><option value="general">General</option>') +
-      '<label style="display:block;margin-bottom:10px;font-size:12px;font-weight:800;color:#344054;">Message<textarea id="bb-support-message" rows="4" style="display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:12px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;color:#182230;"></textarea></label>' +
-      '<button class="primary-btn" style="width:100%;" onclick="submitHtmlSupport()">Create support ticket</button>');
-    emit('SUPPORT_INIT');
+    if(typeof htmlOpenTicketPrecheck==='function') htmlOpenTicketPrecheck();
   };
-  window.submitHtmlSupport = function () {
-    emit('SUPPORT_SUBMIT', { subject: value('bb-support-subject'), category: value('bb-support-category'), message: value('bb-support-message') });
-    toast('Creating support ticket…');
+  window.submitPrecheckedTicket = function () {
+    emit('SUPPORT_SUBMIT',{subject:value('tk-subject'),category:'general',message:value('tk-desc')});
+    toast('Submitting support ticket…');
   };
+  window.openLiveChatAssistant = function () { window.openTicketPrecheck(); };
   window.openFullSettingsOverlay = function () {
     openSheet('<div class="card-title-row"><div class="card-title">Profile settings</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div>' +
       '<div id="bb-profile-email" class="card-sub" style="margin:8px 0;">Loading profile…</div>' +
