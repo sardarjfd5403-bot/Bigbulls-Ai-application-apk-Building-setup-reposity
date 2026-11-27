@@ -4460,58 +4460,7 @@
     /* =====================================================================
        SAFE LIGHTWEIGHT TICK LOOP (1200ms WITH RE-ENTRANCY GUARD)
        ===================================================================== */
-    function runTickStep() {
-      if (appState.isTickRunning) return;
-      appState.isTickRunning = true;
-      try {
-        for (var i = 0; i < appState.instruments.length; i++) {
-          var inst = appState.instruments[i];
-          var step = Math.pow(10, -inst.digits) * (Math.floor(Math.random() * 2) + 1);
-          var up = Math.random() >= 0.48;
-          var gap = inst.ask - inst.bid;
-          inst.bid = up ? inst.bid + step : Math.max(step, inst.bid - step);
-          inst.ask = inst.bid + gap;
-          inst.dir = up ? 'up' : 'down';
-
-          if (appState.activeTab === 'trade') {
-            var bidEl = document.getElementById('mw-bid-' + inst.symbol);
-            var askEl = document.getElementById('mw-ask-' + inst.symbol);
-            if (bidEl && askEl) {
-              bidEl.textContent = inst.bid.toFixed(inst.digits);
-              askEl.textContent = inst.ask.toFixed(inst.digits);
-              bidEl.className = 'quote-box tab-num ' + inst.dir;
-              askEl.className = 'quote-box tab-num ' + inst.dir;
-            }
-          }
-        }
-
-        for (var r = 0; r < appState.runningTrades.length; r++) {
-          var tr = appState.runningTrades[r];
-          tr.pnl = Number((tr.pnl + (Math.random() - 0.48) * 2.5).toFixed(2));
-        }
-
-        var curInst = getInstrumentBySymbol(appState.selectedSymbol);
-        if (appState.candles.length > 0) {
-          var last = appState.candles[appState.candles.length - 1];
-          last.close = curInst.bid;
-          if (curInst.bid > last.high) last.high = curInst.bid;
-          if (curInst.bid < last.low) last.low = curInst.bid;
-        }
-
-        syncAccountHeaderAndCard();
-        if (appState.activeTab === 'accounts') renderTradesLists();
-
-        var cv = document.getElementById('chart-view');
-        if (cv && !cv.classList.contains('hidden')) {
-          updateExecutionButtons();
-          drawMainChart();
-        }
-      } catch (e) {
-        // Guarded against runtime errors
-      } finally {
-        appState.isTickRunning = false;
-      }
-    }
+    function runTickStep() { /* Synthetic quote and P/L mutation intentionally removed. */ }
 
     function startSafeTickLoop() {
       if (appState.tickTimer) clearInterval(appState.tickTimer);
