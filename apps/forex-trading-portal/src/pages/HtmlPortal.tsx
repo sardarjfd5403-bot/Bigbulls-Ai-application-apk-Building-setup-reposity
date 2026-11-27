@@ -183,7 +183,7 @@ export default function HtmlPortal() {
           case 'FEATURE_SUGGESTION': {
             const suggestion=String(payload.suggestion||'').trim();
             if(suggestion.length<10)throw new Error('Please describe your feature idea in at least 10 characters.');
-            const ticket=await bigbullsBackend.createSupportTicket({subject:'Client feature suggestion',category:'feature_suggestion',message:suggestion});
+            const ticket=await bigbullsBackend.createSupportTicket({subject:'Client feature suggestion',category:'general',message:'Feature suggestion: '+suggestion});
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'WORKFLOW_RESULT',workflow:'suggestion',ok:true,message:'Feature suggestion submitted to BIGBULLS.'},window.location.origin);
             break;
           }
