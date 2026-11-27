@@ -232,7 +232,7 @@
       if (data.ok) {
         toast(data.message || 'Saved successfully.');
         if (data.workflow === 'transfer') { appState.transferSubmitting=false;window.refreshAccountData(); closeProfileSheet(); }
-        if (data.workflow === 'account') closeProfileSheet();
+        if (data.workflow === 'account') { appState.accountCreating=false;closeProfileSheet(); }
         if (data.workflow === 'password') { var passInput=byId('new-pass-inp'); if(passInput)passInput.value=''; }
         if (data.workflow === 'support') { var sub=byId('subpage-view'); if(sub)sub.classList.add('hidden'); emit('SUPPORT_INIT'); }
         if (data.workflow === 'suggestion') closeProfileSheet();
@@ -243,6 +243,7 @@
       appState.candlesLoading=false;appState.candlesLoadingKey='';
       appState.fundSubmitting=false;var fb=byId('fund-submit-btn');if(fb&&!fundTxnId)fb.disabled=false;
       appState.transferSubmitting=false;var tb=byId('bb-transfer-submit');if(tb)tb.disabled=false;
+      appState.accountCreating=false;var ab=byId('bb-new-account-submit');if(ab)ab.disabled=false;
       toast(data.message || 'Request failed');
     }
   });
@@ -533,9 +534,10 @@
       selectField('Account mode', 'bb-new-mode', '<option value="real">Real account</option><option value="demo">Demo account</option>') +
       selectField('Account type', 'bb-new-kind', '<option value="Standard">Standard</option><option value="Raw Spread">Raw Spread</option><option value="Pro">Pro</option>') +
       selectField('Leverage', 'bb-new-leverage', '<option value="100">1:100</option><option value="200">1:200</option><option value="500">1:500</option><option value="1000">1:1000</option>') +
-      '<button class="primary-btn" style="width:100%;" onclick="submitNewAccount()">Create account</button>');
+      '<button id="bb-new-account-submit" class="primary-btn" style="width:100%;" onclick="submitNewAccount()">Create account</button>');
   };
   window.submitNewAccount = function () {
+    if(appState.accountCreating)return;appState.accountCreating=true;var btn=byId('bb-new-account-submit');if(btn)btn.disabled=true;
     emit('OPEN_ACCOUNT', { type: value('bb-new-mode'), kind: value('bb-new-kind'), leverage: value('bb-new-leverage') });
     toast('Creating trading account…');
   };
