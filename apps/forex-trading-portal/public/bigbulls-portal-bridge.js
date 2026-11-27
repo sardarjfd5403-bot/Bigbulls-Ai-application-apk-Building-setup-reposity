@@ -52,6 +52,7 @@
       appState.accountMode = s.accountMode || 'real';
       appState.selectedAccountId = s.selectedAccountId || { real: '', demo: '' };
       appState.runningTrades = s.runningTrades || [];
+      appState.pendingOrders = s.pendingOrders || [];
       appState.closedTrades = s.closedTrades || [];
       if (s.instruments && s.instruments.length) {
         appState.instruments = s.instruments.map(function (q) {
@@ -73,6 +74,7 @@
       appState.email = s.email || '';
       syncAccountHeaderAndCard();
       renderTradesLists();
+      renderPendingOrders();
       renderMarketWatch();
       renderPerformance();
       renderProfileTab();
@@ -226,6 +228,22 @@
     setText('kpi-best', '+' + fmtMoney(Number(stats.best)||0));
     setText('kpi-avg', (Number(stats.avg)>=0?'+':'-') + fmtMoney(Math.abs(Number(stats.avg)||0)));
   };
+    function renderPendingOrders() {
+    var run = byId('running-trades-list');
+    if (!run) return;
+    var box = byId('bb-pending-orders');
+    if (!box) {
+      box = document.createElement('div'); box.id = 'bb-pending-orders';
+      box.style.cssText = 'margin-top:12px;padding-top:10px;border-top:1px solid #e5eaf2;';
+      run.parentNode.insertBefore(box, run.nextSibling);
+    }
+    var rows = appState.pendingOrders || [];
+    box.innerHTML = '<div style="font-size:12px;font-weight:900;margin-bottom:7px;">Pending orders ('+rows.length+')</div>' +
+      (rows.map(function(p){return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #edf1f6;">'+
+        '<div><b>'+escapeHtml(p.side+' '+p.kind+' '+p.symbol)+'</b><div style="font-size:11px;color:#64748b;">'+Number(p.lots).toFixed(2)+' lots · '+Number(p.price).toFixed(5)+' · SL '+Number(p.sl||0)+' · TP '+Number(p.tp||0)+'</div></div>'+
+        '<button type="button" class="secondary-btn" onclick="cancelHtmlPending(\''+escapeHtml(p.id)+'\')">Cancel</button></div>';}).join('') || '<div style="font-size:12px;color:#64748b;">No pending orders</div>');
+  }
+  window.cancelHtmlPending = function(id) { emit('CANCEL_PENDING',{id:id}); toast('Cancel request submitted…'); };
     window.generateChartCandles = function () {
     var symbol = appState.selectedSymbol, timeframe = appState.timeframe || '1m';
     var key = symbol + '|' + timeframe, now = Date.now();
