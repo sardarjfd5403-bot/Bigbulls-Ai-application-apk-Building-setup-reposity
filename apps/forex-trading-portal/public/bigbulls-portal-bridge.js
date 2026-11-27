@@ -131,6 +131,7 @@
         walletLabel2.textContent = Number.isFinite(amount2) ? '$' + amount2.toFixed(2) : 'Wallet connected';
       }
     } else if (data.type === 'FUND_RESULT') {
+      appState.fundSubmitting=false;
       if (data.ok) {
         toast(data.message || 'Payment request updated.');
         if (data.otpRequired) {
@@ -141,7 +142,7 @@
         } else if (appState.fundMode === 'deposit' || data.otpVerified) {
           closeFundModal();
         }
-      } else toast(data.message || 'Payment request failed.');
+      } else {var fundBtn=byId('fund-submit-btn');if(fundBtn)fundBtn.disabled=false;toast(data.message || 'Payment request failed.');}
     } else if (data.type === 'APP_LOCK_DATA') {
       window.bbAppLockEnabled=!!data.enabled;ensureAppLockRow(data);
     } else if (data.type === 'BIOMETRIC_DATA') {
@@ -230,7 +231,7 @@
     } else if (data.type === 'WORKFLOW_RESULT') {
       if (data.ok) {
         toast(data.message || 'Saved successfully.');
-        if (data.workflow === 'transfer') { window.refreshAccountData(); closeProfileSheet(); }
+        if (data.workflow === 'transfer') { appState.transferSubmitting=false;window.refreshAccountData(); closeProfileSheet(); }
         if (data.workflow === 'account') closeProfileSheet();
         if (data.workflow === 'password') { var passInput=byId('new-pass-inp'); if(passInput)passInput.value=''; }
         if (data.workflow === 'support') { var sub=byId('subpage-view'); if(sub)sub.classList.add('hidden'); emit('SUPPORT_INIT'); }
@@ -240,6 +241,8 @@
       } else toast(data.message || 'Request failed.');
     } else if (data.type === 'ACTION_ERROR') {
       appState.candlesLoading=false;appState.candlesLoadingKey='';
+      appState.fundSubmitting=false;var fb=byId('fund-submit-btn');if(fb)fb.disabled=false;
+      appState.transferSubmitting=false;var tb=byId('bb-transfer-submit');if(tb)tb.disabled=false;
       toast(data.message || 'Request failed');
     }
   });
@@ -473,16 +476,18 @@
     appState.fundMode = mode === 'withdraw' ? 'withdraw' : 'deposit';
     setText('fund-modal-title', mode === 'withdraw' ? 'Withdraw Funds' : 'Deposit Funds');
     var modal = byId('fund-modal'); if (modal) modal.classList.remove('hidden');
-    fundTxnId='';var otpBox=byId('bb-fund-otp-box');if(otpBox)otpBox.style.display='none';var otpInput=byId('bb-fund-otp');if(otpInput)otpInput.value='';
+    fundTxnId='';appState.fundSubmitting=false;var otpBox=byId('bb-fund-otp-box');if(otpBox)otpBox.style.display='none';var otpInput=byId('bb-fund-otp');if(otpInput)otpInput.value='';
     var submit=byId('fund-submit-btn');if(submit)submit.disabled=false;
     ensureFundFields(); renderFundData(); emit('FUND_INIT');
   };
   window.submitFundRequest = function () {
+    if(appState.fundSubmitting)return;
     var methodId = value('bb-fund-method');
     var methods = appState.fundMode === 'withdraw' ? fundData.wallets : fundData.methods;
     var method = methods.find(function (m) { return m.id === methodId; });
     if (!method) { toast('No active payment method is available.'); return; }
     var proof = byId('bb-fund-proof');
+    appState.fundSubmitting=true;var submitBtn=byId('fund-submit-btn');if(submitBtn)submitBtn.disabled=true;
     emit('FUND_SUBMIT', {
       mode: appState.fundMode, methodId: methodId, accountId: value('bb-fund-account'),
       amountUsd: value('bb-fund-usd'), amountCrypto: value('bb-fund-crypto'),
@@ -541,11 +546,13 @@
       selectField('From', 'bb-transfer-from', '<option value="wallet">BIGBULLS Wallet</option>' + accountOptions()) +
       selectField('To', 'bb-transfer-to', accountOptions() + '<option value="wallet">BIGBULLS Wallet</option>') +
       field('Amount (USD)', 'bb-transfer-amount', 'number', '0.00') + field('Note (optional)', 'bb-transfer-note', 'text', 'Transfer note') +
-      '<button class="primary-btn" style="width:100%;" onclick="submitHtmlTransfer()">Confirm transfer</button>');
+      '<button id="bb-transfer-submit" class="primary-btn" style="width:100%;" onclick="submitHtmlTransfer()">Confirm transfer</button>');
   };
   window.submitHtmlTransfer = function () {
+    if(appState.transferSubmitting)return;
     var from = value('bb-transfer-from'), to = value('bb-transfer-to');
     if (from === to) { toast('Choose different source and destination.'); return; }
+    appState.transferSubmitting=true;var transferBtn=byId('bb-transfer-submit');if(transferBtn)transferBtn.disabled=true;
     emit('TRANSFER_SUBMIT', {
       fromType: from === 'wallet' ? 'wallet' : 'account', fromAccountId: from === 'wallet' ? '' : from,
       toType: to === 'wallet' ? 'wallet' : 'account', toAccountId: to === 'wallet' ? '' : to,
