@@ -83,6 +83,21 @@ export default function HtmlPortal() {
         switch (action) {
           case 'READY': await sendSnapshot(); await sendFundData(); break;
           case 'FUND_INIT': await sendFundData(); break;
+          case 'KYC_INIT': {
+            const record = await bigbullsBackend.kyc();
+            frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'KYC_DATA', record }, window.location.origin);
+            break;
+          }
+          case 'KYC_SUBMIT': {
+            const v = payload.values || {};
+            if (!v.legal_name || !v.date_of_birth || !v.country || !v.residential_address || !v.document_type || !v.document_number) throw new Error('Complete all identity fields.');
+            if (!(payload.front && payload.back)) throw new Error('Upload both front and back document images.');
+            const frontPath = await bigbullsBackend.uploadKycDocument(payload.front as File, 'front');
+            const backPath = await bigbullsBackend.uploadKycDocument(payload.back as File, 'back');
+            const submitted = await bigbullsBackend.submitKyc({ legal_name:String(v.legal_name), first_name:String(v.first_name||''), last_name:String(v.last_name||''), date_of_birth:String(v.date_of_birth), country:String(v.country), residential_address:String(v.residential_address), document_type:String(v.document_type), document_number:String(v.document_number), document_front_path:frontPath, document_back_path:backPath });
+            frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'KYC_RESULT', ok:true, message:'Verification submitted. Status: Pending review.', record:submitted }, window.location.origin);
+            break;
+          }
           case 'FUND_SUBMIT': {
             const mode = payload.mode === 'withdraw' ? 'withdrawal' : 'deposit';
             const amountUsd = Number(payload.amountUsd);
