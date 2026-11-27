@@ -260,6 +260,7 @@ export default function HtmlPortal() {
             if(!Capacitor.isNativePlatform())throw new Error('App Lock is available in the installed Android app only.');
             const {data,error}=await supabase.auth.getUser();if(error||!data.user)throw error||new Error('Sign in again.');
             await removeAppPin(data.user.id);
+            await saveBiometricEnabled(data.user.id,false);
             await bigbullsBackend.setAppLockEnabled(false);
             frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'APP_LOCK_RESULT',ok:true,message:'App Lock disabled.'},window.location.origin);
             break;
