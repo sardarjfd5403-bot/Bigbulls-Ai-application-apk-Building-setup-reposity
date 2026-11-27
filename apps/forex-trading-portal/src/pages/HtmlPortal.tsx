@@ -96,6 +96,11 @@ export default function HtmlPortal() {
             await trading.refresh(); await sendSnapshot();
             break;
           }
+          case 'SUPPORT_INIT': {
+            const tickets=await bigbullsBackend.supportTickets();
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'SUPPORT_DATA',tickets},window.location.origin);
+            break;
+          }
           case 'SUPPORT_SUBMIT': {
             const subject=String(payload.subject||'').trim(), message=String(payload.message||'').trim();
             if(subject.length<3||message.length<10)throw new Error('Enter a subject and a message of at least 10 characters.');
