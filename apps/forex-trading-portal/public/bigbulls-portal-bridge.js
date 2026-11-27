@@ -593,6 +593,10 @@
   window.renderBbAiTab = function(){
     if(typeof htmlRenderBbAiTab==='function')htmlRenderBbAiTab();
     document.querySelectorAll('#ai-signals-list .primary-btn').forEach(function(btn){btn.textContent='Review chart';});
+    var ev=byId('ai-events-list'),news=byId('ai-news-list'),signals=byId('ai-signals-list');
+    if(ev&&!(appState.aiEvents||[]).length)ev.innerHTML='<div class="card-sub">Live economic calendar is not connected to this backend yet.</div>';
+    if(news&&!(appState.aiNews||[]).length)news.innerHTML='<div class="card-sub">Verified live market news feed is not connected yet.</div>';
+    if(signals&&!(appState.aiSignals||[]).length)signals.innerHTML='<div class="card-sub">No qualifying live technical setups loaded. Use Scan live market setups.</div>';
   };
   function ensureAiScanButton(){
     var list=byId('ai-signals-list');if(!list||byId('bb-ai-scan-btn'))return;
