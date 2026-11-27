@@ -226,6 +226,7 @@
         if (data.workflow === 'account') closeProfileSheet();
         if (data.workflow === 'password') { var passInput=byId('new-pass-inp'); if(passInput)passInput.value=''; }
         if (data.workflow === 'support') { var sub=byId('subpage-view'); if(sub)sub.classList.add('hidden'); emit('SUPPORT_INIT'); }
+        if (data.workflow === 'suggestion') closeProfileSheet();
         if (data.workflow === 'profile') { closeProfileSheet(); emit('PROFILE_INIT'); }
         if (data.workflow === 'partner' || data.workflow === 'partner_transfer') { emit('PARTNER_INIT'); }
       } else toast(data.message || 'Request failed.');
@@ -291,6 +292,10 @@
     row.onclick=function(){window.openProfileEditSheet();};
     accountCard.appendChild(row);
   }
+  window.openSuggestionSheet=function(){
+    openSheet('<div class="card-title-row"><div class="card-title">Suggest a feature</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:8px 0 12px;">Share an improvement idea with the BIGBULLS team.</div><textarea id="bb-feature-suggestion" rows="5" style="display:block;width:100%;box-sizing:border-box;padding:12px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;color:#182230;"></textarea><button class="primary-btn" style="width:100%;margin-top:10px;" onclick="submitFeatureSuggestion()">Send suggestion</button>');
+  };
+  window.submitFeatureSuggestion=function(){emit('FEATURE_SUGGESTION',{suggestion:value('bb-feature-suggestion')});toast('Submitting feature suggestion…');};
   window.openProfileEditSheet=function(){
     openSheet('<div class="card-title-row"><div class="card-title">Personal details</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div id="bb-profile-email" class="card-sub" style="margin:8px 0;">Loading profile…</div>'+field('Full name','bb-profile-name','text','Full legal name')+field('Country','bb-profile-country','text','Country')+field('Phone','bb-profile-phone','tel','+92')+'<button class="primary-btn" style="width:100%;" onclick="saveHtmlProfile()">Save profile</button>');
     emit('PROFILE_INIT');
@@ -600,7 +605,7 @@
     if(name==='support_hub'){window.openTicketPrecheck();return;}
     if(name==='ib'||name==='partner'){window.openIbPortal();return;}
     if(name==='copy'){openSheet('<div class="card-title-row"><div class="card-title">Copy Trading</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub" style="margin:10px 0;">Copy Trading is not enabled on the connected BIGBULLS backend. No strategy allocation or investment has been created.</div>');return;}
-    if(name==='suggest'){window.openTicketPrecheck();return;}
+    if(name==='suggest'){window.openSuggestionSheet();return;}
     if(name==='legal'){openSheet('<div class="card-title-row"><div class="card-title">Legal documents</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div><div class="card-sub">Official legal documents are not currently published through the connected client portal. Contact BIGBULLS support for the current agreements and risk disclosures.</div>');return;}
     if(typeof htmlOpenSubpage==='function')htmlOpenSubpage(name);
   };
