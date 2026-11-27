@@ -224,7 +224,7 @@ export default function HtmlPortal() {
               if (!wallet) throw new Error('Choose an active withdrawal network.');
               asset = wallet.asset; network = wallet.network;
               if (destination.length < 10) throw new Error('Enter a valid destination wallet address.');
-              if (String((await bigbullsBackend.kyc())?.status || '').toLowerCase() !== 'approved') throw new Error('Complete KYC verification before requesting a withdrawal.');
+              if (!['approved','verified'].includes(String((await bigbullsBackend.kyc())?.status || '').toLowerCase())) throw new Error('Complete KYC verification before requesting a withdrawal.');
             }
             const created = await bigbullsBackend.submitWalletTransaction({ account_id: account.id, kind: mode, asset, network, destination_address: destination, amount_crypto: cryptoAmount, amount_usd: amountUsd, ...(txHash ? { tx_hash: txHash } : {}), ...(proofPath ? { proof_path: proofPath } : {}) });
             if (mode === 'withdrawal') {
