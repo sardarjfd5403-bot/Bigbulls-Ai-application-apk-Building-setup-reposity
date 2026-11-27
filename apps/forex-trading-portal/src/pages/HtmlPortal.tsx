@@ -223,7 +223,7 @@ export default function HtmlPortal() {
           }
           case 'APP_PIN_SAVE': {
             const pin=String(payload.pin||'');
-            if(!/^\\d{6}$/.test(pin))throw new Error('App Lock PIN must contain exactly 6 digits.');
+            if(!/^\d{6}$/.test(pin))throw new Error('App Lock PIN must contain exactly 6 digits.');
             if(!Capacitor.isNativePlatform())throw new Error('Secure App Lock PIN is available in the installed Android app only.');
             const {data,error}=await supabase.auth.getUser();if(error||!data.user)throw error||new Error('Sign in again.');
             await saveAppPin(data.user.id,pin);
