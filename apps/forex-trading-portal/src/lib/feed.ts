@@ -75,8 +75,9 @@ export function quoteToUsd(symbol: string, q: Quotes): number {
 }
 
 export async function fetchCandles(symbol: string, timeframe: string, outputsize = 500) {
+  const interval = ({'1m':'1min','5m':'5min','15m':'15min','30m':'30min','1h':'1h','4h':'4h','1D':'1day','1W':'1week','1M':'1month'} as Record<string,string>)[timeframe] || timeframe;
   const { data, error } = await supabase.functions.invoke('market-data', {
-    body: { action: 'candles', symbol: providerName(symbol), timeframe, outputsize }
+    body: { action: 'candles', symbol: providerName(symbol), timeframe: interval, outputsize }
   });
   if (error) throw error;
   const rows = Array.isArray(data?.candles) ? data.candles : [];
