@@ -93,7 +93,7 @@ export default function HtmlPortal() {
           case 'READY': await sendSnapshot(); await sendFundData(); break;
           case 'FUND_INIT': await sendFundData(); break;
           case 'BB_AI_ANALYZE': {
-            const symbol=String(payload.symbol||trading.account?.type&&'EURUSD'||'EURUSD');
+            const symbol=String(payload.symbol||'EURUSD');
             const timeframe=String(payload.timeframe||'1h');
             const candles=await fetchCandles(symbol,timeframe,200);
             if(candles.length<30)throw new Error('Not enough live historical candles are available for this instrument.');
