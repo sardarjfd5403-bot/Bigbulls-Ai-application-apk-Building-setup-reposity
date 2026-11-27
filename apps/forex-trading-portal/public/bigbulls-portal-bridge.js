@@ -96,6 +96,9 @@
         var amount = Number(wb.balance != null ? wb.balance : (wb.available_balance != null ? wb.available_balance : 0));
         walletLabel.textContent = Number.isFinite(amount) ? '$' + amount.toFixed(2) : 'Wallet connected';
       }
+    } else if (data.type === 'BB_AI_RESULT') {
+      var r=data.report||{};
+      pushAiMessage('BB AI','Live technical snapshot for '+r.symbol+' ('+r.timeframe+'): '+r.bias+'. Price '+r.price+', EMA 9 '+r.ema9+', EMA 21 '+r.ema21+', RSI(14) '+r.rsi+'. Recent support '+r.support+' and resistance '+r.resistance+'. Based on '+r.candles+' historical candles; this is technical analysis, not a guaranteed trade signal.');
     } else if (data.type === 'CANDLES') {
       if (data.symbol === appState.selectedSymbol && data.timeframe === (appState.timeframe || '1m')) {
         appState.candles = (data.candles || []).map(function (c) {
@@ -573,8 +576,20 @@
   };
   window.toggleAiAutoTrade = function () { toast('AI auto-execution is disabled until server-side risk controls are enabled.'); };
   window.executeAiSignal = function () { toast('AI signal execution is not enabled; no simulated order was placed.'); };
-  window.askBbAiPrompt = function () { toast('Live BB AI analysis service is not connected. No demo answer is shown.'); };
-  window.submitCustomAiPrompt = function () { toast('Live BB AI analysis service is not connected.'); };
+  window.askBbAiPrompt = function (promptText) {
+    var prompt=String(promptText||'').trim();
+    if(!prompt){toast('Enter a market question first.');return;}
+    pushAiMessage('You',prompt);
+    var symbol=(appState.selectedSymbol||'EURUSD');
+    var match=prompt.toUpperCase().match(/\\b(EURUSD|GBPUSD|USDJPY|XAUUSD|XAGUSD|BTCUSD|ETHUSD|US30|US500|USTEC)\\b/);
+    if(match)symbol=match[1];
+    emit('BB_AI_ANALYZE',{symbol:symbol,timeframe:appState.timeframe||'1h',prompt:prompt});
+  };
+  window.submitCustomAiPrompt = function () {
+    var input=byId('ai-custom-input');if(!input)return;
+    var prompt=input.value.trim();if(!prompt)return;input.value='';
+    window.askBbAiPrompt(prompt);
+  };
   window.startSafeTickLoop = function () {
     if (appState.tickTimer) clearInterval(appState.tickTimer);
     appState.tickTimer = null;
