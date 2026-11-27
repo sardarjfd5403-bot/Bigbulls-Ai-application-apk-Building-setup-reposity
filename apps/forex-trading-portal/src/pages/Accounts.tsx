@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, CandlestickChart, ArrowDownToLine, ArrowUpFromLine, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, MoreVertical, CandlestickChart, ArrowDownToLine, ArrowUpFromLine, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import PositionsPanel from '../components/PositionsPanel';
 import { Button } from '@project/components/ui/button';
 import { Card } from '@project/components/ui/card';
@@ -22,7 +22,7 @@ export default function Accounts() {
     <div>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div><h1 className="text-3xl font-extrabold tracking-tight">My accounts</h1><p className="mt-1 text-sm text-muted-foreground">Manage your trading accounts and start trading.</p></div>
-        <Button onClick={() => setOpenNew(true)}><Plus className="mr-2 h-4 w-4" />Open new account</Button>
+        <div className="flex gap-2"><Button variant="outline" onClick={() => { void t.refresh().then(() => toast.success("Account balances refreshed")).catch((e) => toast.error(e?.message || "Unable to refresh balances")); }}><RefreshCw className="mr-2 h-4 w-4" />Refresh balances</Button><Button onClick={() => setOpenNew(true)}><Plus className="mr-2 h-4 w-4" />Open new account</Button></div>
       </div>
       <div className="mb-5 flex gap-6 border-b">
         {(['Real', 'Demo'] as const).map((x) => (
@@ -64,9 +64,10 @@ function AccountCard({ a, expanded, onToggleTrades }: { a: Account; expanded: bo
         </DropdownMenu>
       </div>
       <div className="flex flex-wrap items-center gap-6 p-5">
-        <div>
-          <div className="num text-3xl font-extrabold">{money(a.balance + floating)}</div>
-          <div className="mt-1 text-xs text-muted-foreground">Leverage 1:{a.leverage} · Floating <span className={floating >= 0 ? 'text-up' : 'text-destructive'}>{money(floating)}</span></div>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+          <div><div className="text-xs font-semibold text-muted-foreground">Balance</div><div className="num text-2xl font-extrabold">{money(a.balance)}</div></div>
+          <div><div className="text-xs font-semibold text-muted-foreground">Equity</div><div className="num text-2xl font-extrabold">{money(a.balance + floating)}</div></div>
+          <div className="col-span-2 text-xs text-muted-foreground">Leverage 1:{a.leverage} · Floating <span className={floating >= 0 ? 'text-up' : 'text-destructive'}>{money(floating)}</span></div>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Button onClick={() => go('/terminal')}><CandlestickChart className="mr-2 h-4 w-4" />Trade</Button>
