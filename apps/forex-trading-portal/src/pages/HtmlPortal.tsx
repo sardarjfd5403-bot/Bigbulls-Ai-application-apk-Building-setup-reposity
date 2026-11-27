@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useTrading } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { bigbullsBackend } from '../lib/bigbullsBackend';
+import { fetchCandles } from '../lib/feed';
 
 type PortalMessage = { source?: string; action?: string; payload?: any };
 export default function HtmlPortal() {
@@ -83,6 +84,12 @@ export default function HtmlPortal() {
         switch (action) {
           case 'READY': await sendSnapshot(); await sendFundData(); break;
           case 'FUND_INIT': await sendFundData(); break;
+          case 'GET_CANDLES': {
+            const symbol=String(payload.symbol||'EURUSD'), timeframe=String(payload.timeframe||'1m');
+            const candles=await fetchCandles(symbol,timeframe,500);
+            frame.current?.contentWindow?.postMessage({source:'BIGBULLS_NATIVE_HOST',type:'CANDLES',symbol,timeframe,candles},window.location.origin);
+            break;
+          }
           case 'WALLET_INIT': {
             const [balance, ledger, tx] = await Promise.all([bigbullsBackend.walletBalance(), bigbullsBackend.walletLedger(), bigbullsBackend.walletTransactions()]);
             frame.current?.contentWindow?.postMessage({ source:'BIGBULLS_NATIVE_HOST', type:'WALLET_DATA', data:{balance,ledger,transactions:tx} }, window.location.origin);
