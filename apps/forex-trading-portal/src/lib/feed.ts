@@ -57,7 +57,7 @@ export function subscribePrices(onTick: (fn: (prev: Quotes) => Quotes) => void) 
   let timer: ReturnType<typeof setTimeout> | undefined;
   const poll = async () => {
     await refresh();
-    if (active) timer = setTimeout(poll, 1000);
+    if (active) timer = setTimeout(poll, 5000);
   };
   void poll();
   return () => { active = false; if (timer) clearTimeout(timer); };
