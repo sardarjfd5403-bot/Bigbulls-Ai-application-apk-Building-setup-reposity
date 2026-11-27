@@ -27,7 +27,7 @@ export default function PriceChart({ symbol }: { symbol: string }) {
   const bid = Number.isFinite(quote?.bid) ? quote.bid : info.start;
   const d = info.digits;
 
-  useEffect(() => { let live = true; setCandles([]); setZoom({x:1,y:1,panX:0,panY:0}); fetchCandles(symbol, TF_API[tf] || '15m', 300).then(rows => { if (live) setCandles(rows); }).catch(err => console.warn('Live OHLC unavailable:', err)); return () => { live = false; }; }, [symbol, tf]);
+  useEffect(() => { let live = true; let retryTimer:ReturnType<typeof setTimeout>|undefined; setCandles([]); setZoom({x:1,y:1,panX:0,panY:0}); const load=async(attempt=0)=>{try{const rows=await fetchCandles(symbol,TF_API[tf]||'15m',300);if(live&&rows.length)setCandles(rows);else if(live&&attempt<3)retryTimer=setTimeout(()=>void load(attempt+1),1000*(attempt+1));}catch(err){if(live&&attempt<3)retryTimer=setTimeout(()=>void load(attempt+1),1000*(attempt+1));else if(live)console.warn('Live OHLC unavailable after retries:',err);}};void load();return()=>{live=false;if(retryTimer)clearTimeout(retryTimer);}; }, [symbol, tf]);
 
   useEffect(() => {
     setCandles((cs) => {
