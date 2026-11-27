@@ -37,7 +37,17 @@ function useEngine(){
  const accountsRef=useRef(state.accounts); useEffect(()=>{accountsRef.current=state.accounts;},[state.accounts]);
  const refresh=useCallback(async()=>{
   const [rows, history]=await Promise.all([bigbullsBackend.accounts(),bigbullsBackend.transactionHistory()]);
-  const accounts=rows.filter(a=>a.status==='approved'&&!a.archived_at&&!a.deleted_at).map(mapAccount);
+  let accounts=rows.filter(a=>a.status==='approved'&&!a.archived_at&&!a.deleted_at).map(mapAccount);
+  // Demo balances live in the paper-execution ledger, not trading_accounts.balance.
+  // Hydrate every Demo card from that ledger so inactive accounts also show their real virtual balance.
+  accounts=await Promise.all(accounts.map(async a=>{
+   if(a.type!=='Demo')return a;
+   try{
+    const status:any=await bigbullsBackend.demoStatus(a.id);
+    const ledgerBalance=Number(status?.ledger?.virtual_balance??status?.ledger?.balance);
+    return Number.isFinite(ledgerBalance)?{...a,balance:ledgerBalance}:a;
+   }catch(error){console.warn('Demo ledger balance refresh failed',a.id,error);return a;}
+  }));
   const walletTxns=(history.wallet||[]).map<Txn>((x:any)=>({
    id:x.id,accountId:x.account_id||'',type:x.kind==='deposit'?'Deposit':'Withdrawal',
    method:[x.asset,x.network].filter(Boolean).join(' / ')||'Wallet',
@@ -119,10 +129,14 @@ function useEngine(){
    if(busy)return false;
    setBusy(true);
    try{
-    const result:any=await bigbullsBackend.demoSetBalance(id,amount,operation);
-    const balance=Number(result?.ledger?.virtual_balance??result?.balance_after);
-    if(!Number.isFinite(balance))throw new Error('Demo balance was adjusted, but the updated ledger balance was not returned. Refresh and retry.');
+    await bigbullsBackend.demoSetBalance(id,amount,operation);
+    // Re-read the authoritative ledger after the adjustment instead of trusting
+    // the mutation response shape or the stale trading_accounts.balance column.
+    const status:any=await bigbullsBackend.demoStatus(id);
+    const balance=Number(status?.ledger?.virtual_balance??status?.ledger?.balance);
+    if(!Number.isFinite(balance))throw new Error('Demo balance was adjusted, but the refreshed ledger balance is unavailable. Refresh and retry.');
     setState(old=>({...old,activeId:id,accounts:old.accounts.map(a=>a.id===id?{...a,balance}:a)}));
+    await refreshAccount(id);
     toast.success(operation==='topup'?'Demo balance topped up':'Demo balance updated');
     return true;
    }catch(e:any){toast.error(e?.message||'Unable to adjust Demo balance');return false;}
