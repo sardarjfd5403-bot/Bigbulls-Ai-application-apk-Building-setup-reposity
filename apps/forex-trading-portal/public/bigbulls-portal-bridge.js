@@ -136,6 +136,16 @@
       } else toast(data.message || 'Payment request failed.');
     } else if (data.type === 'APP_LOCK_DATA') {
       window.bbAppLockEnabled=!!data.enabled;ensureAppLockRow(data);
+    } else if (data.type === 'BIOMETRIC_DATA') {
+      appState.settings.biometrics=!!data.enabled;
+      var bioRow=Array.from(document.querySelectorAll('.profile-row')).find(function(x){return (x.textContent||'').toLowerCase().includes('sign-in with biometrics');});
+      var bioTrack=bioRow&&bioRow.querySelector('.sw-track');if(bioTrack)bioTrack.classList.toggle('on',!!data.enabled);
+      if(bioRow&&!data.available){bioRow.title='No enrolled biometric method detected on this device.';}
+    } else if (data.type === 'BIOMETRIC_RESULT') {
+      appState.settings.biometrics=!!data.enabled;
+      var bioRow2=Array.from(document.querySelectorAll('.profile-row')).find(function(x){return (x.textContent||'').toLowerCase().includes('sign-in with biometrics');});
+      var bioTrack2=bioRow2&&bioRow2.querySelector('.sw-track');if(bioTrack2)bioTrack2.classList.toggle('on',!!data.enabled);
+      toast(data.message||'Biometric preference updated.');
     } else if (data.type === 'APP_LOCK_RESULT') {
       toast(data.message||'App Lock updated.');closeProfileSheet();emit('APP_LOCK_INIT');
     } else if (data.type === 'NOTIFICATIONS_RESULT') {
@@ -546,6 +556,7 @@
     if(typeof htmlOpenSubpage==='function')htmlOpenSubpage('settings');
     emit('NOTIFICATIONS_INIT');
     emit('APP_LOCK_INIT');
+    emit('BIOMETRIC_INIT');
   };
   function ensureAppLockRow(data){
     var body=byId('subpage-body');if(!body)return;
@@ -581,7 +592,7 @@
     toast('Lot size selected for manual chart orders: '+appState.aiLot.toFixed(2));
   };
   window.toggleSettingsSwitch = function (key,row) {
-    if(key==='biometrics'){toast('Biometric sign-in requires native device enrollment and is not enabled yet.');return;}
+    if(key==='biometrics'){emit('BIOMETRIC_TOGGLE',{enabled:!appState.settings.biometrics});return;}
     if(key==='notifications'){emit('NOTIFICATIONS_TOGGLE',{enabled:!appState.settings.notifications});return;}
   };
   window.openReferralSheet = function () { window.openIbPortal(); };
