@@ -76,6 +76,7 @@
       ensureAiScanButton();
       appState.perfData = s.perfData || appState.perfData;
       appState.perfDataByFilter = s.perfDataByFilter || appState.perfDataByFilter;
+      appState.perfCurvePointsByFilter = s.perfCurvePointsByFilter || appState.perfCurvePointsByFilter;
       appState.perfCurvePoints = s.perfCurvePoints || [];
       appState.email = s.email || '';
       syncAccountHeaderAndCard();
@@ -240,6 +241,7 @@
   var lastCandleAt = 0;
   window.selectPerfAccountFilter = function (key) {
     appState.perfAccountFilter = key;
+    if(appState.perfCurvePointsByFilter)appState.perfCurvePoints=appState.perfCurvePointsByFilter[key]||[];
     var modal = byId('perf-acc-modal'); if (modal) modal.classList.add('hidden');
     window.renderPerformance();
     if (typeof drawPerformanceCharts === 'function') drawPerformanceCharts();
