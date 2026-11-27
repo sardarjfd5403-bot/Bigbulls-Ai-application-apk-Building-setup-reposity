@@ -241,7 +241,7 @@
       } else toast(data.message || 'Request failed.');
     } else if (data.type === 'ACTION_ERROR') {
       appState.candlesLoading=false;appState.candlesLoadingKey='';
-      appState.fundSubmitting=false;var fb=byId('fund-submit-btn');if(fb)fb.disabled=false;
+      appState.fundSubmitting=false;var fb=byId('fund-submit-btn');if(fb&&!fundTxnId)fb.disabled=false;
       appState.transferSubmitting=false;var tb=byId('bb-transfer-submit');if(tb)tb.disabled=false;
       toast(data.message || 'Request failed');
     }
@@ -541,6 +541,7 @@
   };
 
   window.executeInternalTransfer = function () {
+    appState.transferSubmitting=false;
     openSheet('<div class="card-title-row"><div class="card-title">Funds transfer</div><button class="circle-icon-btn" onclick="closeProfileSheet()">&times;</button></div>' +
       '<div class="card-sub" style="margin:6px 0 14px;">Transfer between your BIGBULLS wallet and trading accounts.</div>' +
       selectField('From', 'bb-transfer-from', '<option value="wallet">BIGBULLS Wallet</option>' + accountOptions()) +
