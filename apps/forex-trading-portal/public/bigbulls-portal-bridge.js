@@ -131,7 +131,7 @@
         if (record && record.admin_note) status.textContent += ' · ' + record.admin_note;
         if (record && record.rejection_reasons && record.rejection_reasons.length) status.textContent += ' · ' + record.rejection_reasons.join(', ');
       }
-      if (record && ['approved', 'pending'].includes(String(record.status).toLowerCase())) {
+      if (record && ['approved', 'verified', 'pending'].includes(String(record.status).toLowerCase())) {
         var form = byId('bb-kyc-form');
         if (form) form.style.display = 'none';
       }
@@ -295,7 +295,7 @@
     var input = document.createElement('input');
     input.id = id; input.type = type; input.placeholder = placeholder || '';
     input.style.cssText = 'display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:12px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;color:#182230;font-size:14px;';
-    if (type === 'file') input.accept = 'image/png,image/jpeg,image/webp,application/pdf';
+    if (type === 'file') { input.accept = 'image/png,image/jpeg,image/webp,application/pdf'; input.style.minHeight='44px'; }
     wrap.appendChild(input);
     return wrap;
   }
