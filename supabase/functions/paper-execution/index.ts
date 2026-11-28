@@ -25,7 +25,7 @@ Deno.serve(async(req:Request)=>{
  try{
   const url=Deno.env.get("SUPABASE_URL"),anon=Deno.env.get("SUPABASE_ANON_KEY")||Deno.env.get("SUPABASE_PUBLISHABLE_KEY"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||Deno.env.get("SUPABASE_SECRET_KEY");
   if(!url||!anon||!service)return reply({error:"Server execution credentials are not configured."},503,origin);
-  const token=(req.headers.get("Authorization")||"").replace(/^Bearer\\s+/i,"");if(!token)return reply({error:"Authentication required."},401,origin);
+  const token=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");if(!token)return reply({error:"Authentication required."},401,origin);
   const auth=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:"Bearer "+token}}});
   const {data:authData,error:authError}=await auth.auth.getUser(token);if(authError||!authData.user)return reply({error:"Invalid or expired session."},401,origin);
   const user=authData.user,admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
