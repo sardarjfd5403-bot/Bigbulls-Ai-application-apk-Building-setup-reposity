@@ -154,6 +154,13 @@ jobs:
           BUILD_NUMBER=$(python -c "import json; print(json.load(open('app-update.json'))['build'])")
           cp android/app/build/outputs/apk/release/app-release.apk BIGBULLS-Android.apk
           TAG="android-build-${BUILD_NUMBER}"
+          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // empty' --repo "${GITHUB_REPOSITORY}")
+          LATEST_BUILD=$(printf '%s' "$LATEST_TAG" | sed -E 's/^android-build-([0-9]+)$/\\1/')
+          LATEST_BUILD=${LATEST_BUILD:-0}
+          if [ "$BUILD_NUMBER" -lt "$LATEST_BUILD" ]; then
+            echo "Skipping stale build $BUILD_NUMBER; latest published build is $LATEST_BUILD."
+            exit 0
+          fi
           if gh release view "$TAG" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
             gh release upload "$TAG" BIGBULLS-Android.apk --clobber --repo "${GITHUB_REPOSITORY}"
           else
