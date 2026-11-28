@@ -40,7 +40,22 @@ async function invokeAuthed<T>(functionName: string, body: Record<string, unknow
     body,
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (error) throw error;
+  if (error) {
+    // Supabase FunctionsHttpError keeps the Edge Function response in context.
+    // Surface its JSON error instead of the generic "Edge Function returned a non-2xx status code".
+    const context = (error as unknown as { context?: Response }).context;
+    let detail = '';
+    if (context && typeof context.clone === 'function') {
+      try {
+        const payload = await context.clone().json() as { error?: unknown; message?: unknown; code?: unknown };
+        detail = String(payload?.error || payload?.message || '');
+        if (payload?.code) detail += ` [${String(payload.code)}]`;
+      } catch {
+        try { detail = await context.clone().text(); } catch { /* keep SDK message */ }
+      }
+    }
+    throw new Error(detail || error.message || 'BIGBULLS server request failed.');
+  }
   if (data?.error) throw new Error(String(data.error));
   return data as T;
 }
