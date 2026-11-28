@@ -85,7 +85,7 @@ export default function PriceChart({ symbol, onOpenSymbols }: { symbol:string; o
         <div className="flex items-center justify-between gap-2 pointer-events-auto">
           <button onClick={onOpenSymbols} className="rounded-lg border border-blue-200 bg-white/90 px-2.5 py-1 text-xs font-extrabold text-blue-600 shadow-sm">{symbol} <ChevronDown className="inline h-3 w-3"/></button>
           <div className="flex gap-1">
-            <button onClick={()=>{setCross(v=>!v);setCrossAt(null);setCrossIndex(null);}} className={cn('rounded-lg border px-2 py-1 text-[10px] font-bold shadow-sm',cross?'border-blue-300 bg-blue-50 text-blue-700':'border-slate-200 bg-white/90 text-slate-700')}><Crosshair className="mr-1 inline h-3 w-3"/>Cross</button>
+            <button onClick={()=>{setCross(v=>!v);setCrossAt(null);setCrossTime(null);}} className={cn('rounded-lg border px-2 py-1 text-[10px] font-bold shadow-sm',cross?'border-blue-300 bg-blue-50 text-blue-700':'border-slate-200 bg-white/90 text-slate-700')}><Crosshair className="mr-1 inline h-3 w-3"/>Cross</button>
             <button onClick={()=>setShowIndicators(true)} className="rounded-lg border border-slate-200 bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-700 shadow-sm"><Activity className="mr-1 inline h-3 w-3"/>fx Indicators <span className="ml-1 rounded-full bg-blue-600 px-1.5 text-[9px] text-white">{indicators.length}</span></button>
           </div>
         </div>
