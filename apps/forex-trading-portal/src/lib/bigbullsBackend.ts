@@ -257,9 +257,11 @@ export const bigbullsBackend = {
     symbol: string; side: 'BUY' | 'SELL'; quantity: number;
     stop_loss?: number | null; take_profit?: number | null;
   }) {
-    return invokeAuthed<Record<string, unknown>>('paper-execution', {
+    const result = await invokeAuthed<Record<string, unknown>>('paper-execution', {
       action: 'open', account_id: accountId, account_mode: 'demo', ...input,
     });
+    if (result?.success !== true || !result?.trade) throw new Error(String(result?.error || 'Demo order was not confirmed by the execution engine.'));
+    return result;
   },
 
   async demoClose(accountId: string, tradeId: string) {
@@ -286,9 +288,11 @@ export const bigbullsBackend = {
     symbol: string; side: 'BUY' | 'SELL'; quantity: number;
     stop_loss?: number | null; take_profit?: number | null;
   }) {
-    return invokeAuthed<Record<string, unknown>>('bbook-engine', {
+    const result = await invokeAuthed<Record<string, unknown>>('bbook-engine', {
       action: 'open', account_id: accountId, ...input,
     });
+    if (result?.success !== true) throw new Error(String(result?.error || 'Real order was not confirmed by the B-Book engine.'));
+    return result;
   },
 
   async realClose(accountId: string, positionId: string) {
