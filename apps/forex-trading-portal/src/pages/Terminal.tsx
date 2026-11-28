@@ -47,14 +47,14 @@ export default function Terminal() {
    {view==='Market Watch'?<Watchlist selected={symbol} onSelect={select}/>:view==='Positions'?<PositionsPanel/>:
     <div className="grid h-full min-h-0 grid-cols-[250px_minmax(0,1fr)_290px]">
      <aside className="min-h-0 border-r bg-card"><Watchlist selected={symbol} onSelect={select}/></aside>
-     <main className="grid min-h-0 grid-rows-[minmax(320px,1fr)_250px]"><div className="min-h-0 bg-white"><PriceChart symbol={symbol}/></div><div className="min-h-0 border-t bg-card"><PositionsPanel/></div></main>
+     <main className="grid min-h-0 grid-rows-[minmax(320px,1fr)_250px]"><div className="min-h-0 bg-white"><PriceChart symbol={symbol} onOpenSymbols={()=>setView('Market Watch')}/></div><div className="min-h-0 border-t bg-card"><PositionsPanel/></div></main>
      <aside className="min-h-0 border-l bg-card"><OrderPanel symbol={symbol}/></aside>
     </div>}
   </div>
   <div className="flex min-h-0 flex-1 flex-col lg:hidden">
    {view==='Market Watch'||mobileMarkets?<div className="min-h-0 flex-1 bg-card"><Watchlist selected={symbol} onSelect={select}/></div>:view==='Positions'?<div className="min-h-0 flex-1 bg-card"><PositionsPanel/></div>:
     <div className="min-h-0 flex-1 overflow-y-auto">
-     <div className="h-[48vh] min-h-[300px] border-b bg-white"><PriceChart symbol={symbol}/></div>
+     <div className="h-[48vh] min-h-[300px] border-b bg-white"><PriceChart symbol={symbol} onOpenSymbols={()=>setView('Market Watch')}/></div>
      <div className="border-b bg-card"><OrderPanel symbol={symbol}/></div>
      <div className="h-[300px] bg-card"><PositionsPanel/></div>
     </div>}
