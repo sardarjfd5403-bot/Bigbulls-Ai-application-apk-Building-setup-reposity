@@ -162,6 +162,15 @@ jobs:
             exit 0
           fi
           if gh release view "$TAG" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            EXISTING_TARGET=$(gh release view "$TAG" --json targetCommitish --jq '.targetCommitish' --repo "${GITHUB_REPOSITORY}")
+            if [ "$EXISTING_TARGET" != "$GITHUB_SHA" ]; then
+              if git merge-base --is-ancestor "$EXISTING_TARGET" "$GITHUB_SHA"; then
+                gh release edit "$TAG" --target "$GITHUB_SHA" --repo "${GITHUB_REPOSITORY}"
+              else
+                echo "Skipping stale commit $GITHUB_SHA; release already targets newer commit $EXISTING_TARGET."
+                exit 0
+              fi
+            fi
             gh release upload "$TAG" BIGBULLS-Android.apk --clobber --repo "${GITHUB_REPOSITORY}"
           else
             gh release create "$TAG" BIGBULLS-Android.apk \
