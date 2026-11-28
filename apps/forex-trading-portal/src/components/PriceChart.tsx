@@ -26,7 +26,7 @@ const bollinger=(values:number[],period=20)=>{const mid=sma(values,period);retur
 const rsi=(values:number[],period=14)=>{const out:number[]=Array(values.length).fill(50);let gain=0,loss=0;for(let i=1;i<values.length;i++){const d=values[i]-values[i-1];if(i<=period){gain+=Math.max(d,0);loss+=Math.max(-d,0);if(i===period){gain/=period;loss/=period;}}else{gain=(gain*(period-1)+Math.max(d,0))/period;loss=(loss*(period-1)+Math.max(-d,0))/period;}if(i>=period)out[i]=loss===0?100:100-100/(1+gain/loss);}return out;};
 const linePath=(values:(number|null)[],xAt:(i:number)=>number,yAt:(v:number)=>number)=>values.map((v,i)=>v===null?'':(i===0||values[i-1]===null?'M':'L')+xAt(i).toFixed(2)+','+yAt(v).toFixed(2)).filter(Boolean).join(' ');
 
-export default function PriceChart({ symbol }: { symbol:string }) {
+export default function PriceChart({ symbol, onOpenSymbols }: { symbol:string; onOpenSymbols?:()=>void }) {
   const t=useTrading(); const quotes=t.quotes??initialQuotes(); const quote=quotes[symbol]??initialQuotes()[symbol]??initialQuotes().EURUSD;
   const info=SYM[symbol]??SYM.EURUSD; const bid=Number.isFinite(quote.bid)?quote.bid:info.start; const ask=Number.isFinite(quote.ask)?quote.ask:bid+info.spread;
   const [tf,setTf]=useState('15m'); const [candles,setCandles]=useState<Candle[]>([]);
@@ -47,7 +47,7 @@ export default function PriceChart({ symbol }: { symbol:string }) {
   const closes=candles.map(c=>c.c);const ema20=useMemo(()=>ema(closes,20),[candles]);const sma20=useMemo(()=>sma(closes,20),[candles]);const bb=useMemo(()=>bollinger(closes),[candles]);const rsi14=useMemo(()=>rsi(closes),[candles]);
   const axisW=66, topPad=94, bottomPad=indicators.includes('RSI')?82:indicators.includes('VOL')?62:34;
   const W=Math.max(100,size.w-axisW), H=Math.max(90,size.h-bottomPad);
-  const count=Math.max(candles.length,1);const visible=Math.max(12,count/zoom.x);const center=(count-1)/2+zoom.panX*count;const first=center-visible/2;const cw=W/visible;
+  const count=Math.max(candles.length,1);const visible=Math.max(12,count/zoom.x);const center=count-1-(visible-1)/2+zoom.panX*count;const first=center-visible/2;const cw=W/visible;
   const xAt=(i:number)=>(i-first+.5)*cw;const xToIndex=(x:number)=>clamp(Math.round(x/Math.max(cw,1)+first-.5),0,Math.max(0,count-1));
   const visibleCandles=candles.filter((c,i)=>xAt(i)>=-cw&&xAt(i)<=W+cw);
   const lo=Math.min(bid,...visibleCandles.map(c=>c.l),...positions.flatMap(p=>[p.openPrice,p.sl??Infinity,p.tp??Infinity]).filter(Number.isFinite));
@@ -83,7 +83,7 @@ export default function PriceChart({ symbol }: { symbol:string }) {
       </svg>
       <div className="absolute left-2 right-[68px] top-2 z-10 flex flex-col gap-1.5 pointer-events-none">
         <div className="flex items-center justify-between gap-2 pointer-events-auto">
-          <button onClick={()=>{}} className="rounded-lg border border-blue-200 bg-white/90 px-2.5 py-1 text-xs font-extrabold text-blue-600 shadow-sm">{symbol} <ChevronDown className="inline h-3 w-3"/></button>
+          <button onClick={onOpenSymbols} className="rounded-lg border border-blue-200 bg-white/90 px-2.5 py-1 text-xs font-extrabold text-blue-600 shadow-sm">{symbol} <ChevronDown className="inline h-3 w-3"/></button>
           <div className="flex gap-1">
             <button onClick={()=>{setCross(v=>!v);setCrossAt(null);}} className={cn('rounded-lg border px-2 py-1 text-[10px] font-bold shadow-sm',cross?'border-blue-300 bg-blue-50 text-blue-700':'border-slate-200 bg-white/90 text-slate-700')}><Crosshair className="mr-1 inline h-3 w-3"/>Cross</button>
             <button onClick={()=>setShowIndicators(true)} className="rounded-lg border border-slate-200 bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-700 shadow-sm"><Activity className="mr-1 inline h-3 w-3"/>fx Indicators <span className="ml-1 rounded-full bg-blue-600 px-1.5 text-[9px] text-white">{indicators.length}</span></button>
