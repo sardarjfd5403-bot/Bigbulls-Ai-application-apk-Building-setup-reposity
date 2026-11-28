@@ -82,7 +82,8 @@ export async function fetchCandles(symbol: string, timeframe: string, outputsize
   const rows = Array.isArray(data?.candles) ? data.candles : [];
   return rows.map((c: any) => ({
     t: Math.floor(new Date(c.time).getTime() / 1000),
-    o: Number(c.open), h: Number(c.high), l: Number(c.low), c: Number(c.close)
+    o: Number(c.open), h: Number(c.high), l: Number(c.low), c: Number(c.close),
+    v: Number(c.volume ?? 0), tv: Number(c.tickVolume ?? 0)
   })).filter((c: any) => Number.isFinite(c.t) && [c.o,c.h,c.l,c.c].every(Number.isFinite));
 }
 
