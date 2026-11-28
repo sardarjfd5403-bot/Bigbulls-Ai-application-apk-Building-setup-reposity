@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
-const cors = {"Access-Control-Allow-Origin":"https://bigbullsglobalmarket.is-an.ai","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
-const reply=(body:unknown,status=200,origin:string|null=null)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Access-Control-Allow-Origin":origin==="https://bigbullsglobalmarket.is-an.ai"?origin:cors["Access-Control-Allow-Origin"],"Content-Type":"application/json","Cache-Control":"no-store"}});
+const ALLOWED_ORIGINS = new Set(["https://bigbullsglobalmarket.is-an.ai","https://localhost","http://localhost","capacitor://localhost","ionic://localhost"]);
+const cors = {"Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
+const corsFor=(origin:string|null)=>({...cors,"Access-Control-Allow-Origin":origin&&ALLOWED_ORIGINS.has(origin)?origin:"https://bigbullsglobalmarket.is-an.ai"});
+const reply=(body:unknown,status=200,origin:string|null=null)=>new Response(JSON.stringify(body),{status,headers:{...corsFor(origin),"Content-Type":"application/json","Cache-Control":"no-store"}});
 const norm=(s:string)=>s.toUpperCase().replaceAll("/","");
 const contract=(s:string)=>["EURUSD","GBPUSD","USDJPY"].includes(s)?100000:s==="XAUUSD"?100:1;
 const allowed=new Set(["EURUSD","GBPUSD","USDJPY","XAUUSD","BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT","XRPUSDT","DOGEUSDT"]);
@@ -18,7 +20,7 @@ async function quoteFor(symbol:string,url:string,anon:string,admin:any,allowCach
 function costs(symbol:string,side:string,qty:number,mid:number){const s=norm(symbol);const bps=s==="XAUUSD"?3:s.endsWith("USDT")?8:1.2;const half=mid*bps/20000;const slip=mid*.5/10000;const fill=side==="BUY"?mid+half+slip:mid-half-slip;const size=contract(s);return {fill,spread_cost:half*qty*size,slippage:slip*qty*size,commission:s.endsWith("USDT")?mid*qty*.0005:3.5*qty};}
 Deno.serve(async(req:Request)=>{
  const origin=req.headers.get("Origin");
- if(req.method==="OPTIONS")return new Response("ok",{headers:{...cors,"Access-Control-Allow-Origin":origin==="https://bigbullsglobalmarket.is-an.ai"?origin:cors["Access-Control-Allow-Origin"]}});
+ if(req.method==="OPTIONS")return new Response("ok",{headers:corsFor(origin)});
  if(req.method!=="POST")return reply({error:"POST required."},405,origin);
  try{
   const url=Deno.env.get("SUPABASE_URL"),anon=Deno.env.get("SUPABASE_ANON_KEY")||Deno.env.get("SUPABASE_PUBLISHABLE_KEY"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||Deno.env.get("SUPABASE_SECRET_KEY");
