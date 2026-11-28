@@ -1,113 +1,36 @@
 import { useState } from 'react';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, ArrowDown, ArrowUp } from 'lucide-react';
 import { Input } from '@project/components/ui/input';
-import { Switch } from '@project/components/ui/switch';
 import { Button } from '@project/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@project/components/ui/dialog';
 import { cn } from '@project/components/lib/utils';
-import { marginFor, useTrading, Side } from '../lib/store';
+import { useTrading, Side } from '../lib/store';
 import { SYM, money } from '../lib/symbols';
 import { initialQuotes } from '../lib/feed';
 import AIAutoTradeControl from './AIAutoTradeControl';
 
-type Mode = 'Market' | 'Pending';
-
-export default function OrderPanel({ symbol }: { symbol: string }) {
-  const t = useTrading();
-  const s = SYM[symbol] ?? SYM.EURUSD;
-  const q = t.quotes?.[symbol] ?? initialQuotes()[symbol] ?? initialQuotes().EURUSD;
-  const [side, setSide] = useState<Side>('buy');
-  const [mode, setMode] = useState<Mode>('Market');
-  const [vol, setVol] = useState('0.01');
-  const [price, setPrice] = useState('');
-  const [useSl, setUseSl] = useState(false); const [sl, setSl] = useState('');
-  const [useTp, setUseTp] = useState(false); const [tp, setTp] = useState('');
-
-  const v = Number(vol);
-  const validVol = Number.isFinite(v) && v >= 0.01 && v <= 200;
-  const margin = validVol ? marginFor(symbol, v, t.account?.leverage ?? 100, t.quotes ?? initialQuotes()) : 0;
-  const pip = s.digits >= 3 ? Math.pow(10, -(s.digits - 1)) : Math.pow(10, -s.digits);
-  const pipValue = validVol ? pip * v * s.contract : 0;
-  const ref = side === 'buy' ? q.ask : q.bid;
-
-  const submit = (orderSide: Side = side) => {
-    if (!validVol || t.busy || !(t.account?.id ?? '')) return;
-    const slN = useSl && sl ? Number(sl) : undefined, tpN = useTp && tp ? Number(tp) : undefined;
-    if (useSl && (!slN || !Number.isFinite(slN))) return;
-    if (useTp && (!tpN || !Number.isFinite(tpN))) return;
-    if (mode === 'Market') {
-      void t.openPosition({ symbol, side: orderSide, volume: v, sl: slN, tp: tpN });
-      return;
-    }
-    const p = Number(price);
-    if (!Number.isFinite(p) || p <= 0) return;
-    const kind = orderSide === 'buy' ? (p < q.ask ? 'Limit' : 'Stop') : (p > q.bid ? 'Limit' : 'Stop');
-    void t.placePending({ symbol, side: orderSide, kind, volume: v, price: p, sl: slN, tp: tpN });
-    setPrice('');
-  };
-
-  const step = (d: number) => {
-    const current = Number.isFinite(v) ? v : 0.01;
-    setVol(Math.min(200, Math.max(0.01, Math.round((current + d) * 100) / 100)).toFixed(2));
-  };
-
-  return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4">
-      <div>
-        <div className="text-lg font-extrabold">{symbol}</div>
-        <div className="text-xs text-muted-foreground">{s.name}</div>
-      </div>
-      <AIAutoTradeControl />
-      <div className="grid grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] items-stretch gap-1.5 sm:gap-2">
-        <button type="button" disabled={t.busy || !t.account.id || !validVol || (mode === 'Pending' && !(Number(price) > 0))} onClick={() => { setSide('sell'); if (mode === 'Market') submit('sell'); }} className={cn('min-w-0 rounded-lg border-2 p-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 sm:p-2.5', side === 'sell' ? 'border-destructive bg-destructive text-destructive-foreground' : 'border-destructive/30 text-destructive')}>
-          <div className="text-[10px] font-bold uppercase">{mode === 'Market' ? 'Sell' : 'Sell'}</div><div className="num truncate text-sm font-bold sm:text-base">{q.bid.toFixed(s.digits)}</div>
-          {mode === 'Market' && <div className="mt-1 text-[10px] font-semibold">{t.busy && side === 'sell' ? 'Sending…' : 'SELL NOW'}</div>}
-        </button>
-        <div className="flex min-w-0 flex-col justify-center gap-1">
-          <div className="text-center text-[10px] font-semibold text-muted-foreground">LOTS</div>
-          <div className="flex items-center gap-0.5">
-            <Button type="button" variant="outline" size="icon" className="h-8 w-7 shrink-0 p-0" disabled={t.busy || v <= 0.01} onClick={() => step(-0.01)} aria-label="Decrease lot size"><Minus className="h-3 w-3"/></Button>
-            <Input aria-label="Volume in lots" inputMode="decimal" className={cn('num h-8 min-w-0 rounded-md px-1 text-center text-xs', !validVol && 'border-destructive')} value={vol} onChange={(e) => setVol(e.target.value)} />
-            <Button type="button" variant="outline" size="icon" className="h-8 w-7 shrink-0 p-0" disabled={t.busy || v >= 200} onClick={() => step(0.01)} aria-label="Increase lot size"><Plus className="h-3 w-3"/></Button>
-          </div>
-          {!validVol && <p className="text-center text-[9px] text-destructive">0.01–200</p>}
-        </div>
-        <button type="button" disabled={t.busy || !t.account.id || !validVol || (mode === 'Pending' && !(Number(price) > 0))} onClick={() => { setSide('buy'); if (mode === 'Market') submit('buy'); }} className={cn('min-w-0 rounded-lg border-2 p-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 sm:p-2.5', side === 'buy' ? 'border-primary bg-primary text-primary-foreground' : 'border-primary/30 text-primary')}>
-          <div className="text-[10px] font-bold uppercase">Buy</div><div className="num truncate text-sm font-bold sm:text-base">{q.ask.toFixed(s.digits)}</div>
-          {mode === 'Market' && <div className="mt-1 text-[10px] font-semibold">{t.busy && side === 'buy' ? 'Sending…' : 'BUY NOW'}</div>}
-        </button>
-      </div>
-      <div className="num -mt-1 text-center text-[11px] text-muted-foreground">Spread {((q.ask - q.bid) / pip).toFixed(1)} pips</div>
-      <div className="grid grid-cols-2 rounded-lg bg-muted p-1">
-        {(['Market', 'Pending'] as Mode[]).map((m) => (
-          <button type="button" key={m} onClick={() => setMode(m)} className={cn('rounded-md py-1.5 text-xs font-bold', mode === m ? 'bg-card shadow-sm' : 'text-muted-foreground')}>{m}</button>
-        ))}
-      </div>
-      {mode === 'Pending' && (
-        <Field label="Open price"><Input className="num" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder={ref.toFixed(s.digits)} /></Field>
-      )}
-      <Toggle label="Take Profit" on={useTp} setOn={setUseTp} value={tp} setValue={setTp} ph={ref.toFixed(s.digits)} />
-      <Toggle label="Stop Loss" on={useSl} setOn={setUseSl} value={sl} setValue={setSl} ph={ref.toFixed(s.digits)} />
-      <div className="space-y-1.5 rounded-lg bg-muted/60 p-3 text-xs">
-        <Row k="Margin" v={money(margin)} /><Row k="Free margin" v={money(t.free)} />
-        <Row k="Pip value" v={money(pipValue)} /><Row k="Leverage" v={`1:${(t.account?.leverage ?? 100)}`} />
-      </div>
-      {mode === 'Pending' && <Button size="lg" disabled={!validVol || !t.account.id || t.busy || !(Number(price) > 0)} onClick={() => submit()} className="mt-auto h-12 text-base font-bold">Place {side === 'buy' ? 'Buy' : 'Sell'} pending order · {vol} lots</Button>}
-      {mode === 'Market' && <p className="mt-auto text-center text-[11px] text-muted-foreground">{t.busy ? 'Sending order securely…' : 'Tap BUY or SELL to execute immediately'}</p>}
-    </div>
-  );
-}
-
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div><div className="mb-1.5 text-xs font-semibold text-muted-foreground">{label}</div>{children}</div>
-);
-const Row = ({ k, v }: { k: string; v: string }) => (
-  <div className="flex justify-between"><span className="text-muted-foreground">{k}</span><span className="num font-semibold">{v}</span></div>
-);
-function Toggle({ label, on, setOn, value, setValue, ph }: { label: string; on: boolean; setOn: (b: boolean) => void; value: string; setValue: (s: string) => void; ph: string }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between"><span className="text-xs font-semibold text-muted-foreground">{label}</span><Switch checked={on} onCheckedChange={setOn} /></div>
-      {on && <Input className="num mt-1.5" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} placeholder={ph} />}
-    </div>
-  );
+type OrderType='Market'|'Limit'|'Stop';
+export default function OrderPanel({symbol}:{symbol:string}) {
+ const t=useTrading();const s=SYM[symbol]??SYM.EURUSD;const q=t.quotes?.[symbol]??initialQuotes()[symbol]??initialQuotes().EURUSD;
+ const [side,setSide]=useState<Side>('buy');const [type,setType]=useState<OrderType>('Market');const [lots,setLots]=useState('0.01');const [price,setPrice]=useState('');const [confirm,setConfirm]=useState<Side|null>(null);
+ const volume=Number(lots);const valid=Number.isFinite(volume)&&volume>=0.01&&volume<=200&&Math.round(volume*100)===volume*100;
+ const pending=type!=='Market';const quote=side==='buy'?q.ask:q.bid;const target=Number(price);
+ const submit=async()=>{const action=confirm;setConfirm(null);if(!action||!valid||t.busy||!t.account.id)return;if(type==='Market'){await t.openPosition({symbol,side:action,volume});return;}if(t.account.type!=='Real'){return;}if(!Number.isFinite(target)||target<=0)return;await t.placePending({symbol,side:action,kind:type,volume,price:target});setPrice('');};
+ const step=(n:number)=>setLots(Math.min(200,Math.max(.01,Math.round(((Number(lots)||.01)+n)*100)/100)).toFixed(2));
+ return <div className="flex h-full min-w-0 flex-col gap-3 overflow-y-auto bg-white p-3 sm:p-4">
+  <div className="flex items-start justify-between"><div><div className="text-base font-extrabold text-slate-900">{symbol}</div><div className="text-[11px] text-slate-500">{s.name}</div></div><div className="text-right"><div className="text-[9px] font-bold uppercase text-slate-400">Spread</div><div className="num text-xs font-bold text-slate-700">{((q.ask-q.bid)/(s.digits>=3?Math.pow(10,-(s.digits-1)):Math.pow(10,-s.digits))).toFixed(1)} pips</div></div></div>
+  <AIAutoTradeControl/>
+  <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1">{(['Market','Limit','Stop'] as OrderType[]).map(x=><button key={x} onClick={()=>setType(x)} className={cn('rounded-lg py-2 text-[11px] font-extrabold',type===x?'bg-white text-blue-600 shadow-sm':'text-slate-500')}>{x}</button>)}</div>
+  {pending&&<div className="rounded-lg border border-slate-200 bg-slate-50 p-2"><label className="mb-1 block text-[10px] font-bold text-slate-500">{type} entry price</label><Input value={price} onChange={e=>setPrice(e.target.value)} inputMode="decimal" placeholder={quote.toFixed(s.digits)} className="num h-9 border-0 bg-transparent text-sm font-bold"/></div>}
+  <div className="grid grid-cols-[minmax(0,1fr)_94px_minmax(0,1fr)] items-stretch gap-1.5">
+   <button type="button" onClick={()=>setSide('sell')} className={cn('flex min-w-0 flex-col items-center justify-center rounded-xl border-2 px-1 py-3',side==='sell'?'border-red-500 bg-red-500 text-white':'border-red-200 bg-white text-red-500')}><span className="text-[10px] font-extrabold">SELL</span><span className="num truncate text-sm font-extrabold">{q.bid.toFixed(s.digits)}</span><span className="text-[9px] font-bold opacity-80">BID</span></button>
+   <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-1"><span className="mb-1 text-[9px] font-extrabold text-slate-500">LOTS</span><div className="flex w-full items-center gap-0.5"><button onClick={()=>step(-.01)} disabled={!valid||volume<=.01} className="rounded-md bg-white p-1 text-blue-600"><Minus className="h-3 w-3"/></button><Input aria-label="Lots" value={lots} onChange={e=>setLots(e.target.value)} inputMode="decimal" className="num h-8 min-w-0 border-0 bg-transparent px-0 text-center text-xs font-extrabold"/><button onClick={()=>step(.01)} disabled={volume>=200} className="rounded-md bg-white p-1 text-blue-600"><Plus className="h-3 w-3"/></button></div><span className="mt-1 text-[8px] text-slate-400">0.01–200</span></div>
+   <button type="button" onClick={()=>setSide('buy')} className={cn('flex min-w-0 flex-col items-center justify-center rounded-xl border-2 px-1 py-3',side==='buy'?'border-blue-600 bg-blue-600 text-white':'border-blue-200 bg-white text-blue-600')}><span className="text-[10px] font-extrabold">BUY</span><span className="num truncate text-sm font-extrabold">{q.ask.toFixed(s.digits)}</span><span className="text-[9px] font-bold opacity-80">ASK</span></button>
+  </div>
+  <div className="text-center text-[10px] text-slate-400">Execution quote · {t.account.type} account · {t.account.number?'#'+t.account.number:'No account selected'}</div>
+  {pending&&t.account.type==='Demo'&&<p className="rounded-lg bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-700">Pending orders are not enabled in the current Demo paper-execution service. Use Market orders on Demo; Limit/Stop are available on Real B-Book accounts.</p>}
+  {!valid&&<p className="text-center text-[10px] font-semibold text-red-500">Enter a lot size from 0.01 to 200, in 0.01 steps.</p>}
+  <Button className="mt-auto h-10 w-full text-xs font-extrabold" disabled={!valid||t.busy||!t.account.id||(pending&&(t.account.type!=='Real'||!(target>0)))} onClick={()=>setConfirm(side)}>{t.busy?'Sending…':pending?'Review '+side.toUpperCase()+' '+type:'Review '+side.toUpperCase()+' market order'}</Button>
+  <Dialog open={!!confirm} onOpenChange={open=>{if(!open)setConfirm(null);}}><DialogContent><DialogHeader><DialogTitle>Confirm {confirm?.toUpperCase()} {type} order</DialogTitle><DialogDescription>Review the order details before sending it to the BIGBULLS execution service.</DialogDescription></DialogHeader><div className="space-y-2 rounded-xl bg-slate-50 p-3 text-xs"><div className="flex justify-between"><span className="text-slate-500">Account</span><b>{t.account.type} #{t.account.number}</b></div><div className="flex justify-between"><span className="text-slate-500">Instrument</span><b>{symbol}</b></div><div className="flex justify-between"><span className="text-slate-500">Direction / Volume</span><b>{confirm?.toUpperCase()} · {lots} lots</b></div><div className="flex justify-between"><span className="text-slate-500">Reference price</span><b className="num">{pending?target.toFixed(s.digits):quote.toFixed(s.digits)}</b></div><div className="flex justify-between"><span className="text-slate-500">Execution</span><b>{t.account.type==='Real'?'In-house B-Book':'Demo paper engine'}</b></div></div><DialogFooter><Button variant="outline" onClick={()=>setConfirm(null)}>Cancel</Button><Button onClick={()=>void submit()} disabled={t.busy}>Confirm & place</Button></DialogFooter></DialogContent></Dialog>
+ </div>;
 }
