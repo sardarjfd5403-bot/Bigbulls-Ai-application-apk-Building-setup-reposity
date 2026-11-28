@@ -1,7 +1,7 @@
 import { SYM, SYMBOLS } from './symbols';
 import { supabase } from './supabase';
 
-export type Quote = { bid: number; ask: number; open: number; high: number; low: number; dir: 1 | -1 | 0; stale?: boolean };
+export type Quote = { bid: number; ask: number; open: number; high: number; low: number; dir: 1 | -1 | 0; stale?: boolean; quoteTime?: number };
 export type Quotes = Record<string, Quote>;
 
 const providerName = (symbol: string) => ({
@@ -25,6 +25,7 @@ export function initialQuotes(): Quotes {
 
 export function subscribePrices(onTick: (fn: (prev: Quotes) => Quotes) => void) {
   let active = true;
+  const seenQuoteTime = new Map<string, number>();
   const symbols = SYMBOLS.map(s => providerName(s.symbol));
   const refresh = async () => {
     try {
@@ -40,12 +41,17 @@ export function subscribePrices(onTick: (fn: (prev: Quotes) => Quotes) => void) 
           if (!entry || !(Number(row.bid) > 0) || !(Number(row.ask) >= Number(row.bid))) continue;
           const old = prev[entry.symbol];
           const bid = Number(row.bid), ask = Number(row.ask);
+          const quoteTime = Date.parse(String(row.quote_time || row.updated_at || ''));
+          const lastTime = seenQuoteTime.get(entry.symbol) || 0;
+          if (Number.isFinite(quoteTime) && quoteTime > 0 && quoteTime < lastTime) continue;
+          if (Number.isFinite(quoteTime) && quoteTime > 0) seenQuoteTime.set(entry.symbol, quoteTime);
           if (old.bid === bid && old.ask === ask && old.stale === (row.stale === true || row.fallback === true)) continue;
           changed = true;
           next[entry.symbol] = {
             ...old, bid, ask, high: Math.max(old.high, bid), low: Math.min(old.low, bid),
             dir: bid > old.bid ? 1 : bid < old.bid ? -1 : 0,
-            stale: row.stale === true || row.fallback === true
+            stale: row.stale === true || row.fallback === true,
+            quoteTime: Number.isFinite(quoteTime) && quoteTime > 0 ? quoteTime : old.quoteTime
           };
         }
         return changed ? next : prev;
