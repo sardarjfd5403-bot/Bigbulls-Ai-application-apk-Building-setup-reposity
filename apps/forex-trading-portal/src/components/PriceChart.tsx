@@ -63,7 +63,7 @@ export default function PriceChart({ symbol, onOpenSymbols }: { symbol:string; o
   const pointerUp=(e:React.PointerEvent<HTMLDivElement>)=>{pointers.current.delete(e.pointerId);if(pointers.current.size<2)gesture.current=null;if(!pointers.current.size)drag.current=null;};
   const zoomBars=(factor:number)=>{setFollowLive(false);setZoom(z=>({...z,x:clamp(z.x*factor,.35,14)}));};
   const zoomPrice=(factor:number)=>{setAuto(false);setZoom(z=>({...z,y:clamp(z.y*factor,.35,14)}));};
-  const saveSelected=async()=>{if(!selected)return;const sln=sl.trim()===''?undefined:Number(sl);const tpn=tp.trim()===''?undefined:Number(tp);if((sl.trim()!==''&&!Number.isFinite(sln))||(tp.trim()!==''&&!Number.isFinite(tpn)))return;await t.modifyPosition(selected.id,sln,tpn);setSelected(null);};
+  const saveSelected=async()=>{if(!selected)return;const slRaw=sl.trim()===''?undefined:Number(sl);const tpRaw=tp.trim()===''?undefined:Number(tp);if((sl.trim()!==''&&!Number.isFinite(slRaw))||(tp.trim()!==''&&!Number.isFinite(tpRaw)))return;const sln=slRaw===undefined?undefined:Number(slRaw.toFixed(info.digits));const tpn=tpRaw===undefined?undefined:Number(tpRaw.toFixed(info.digits));await t.modifyPosition(selected.id,sln,tpn);setSelected(null);};
   const last=candles[candles.length-1];const change=last&&last.o?((bid-last.o)/last.o)*100:0;const crossIndex=crossTime===null?-1:candles.findIndex(c=>c.t===crossTime);const read=crossIndex>=0?candles[crossIndex]:last;const activeCross=crossAt&&crossIndex>=0?{x:xAt(crossIndex),y:crossAt.y}:null;
   const pathFor=(arr:(number|null)[])=>linePath(arr,xAt,yAt);
   return <div className="relative flex h-full min-h-0 min-w-0 flex-col bg-white text-slate-900">
